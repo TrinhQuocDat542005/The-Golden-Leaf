@@ -1,0 +1,60 @@
+{
+  // Cài đặt chung của VS Code
+  "files.autoSave": "onFocusChange",
+  "editor.formatOnSave": true,
+  "workbench.iconTheme": "material-icon-theme",
+
+  // Thiết lập Java Runtime: Đảm bảo Java 21 là Default
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\17"
+    },
+    {
+      "name": "JavaSE-21",
+      "path": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\21",
+      "default": true // <-- Đặt 21 làm mặc định
+    },
+    {
+      "name": "JavaSE-25",
+      "path": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\latest"
+    }
+  ],
+
+  // Thiết lập Terminal: Buộc Terminal mới sử dụng Profile JavaSE-21 LTS
+  "terminal.integrated.defaultProfile.windows": "JavaSE-21 LTS", // <-- Sửa từ 25 LTS
+
+  "terminal.integrated.profiles.windows": {
+    // ... (Giữ nguyên các profiles Java 8, 11, 17 nếu bạn cần) ...
+    "JavaSE-21 LTS": {
+      "overrideName": true,
+      "env": {
+        "PATH": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\21\\bin;${env:PATH}",
+        "JAVA_TOOL_OPTIONS": "-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8",
+        "JAVA_HOME": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\21"
+      },
+      "path": "cmd",
+      "args": ["/k", "chcp", "65001"]
+    },
+    "JavaSE-25 LTS": {
+      "overrideName": true,
+      "env": {
+        "PATH": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\latest\\bin;${env:PATH}",
+        "JAVA_TOOL_OPTIONS": "-Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8",
+        "JAVA_HOME": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\latest"
+      },
+      "path": "cmd",
+      "args": ["/k", "chcp", "65001"]
+    }
+  },
+
+  // Thiết lập Maven: Buộc Maven sử dụng phiên bản 21
+  "maven.executable.path": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\maven\\21\\bin\\mvn", // <-- Sửa từ latest
+
+  // Các thiết lập Java khác
+  "java.jdt.ls.java.home": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\21",
+  "java.import.gradle.java.home": "C:\\Users\\quan\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\21",
+  "java.test.config": {
+    "vmArgs": ["-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8"]
+  }
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Danh sách đặt bàn</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+      h1 {
+        text-align: center;
+        color: #4caf50;
+        margin-bottom: 20px;
+      }
+      .datban-card {
+        background-color: #fff;
+        border: 2px solid #4caf50;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px auto;
+        width: 90%;
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .datban-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .datban-header h2 {
+        margin: 0;
+        color: #333;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
+      th,
+      td {
+        padding: 6px 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+      ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Danh sách đặt bàn đã thanh toán</h1>
+
+    <div th:each="datBan : ${danhSachDatBan}" class="datban-card">
+      <div class="datban-header">
+        <h2>
+          ID: <span th:text="${datBan.idDat}"></span> -
+          <span th:text="${datBan.ten}"></span>
+        </h2>
+        <span th:text="${datBan.email}"></span>
+      </div>
+
+      <table>
+        <tr>
+          <th>Ngày</th>
+          <td th:text="${datBan.ngay}"></td>
+          <th>Khung giờ</th>
+          <td th:text="${datBan.khungGio}"></td>
+        </tr>
+        <tr>
+          <th>Vị trí bàn</th>
+          <td th:text="${datBan.viTriBan}"></td>
+          <th>Số lượng khách</th>
+          <td th:text="${datBan.soLuong}"></td>
+        </tr>
+        <tr>
+          <th>Món ăn</th>
+          <td colspan="3">
+            <ul th:if="${datBan.gioHangItems != null}">
+              <li
+                th:each="item : ${datBan.gioHangItems}"
+                th:text="${item.tenMon} + ' x ' + ${item.soLuong}"
+              ></li>
+            </ul>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
