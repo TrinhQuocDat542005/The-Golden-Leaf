@@ -1,20 +1,27 @@
 package com.example.datban.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "thuc_don")
+@Table(name = "menu_items")
 public class ThucDon {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long idThucDon;
 
+    @Column(name = "name", nullable = false)
     private String tenMon;
-    private double gia;
+    @Column(name = "price", nullable = false, precision = 12, scale = 2)
+    private BigDecimal gia;
+    @Column(name = "description")
     private String moTa;
+    @Column(name = "image_url")
     private String anh;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "legacy_group")
     private NhomMon nhom;  // thêm cột mới
 
     // Getters và Setters
@@ -24,8 +31,8 @@ public class ThucDon {
     public String getTenMon() { return tenMon; }
     public void setTenMon(String tenMon) { this.tenMon = tenMon; }
 
-    public double getGia() { return gia; }
-    public void setGia(double gia) { this.gia = gia; }
+    public BigDecimal getGia() { return gia; }
+    public void setGia(BigDecimal gia) { this.gia = gia; }
 
     public String getMoTa() { return moTa; }
     public void setMoTa(String moTa) { this.moTa = moTa; }

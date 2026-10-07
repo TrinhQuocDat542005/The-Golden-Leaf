@@ -4,20 +4,27 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "ban_slot")
+@Table(name = "time_slots")
 public class BanSlot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "booking_date", nullable = false)
     private LocalDate ngay;
 
+    @Column(name = "slot_label", nullable = false)
     private String khungGio;
 
+    @Column(name = "initial_table_count", nullable = false)
     private int soBanBanDau;
 
+    @Column(name = "remaining_table_count", nullable = false)
     private int soBanConLai;
+
+    @Version
+    private long version;
 
     // Getter / Setter
     public Long getId() { return id; }

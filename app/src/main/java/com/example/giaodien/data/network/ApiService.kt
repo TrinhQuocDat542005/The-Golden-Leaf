@@ -41,7 +41,7 @@
         @POST("api/giohang/datmon")
         suspend fun postGioHang(
             @Body danhSachMon: List<GioHangMonAn>
-        ): Unit
+        ): List<GioHangResponse>
 
         // 🆕 API thanh toán hóa đơn
         @POST("api/hoadon/create")

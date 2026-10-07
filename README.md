@@ -114,41 +114,15 @@ Khách nhận thông báo trả bàn thành công.
 
 
 🔌 API chính (Spring Boot)
-User APIs
 
-POST /api/auth/login
+- `POST /api/auth/sync`
+- `GET /api/thucdon`, `GET /api/thucdon/{id}`
+- `GET /api/ban-slot`, `POST /api/ban-slot/dat`, `POST /api/ban-slot/tra`
+- `POST /api/datban/save`, `GET /api/datban/latest`
+- `POST /api/giohang/datmon`
+- `POST /api/hoadon/create`
 
-POST /api/auth/register
-
-Menu APIs
-
-GET /api/thucdon
-
-GET /api/mon/{id}
-
-POST /api/danhgia
-
-Booking APIs
-
-POST /api/book
-
-GET /api/book/user/{id}
-
-POST /api/book/cancel/{id}
-
-Table APIs
-
-GET /api/tables
-
-POST /api/tables/assign
-
-POST /api/tables/release
-
-Notification APIs
-
-GET /api/notifications?userId=...
-
-POST /api/notifications/{id}/read
+Contract chi tiết và schema lỗi chuẩn nằm trong [tài liệu REST API](docs/api-contract.md).
 
 ## Chạy dự án local
 
@@ -167,7 +141,8 @@ docker compose up --build
 ```
 
 Backend chạy tại `http://localhost:8080`. Health check nằm tại
-`http://localhost:8080/actuator/health`. phpMyAdmin là công cụ tùy chọn:
+`http://localhost:8080/actuator/health`. Swagger UI nằm tại
+`http://localhost:8080/swagger-ui.html`. phpMyAdmin là công cụ tùy chọn:
 
 ```powershell
 docker compose --profile tools up --build
@@ -223,3 +198,7 @@ $env:WEATHER_API_KEY='your-production-key'
 - `prod`: bắt buộc nhận database và Firebase credentials từ môi trường; schema chỉ được validate.
 
 Các biến môi trường mẫu nằm trong `The-Golden-Leaf-server/.env.example`.
+
+Schema do Flyway quản lý và Hibernate chỉ kiểm tra độ khớp. Database từ bản prototype
+trước Flyway cần được sao lưu rồi migrate hoặc tạo lại trước khi chạy migration `V1`.
+Xem [thiết kế database](docs/database-schema.md) và [REST API contract](docs/api-contract.md).

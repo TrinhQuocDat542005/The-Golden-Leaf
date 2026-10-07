@@ -1,8 +1,9 @@
 package com.example.datban.controller;
 
 import com.example.datban.dto.HoaDonRequest;
-import com.example.datban.model.HoaDon;
+import com.example.datban.dto.InvoiceResponse;
 import com.example.datban.service.HoaDonService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,7 +18,7 @@ public class HoaDonController {
     }
 
     @PostMapping("/create")
-    public HoaDon createHoaDon(@RequestBody HoaDonRequest req) {
-        return service.saveHoaDon(req);
+    public InvoiceResponse createHoaDon(@Valid @RequestBody HoaDonRequest req) {
+        return InvoiceResponse.from(service.saveHoaDon(req));
     }
 }

@@ -17,7 +17,8 @@ public class SecurityConfig {
 
         if (requireAuthentication) {
             http.authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/actuator/health", "/uploads/**", "/api/auth/**", "/api/thucdon/**").permitAll()
+                    .requestMatchers("/actuator/health", "/uploads/**", "/api/auth/**", "/api/thucdon/**",
+                            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/nhahang/**").permitAll()
                     .anyRequest().authenticated())
                 .addFilterBefore(

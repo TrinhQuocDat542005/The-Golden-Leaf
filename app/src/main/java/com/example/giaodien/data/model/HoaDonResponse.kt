@@ -9,6 +9,7 @@ data class HoaDonResponse(
     val tienBan: Double,
     val tienAn: Double,
     val tongTien: Double,
+    val currency: String,
     val ngayGioThanhToan: String
 )
 

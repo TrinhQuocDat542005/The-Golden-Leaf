@@ -1,16 +1,19 @@
 package com.example.datban.service;
 
+import com.example.datban.exception.ResourceNotFoundException;
 import com.example.datban.model.ThucDon;
 import com.example.datban.repository.ThucDonRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ThucDonService {
 
-    @Autowired
-    private ThucDonRepository thucDonRepository;
+    private final ThucDonRepository thucDonRepository;
+
+    public ThucDonService(ThucDonRepository thucDonRepository) {
+        this.thucDonRepository = thucDonRepository;
+    }
 
     public List<ThucDon> getAllMonAn() {
         return thucDonRepository.findAll();
@@ -19,8 +22,9 @@ public class ThucDonService {
     public void createMonAn(ThucDon monAn) {
         thucDonRepository.save(monAn);
     }
-    public ThucDon getMonAnById(Long id) {
-    return thucDonRepository.findById(id).orElse(null);
-}
 
+    public ThucDon getMonAnById(Long id) {
+        return thucDonRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy món ăn"));
+    }
 }

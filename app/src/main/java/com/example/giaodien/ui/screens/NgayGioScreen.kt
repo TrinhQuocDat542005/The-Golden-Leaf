@@ -115,7 +115,7 @@ fun DateTimeSelectionBlock(
 
     // 2. Tính tổng số bàn trống của ngày
     val totalAvailableTables = slotsByKhungGio.values.sumOf { list ->
-        list.count { !it.daDat }
+        list.sumOf { it.soBanConLai }
     }
 
     // 3. Lấy danh sách khung giờ duy nhất đã sắp xếp (ví dụ: theo thứ tự giờ)
@@ -187,7 +187,7 @@ fun DateTimeSelectionBlock(
                     val rowColor = if (isSelected) LightGreen.copy(alpha = 0.2f) else Color.Transparent
 
                     // Lấy số bàn trống cho khung giờ này
-                    val availableSlotsInKhungGio = slotsByKhungGio[khungGio]?.count { !it.daDat } ?: 0
+                    val availableSlotsInKhungGio = slotsByKhungGio[khungGio]?.sumOf { it.soBanConLai } ?: 0
 
                     Row(
                         modifier = Modifier

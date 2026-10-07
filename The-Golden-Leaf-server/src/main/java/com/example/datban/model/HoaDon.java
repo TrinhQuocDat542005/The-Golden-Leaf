@@ -1,35 +1,39 @@
 package com.example.datban.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.Instant;
 
 @Entity
-@Table(name = "hoa_don")
+@Table(name = "invoices")
 public class HoaDon {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;   // ID thứ tự (auto increment)
 
-    @Column(name = "id_dat", unique = true, nullable = false)
+    @Column(name = "booking_id", unique = true, nullable = false)
     private Long idDat;  // ID đặt bàn (duy nhất)
 
-    @Column(name = "tien_ban", nullable = false)
-    private Double tienBan;
+    @Column(name = "table_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal tienBan;
 
-    @Column(name = "tien_an", nullable = false)
-    private Double tienAn;
+    @Column(name = "food_total", nullable = false, precision = 12, scale = 2)
+    private BigDecimal tienAn;
 
-    @Column(name = "tong_tien", nullable = false)
-    private Double tongTien;
+    @Column(name = "grand_total", nullable = false, precision = 12, scale = 2)
+    private BigDecimal tongTien;
 
-    @Column(name = "ngay_gio_thanh_toan", nullable = false)
-    private LocalDateTime ngayGioThanhToan;
+    @Column(name = "currency", nullable = false, length = 3)
+    private String currency = "VND";
+
+    @Column(name = "created_at", nullable = false)
+    private Instant ngayGioThanhToan;
 
     // TỰ ĐỘNG GÁN NGÀY GIỜ THANH TOÁN LÚC TẠO RECORD
     @PrePersist
     protected void onCreate() {
-        this.ngayGioThanhToan = LocalDateTime.now();
+        this.ngayGioThanhToan = Instant.now();
     }
 
     // Getter & Setter
@@ -45,31 +49,35 @@ public class HoaDon {
         this.idDat = idDat;
     }
 
-    public Double getTienBan() {
+    public BigDecimal getTienBan() {
         return tienBan;
     }
 
-    public void setTienBan(Double tienBan) {
+    public void setTienBan(BigDecimal tienBan) {
         this.tienBan = tienBan;
     }
 
-    public Double getTienAn() {
+    public BigDecimal getTienAn() {
         return tienAn;
     }
 
-    public void setTienAn(Double tienAn) {
+    public void setTienAn(BigDecimal tienAn) {
         this.tienAn = tienAn;
     }
 
-    public Double getTongTien() {
+    public BigDecimal getTongTien() {
         return tongTien;
     }
 
-    public void setTongTien(Double tongTien) {
+    public void setTongTien(BigDecimal tongTien) {
         this.tongTien = tongTien;
     }
 
-    public LocalDateTime getNgayGioThanhToan() {
+    public String getCurrency() { return currency; }
+
+    public void setCurrency(String currency) { this.currency = currency; }
+
+    public Instant getNgayGioThanhToan() {
         return ngayGioThanhToan;
     }
 }

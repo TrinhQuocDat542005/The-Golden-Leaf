@@ -1,9 +1,10 @@
 package com.example.datban.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "gio_hang")
+@Table(name = "booking_items")
 public class GioHang {
 
     @Id
@@ -11,37 +12,41 @@ public class GioHang {
     private Long id; // Khóa chính tự tăng
 
     // --- KHÓA NGOẠI: LIÊN KẾT VỚI BẢNG DAT_BAN ---
-    @Column(name = "id_dat", nullable = false)
+    @Column(name = "booking_id", nullable = false)
     private Long idDat; // Liên kết với DatBan.idDat (id_ban)
 
     // --- THÔNG TIN KHÁCH HÀNG ---
-    @Column(nullable = false)
+    @Column(name = "customer_email", nullable = false)
     private String email; // Email khách hàng
 
     // --- THÔNG TIN CHI TIẾT MÓN ĂN ---
-    @Column(name = "id_thuc_don", nullable = false)
+    @Column(name = "menu_item_id", nullable = false)
     private Long idThucDon; // ID của món ăn trong bảng ThucDon
 
-    @Column(name = "ten_mon", nullable = false)
+    @Column(name = "item_name", nullable = false)
     private String tenMon; // Tên món (để hiển thị nhanh)
 
-    @Column(name = "so_luong", nullable = false)
+    @Column(name = "quantity", nullable = false)
     private Integer soLuong; // Số lượng món khách đặt
 
-    @Column(name = "gia_mon", nullable = false)
-    private Double giaMon; // Giá món tại thời điểm đặt
+    @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
+    private BigDecimal giaMon; // Giá món tại thời điểm đặt
+
+    @Column(name = "line_total", nullable = false, precision = 12, scale = 2)
+    private BigDecimal thanhTien;
 
     // Constructor không tham số
     public GioHang() {}
 
     // Constructor đầy đủ tham số
-    public GioHang(Long idDat, String email, Long idThucDon, String tenMon, Integer soLuong, Double giaMon) {
+    public GioHang(Long idDat, String email, Long idThucDon, String tenMon, Integer soLuong, BigDecimal giaMon) {
         this.idDat = idDat;
         this.email = email;
         this.idThucDon = idThucDon;
         this.tenMon = tenMon;
         this.soLuong = soLuong;
         this.giaMon = giaMon;
+        this.thanhTien = giaMon.multiply(BigDecimal.valueOf(soLuong));
     }
 
     // Getter & Setter
@@ -63,8 +68,11 @@ public class GioHang {
     public Integer getSoLuong() { return soLuong; }
     public void setSoLuong(Integer soLuong) { this.soLuong = soLuong; }
 
-    public Double getGiaMon() { return giaMon; }
-    public void setGiaMon(Double giaMon) { this.giaMon = giaMon; }
+    public BigDecimal getGiaMon() { return giaMon; }
+    public void setGiaMon(BigDecimal giaMon) { this.giaMon = giaMon; }
+
+    public BigDecimal getThanhTien() { return thanhTien; }
+    public void setThanhTien(BigDecimal thanhTien) { this.thanhTien = thanhTien; }
 
     @Override
     public String toString() {

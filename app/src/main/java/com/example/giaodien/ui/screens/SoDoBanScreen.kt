@@ -20,7 +20,6 @@ import com.example.giaodien.R
 import com.example.giaodien.data.model.BanSlot
 import com.example.giaodien.navigation.Screen
 import com.example.giaodien.viewmodel.BanSlotViewModel
-import com.example.giaodien.viewmodel.DatBanViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
@@ -41,10 +40,11 @@ fun SoDoBanScreen(
         slot.ngay.substring(0, 10) == ngayChon && slot.khungGio == khungGioChon
     }
 
-    val total = daySlots.size
-    val banConLai = daySlots.count { slot -> !slot.daDat }
+    val selectedSlot = daySlots.firstOrNull()
+    val total = selectedSlot?.soBanBanDau ?: 0
+    val banConLai = selectedSlot?.soBanConLai ?: 0
     val banDaDat = total - banConLai
-    val datBanViewModel: DatBanViewModel = viewModel()
+    val tables = (1..total).map { number -> TableVisual(number, number <= banDaDat) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -148,13 +148,13 @@ fun SoDoBanScreen(
                     item { FacilityRow() }
 
                     var currentIndex = 0
-                    while (currentIndex < daySlots.size) {
+                    while (currentIndex < tables.size) {
                         // Hàng 2 bàn
                         val row2Count = 2
-                        if (currentIndex < daySlots.size) {
-                            val tablesInRow2 = daySlots.subList(
+                        if (currentIndex < tables.size) {
+                            val tablesInRow2 = tables.subList(
                                 currentIndex,
-                                (currentIndex + row2Count).coerceAtMost(daySlots.size)
+                                (currentIndex + row2Count).coerceAtMost(tables.size)
                             )
                             item { TableRow(slots = tablesInRow2) }
                             currentIndex += row2Count
@@ -162,10 +162,10 @@ fun SoDoBanScreen(
 
                         // Hàng 3 bàn
                         val row3Count = 3
-                        if (currentIndex < daySlots.size) {
-                            val tablesInRow3 = daySlots.subList(
+                        if (currentIndex < tables.size) {
+                            val tablesInRow3 = tables.subList(
                                 currentIndex,
-                                (currentIndex + row3Count).coerceAtMost(daySlots.size)
+                                (currentIndex + row3Count).coerceAtMost(tables.size)
                             )
                             item { TableRow(slots = tablesInRow3) }
                             currentIndex += row3Count
@@ -229,8 +229,10 @@ fun FacilityRow() {
     }
 }
 
+private data class TableVisual(val number: Int, val booked: Boolean)
+
 @Composable
-fun TableRow(slots: List<BanSlot>) {
+private fun TableRow(slots: List<TableVisual>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -242,7 +244,7 @@ fun TableRow(slots: List<BanSlot>) {
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (slot.daDat) Color.Gray else Color.Green
+                    containerColor = if (slot.booked) Color.Gray else Color.Green
                 )
             ) {
                 Box(
@@ -250,7 +252,7 @@ fun TableRow(slots: List<BanSlot>) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "B${slot.soBan}",
+                        text = "B${slot.number}",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp

@@ -1,28 +1,30 @@
 package com.example.datban.controller.api;
 
-import com.example.datban.model.ThucDon;
+import com.example.datban.dto.MenuItemResponse;
 import com.example.datban.service.ThucDonService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/thucdon")
 public class ThucDonApiController {
 
-    @Autowired
-    private ThucDonService thucDonService;
+    private final ThucDonService thucDonService;
 
-    // Lấy toàn bộ danh sách món ăn
-    @GetMapping
-    public List<ThucDon> getAllThucDon() {
-        return thucDonService.getAllMonAn();
+    public ThucDonApiController(ThucDonService thucDonService) {
+        this.thucDonService = thucDonService;
     }
 
-    // Lấy món ăn theo ID
+    @GetMapping
+    public List<MenuItemResponse> getAllThucDon() {
+        return thucDonService.getAllMonAn().stream().map(MenuItemResponse::from).toList();
+    }
+
     @GetMapping("/{id}")
-    public ThucDon getThucDonById(@PathVariable Long id) {
-        return thucDonService.getMonAnById(id);
+    public MenuItemResponse getThucDonById(@PathVariable Long id) {
+        return MenuItemResponse.from(thucDonService.getMonAnById(id));
     }
 }

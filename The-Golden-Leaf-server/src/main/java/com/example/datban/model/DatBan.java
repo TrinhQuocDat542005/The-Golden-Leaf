@@ -4,33 +4,33 @@ import java.time.LocalDate;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "dat_ban")
+@Table(name = "bookings")
 public class DatBan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_ban")
+    @Column(name = "id")
     private Long idDat;
 
-    @Column(nullable = false)
+    @Column(name = "customer_email", nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "customer_name", nullable = false)
     private String ten;
 
-    @Column(nullable = false)
+    @Column(name = "booking_date", nullable = false)
     private LocalDate ngay;
 
-    @Column(name = "khung_gio", nullable = false)
+    @Column(name = "slot_label", nullable = false)
     private String khungGio;
 
-    @Column(name = "so_luong", nullable = false)
+    @Column(name = "guest_count", nullable = false)
     private Integer soLuong;
 
-    @Column(name = "ghi_chu")
+    @Column(name = "note")
     private String ghiChu;
 
-    @Column(name = "vi_tri_ban", nullable = false)
+    @Column(name = "preferred_area_name", nullable = false)
     private String viTriBan;
 
     // Constructor không tham số

@@ -2,6 +2,7 @@ package com.example.datban.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id; // Không dùng GeneratedValue nữa
+import jakarta.persistence.Column;
 
 @Entity
 @jakarta.persistence.Table(name = "users")
@@ -12,9 +13,11 @@ public class User {
     private String uid; 
 
     private String email;
+    @Column(name = "display_name", nullable = false)
     private String ten;
     
     // 💡 THAY ĐỔI 2: Thêm trường để lưu Provider ID (vd: "google.com", "password")
+    @Column(name = "firebase_provider", nullable = false)
     private String firebaseProvider; 
 
     // Constructor rỗng (cần thiết cho JPA)
