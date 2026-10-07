@@ -12,8 +12,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import androidx.lifecycle.SavedStateHandle
+import com.example.giaodien.data.network.userMessage
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CancellationException
 
 // Định nghĩa một lớp dữ liệu để lưu thông tin món ăn và số lượng
+@Serializable
 data class GioHangItem(
     val thucDon: ThucDon,
     val quantity: Int = 1
@@ -21,21 +28,39 @@ data class GioHangItem(
 
 class GioHangViewModel(
     // ⚠️ Thêm ApiService vào constructor để thực hiện gọi API
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val savedState: SavedStateHandle
 ) : ViewModel() {
 
     // 1. BIẾN LƯU TRỮ ID ĐẶT BÀN (DÙNG ĐỂ LIÊN KẾT GIỎ HÀNG)
-    private val _currentDatBanId = MutableStateFlow<Long?>(null)
+    private val _currentDatBanId = MutableStateFlow(savedState.get<Long>("bookingId"))
     val currentDatBanId: StateFlow<Long?> = _currentDatBanId
+    private val _submitting = MutableStateFlow(false)
+    val submitting: StateFlow<Boolean> = _submitting
+    private val _holdExpiresAt = MutableStateFlow(savedState.get<String>("holdExpiresAt"))
+    val holdExpiresAt: StateFlow<String?> = _holdExpiresAt
 
     // HÀM ĐỂ LƯU ID ĐẶT BÀN TỪ NAVIGATION
-    fun setDatBanId(id: Long) {
+    fun setDatBanId(id: Long, expiresAt: String? = null) {
+        if (_currentDatBanId.value != id) clearCart()
         _currentDatBanId.value = id
+        savedState["bookingId"] = id
+        savedState["holdExpiresAt"] = expiresAt
+        _holdExpiresAt.value = expiresAt
     }
 
     // Danh sách giỏ hàng (MutableStateFlow để theo dõi trạng thái)
-    private val _gioHangList = MutableStateFlow<List<GioHangItem>>(emptyList())
+    private val _gioHangList = MutableStateFlow<List<GioHangItem>>(
+        savedState.get<String>("cart")?.let { runCatching { Json.decodeFromString<List<GioHangItem>>(it) }.getOrNull() }
+            ?: emptyList()
+    )
     val gioHangList: StateFlow<List<GioHangItem>> = _gioHangList
+
+    init {
+        viewModelScope.launch {
+            _gioHangList.collect { savedState["cart"] = Json.encodeToString(it) }
+        }
+    }
 
     // Tính tổng số tiền
     val tongTien: StateFlow<Double> = _gioHangList.map { items ->
@@ -44,12 +69,13 @@ class GioHangViewModel(
 
     // HÀM THÊM MÓN VÀO GIỎ HÀNG
     fun addToCart(mon: ThucDon) {
+        if (_submitting.value) return
         _gioHangList.update { currentList ->
             val existingItem = currentList.find { it.thucDon.idThucDon == mon.idThucDon }
             if (existingItem != null) {
                 currentList.map {
                     if (it.thucDon.idThucDon == mon.idThucDon) {
-                        it.copy(quantity = it.quantity + 1)
+                        it.copy(quantity = minOf(100, it.quantity + 1))
                     } else {
                         it
                     }
@@ -60,13 +86,15 @@ class GioHangViewModel(
         }
     }
     fun tangSoLuong(item: GioHangItem) {
+        if (_submitting.value) return
         _gioHangList.value = _gioHangList.value.map {
-            if (it.thucDon.idThucDon == item.thucDon.idThucDon) it.copy(quantity = it.quantity + 1)
+            if (it.thucDon.idThucDon == item.thucDon.idThucDon) it.copy(quantity = minOf(100, it.quantity + 1))
             else it
         }
     }
 
     fun giamSoLuong(item: GioHangItem) {
+        if (_submitting.value) return
         _gioHangList.value = _gioHangList.value.map {
             if (it.thucDon.idThucDon == item.thucDon.idThucDon && it.quantity > 1)
                 it.copy(quantity = it.quantity - 1)
@@ -75,19 +103,22 @@ class GioHangViewModel(
     }
 
     fun xoaMon(item: GioHangItem) {
+        if (_submitting.value) return
         _gioHangList.value = _gioHangList.value.filter { it.thucDon.idThucDon != item.thucDon.idThucDon }
     }
 
     fun clearCart() {
+        if (_submitting.value) return
         _gioHangList.value = emptyList()
     }
 
     // HÀM XỬ LÝ XÁC NHẬN ĐẶT MÓN (GỬI LÊN SERVER)
-    fun xacNhanDatMon(onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun xacNhanDatMon(onSuccess: () -> Unit, onError: (String) -> Unit, allowEmpty: Boolean = false) {
+        if (_submitting.value) return
         val datBanId = _currentDatBanId.value
         val gioHang = _gioHangList.value
 
-        if (datBanId == null || gioHang.isEmpty()) {
+        if (datBanId == null || (!allowEmpty && gioHang.isEmpty())) {
             onError("Chưa có thông tin đặt bàn hoặc giỏ hàng trống.")
             return
         }
@@ -103,17 +134,49 @@ class GioHangViewModel(
             )
         }
 
+        _submitting.value = true
         viewModelScope.launch {
             try {
-                // ✅ GỌI API THẬT SỰ VÀ KHÔNG CHỜ KẾT QUẢ TRẢ VỀ (Unit)
-                apiService.postGioHang(danhSachGioHang)
+                // Persist a full snapshot, then confirm; both calls can be safely retried.
+                val serverItems = apiService.replaceGioHang(datBanId, danhSachGioHang)
+                _gioHangList.value = gioHang.map { item ->
+                    val serverItem = serverItems.first { it.idThucDon == item.thucDon.idThucDon }
+                    item.copy(thucDon = item.thucDon.copy(gia = serverItem.giaMon, tenMon = serverItem.tenMon))
+                }
+                apiService.confirmDatBan(datBanId)
+                _holdExpiresAt.value = null
+                savedState["holdExpiresAt"] = null
 
-                // Sau khi gửi thành công:
-//                _gioHangList.value = emptyList()
-//                _currentDatBanId.value = null
-                onSuccess() // Kích hoạt điều hướng về Main
+                onSuccess()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                onError("Lỗi khi gửi đặt món: ${e.message ?: "Lỗi không xác định"}")
+                onError(e.userMessage())
+            } finally {
+                _submitting.value = false
+            }
+        }
+    }
+
+    fun cancelBooking(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val id = _currentDatBanId.value ?: return
+        if (_submitting.value) return
+        _submitting.value = true
+        viewModelScope.launch {
+            try {
+                apiService.cancelDatBan(id)
+                _gioHangList.value = emptyList()
+                _currentDatBanId.value = null
+                _holdExpiresAt.value = null
+                savedState["bookingId"] = null
+                savedState["holdExpiresAt"] = null
+                onSuccess()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onError(e.userMessage())
+            } finally {
+                _submitting.value = false
             }
         }
     }

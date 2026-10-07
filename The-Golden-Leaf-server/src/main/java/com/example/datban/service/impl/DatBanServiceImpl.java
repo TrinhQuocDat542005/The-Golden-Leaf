@@ -5,7 +5,6 @@ import com.example.datban.model.DatBan;
 import com.example.datban.repository.DatBanRepository;
 import com.example.datban.service.DatBanService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DatBanServiceImpl implements DatBanService {
@@ -17,9 +16,11 @@ public class DatBanServiceImpl implements DatBanService {
     }
 
     @Override
-    @Transactional
-    public DatBan saveDatBan(DatBan datBan) {
-        return datBanRepository.save(datBan);
+    public DatBan getById(Long id, String actorEmail) {
+        DatBan booking = datBanRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lượt đặt bàn"));
+        com.example.datban.service.BookingLifecycleService.checkOwner(booking, actorEmail);
+        return booking;
     }
 
     @Override

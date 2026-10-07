@@ -14,14 +14,20 @@ import java.util.List;
 public class BanSlotService {
 
     private final BanSlotRepository repo;
+    private final java.time.Clock clock;
+    private final java.time.ZoneId zone;
 
-    public BanSlotService(BanSlotRepository repo) {
+    public BanSlotService(BanSlotRepository repo, java.time.Clock clock,
+            @org.springframework.beans.factory.annotation.Value("${app.booking.zone:Asia/Ho_Chi_Minh}") String zone) {
         this.repo = repo;
+        this.clock = clock;
+        this.zone = java.time.ZoneId.of(zone);
     }
 
     // Lấy tất cả slot
     public List<BanSlot> getAllSlots() {
-        return repo.findAll();
+        LocalDate today = LocalDate.now(clock.withZone(zone));
+        return repo.findByNgayBetweenOrderByNgayAscKhungGioAsc(today, today.plusDays(6));
     }
 
     // Lấy slot theo ngày + khung
@@ -33,24 +39,12 @@ public class BanSlotService {
     // Đặt bàn theo số lượng khách
     @Transactional
     public BanSlot datBan(LocalDate ngay, String khungGio, int soLuongKhach) {
-        BanSlot slot = getSlot(ngay, khungGio);
-
-        int soBanCan = (int) Math.ceil(soLuongKhach / 8.0);
-
-        if (slot.getSoBanConLai() < soBanCan) {
-            throw new BusinessRuleException("NOT_ENOUGH_TABLES", "Không đủ bàn trống cho số lượng khách đã chọn");
-        }
-
-        slot.setSoBanConLai(slot.getSoBanConLai() - soBanCan);
-        return repo.save(slot);
+        throw new BusinessRuleException("BOOKING_REQUIRED", "Giữ chỗ qua /api/datban/save để gắn sức chứa với đơn");
     }
 
     // Trả bàn
     @Transactional
     public BanSlot traBan(LocalDate ngay, String khungGio, int soLuongKhach) {
-        BanSlot slot = getSlot(ngay, khungGio);
-        int soBanCan = (int) Math.ceil(soLuongKhach / 8.0);
-        slot.setSoBanConLai(Math.min(slot.getSoBanBanDau(), slot.getSoBanConLai() + soBanCan));
-        return repo.save(slot);
+        throw new BusinessRuleException("BOOKING_REQUIRED", "Trả sức chứa qua /api/datban/{id}/cancel");
     }
 }

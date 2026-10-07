@@ -36,6 +36,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.giaodien.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 val DeepRed = Color(0xFF8B0000)
 
@@ -48,7 +49,10 @@ fun ChonMonAnScreen(
 ) {
     val thucDonList by viewModel.thucDonList.collectAsState()
     val favoriteList by yeuThichViewModel.favoriteList.collectAsState(initial = emptyList())
-    val datBanViewModel: DatBanViewModel = viewModel()
+    val submitting by gioHangViewModel.submitting.collectAsState()
+    val holdExpiresAt by gioHangViewModel.holdExpiresAt.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
     LaunchedEffect(Unit) { viewModel.loadThucDon() }
@@ -56,7 +60,7 @@ fun ChonMonAnScreen(
 
     val baseUrl = "http://10.0.2.2:8080/uploads/"
 
-    Scaffold(containerColor = Color.Black) { innerPadding ->
+    Scaffold(containerColor = Color.Black, snackbarHost = { SnackbarHost(snackbar) }) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -94,6 +98,12 @@ fun ChonMonAnScreen(
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        TextButton(enabled = !submitting, onClick = {
+                            gioHangViewModel.cancelBooking(
+                                onSuccess = { navController.navigate("trang_chu") { popUpTo(Screen.ChonMonAn.route) { inclusive = true } } },
+                                onError = { message -> scope.launch { snackbar.showSnackbar(message) } }
+                            )
+                        }) { Text("Hủy giữ chỗ", color = Color.White) }
                         IconButton(onClick = { navController.navigate("gio_hang_screen") }) {
                             Icon(Icons.Default.ShoppingCart, contentDescription = "Giỏ hàng", tint = Color.White)
                         }
@@ -108,6 +118,10 @@ fun ChonMonAnScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+                holdExpiresAt?.let { expiry ->
+                    Text("Giữ chỗ đến ${org.threeten.bp.Instant.parse(expiry).atZone(org.threeten.bp.ZoneId.of("Asia/Ho_Chi_Minh")).toLocalTime().withNano(0)}",
+                        color = Color.White, modifier = Modifier.padding(horizontal = 16.dp))
+                }
 
                 // LazyColumn chứa các nhóm món
                 LazyColumn(
@@ -140,18 +154,15 @@ fun ChonMonAnScreen(
             }
 
             // Nút Bỏ Qua
-            val datBan = datBanViewModel.currentDatBan
             Button(
+                enabled = !submitting,
                 onClick = {
-                    // Xóa giỏ hàng trước khi đi sang hóa đơn
-                    gioHangViewModel.clearCart()  // hoặc gioHangViewModel.resetCart()
-
-                    // Nếu cần lưu thông tin đặt bàn
-                    val datBanDaLuu = datBanViewModel.currentDatBan
-                    if (datBanDaLuu != null) datBanViewModel.setDatBan(datBanDaLuu)
-
-                    // Chuyển sang trang Hóa Đơn
-                    navController.navigate(Screen.HoaDon.route)
+                    gioHangViewModel.clearCart()
+                    gioHangViewModel.xacNhanDatMon(
+                        onSuccess = { navController.navigate(Screen.HoaDon.route) },
+                        onError = { message -> scope.launch { snackbar.showSnackbar(message) } },
+                        allowEmpty = true
+                    )
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = DeepRed, contentColor = Color.White),
                 modifier = Modifier

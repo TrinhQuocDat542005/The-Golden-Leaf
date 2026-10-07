@@ -35,6 +35,9 @@ import com.example.giaodien.viewmodel.GioHangItem
 import com.example.giaodien.viewmodel.GioHangViewModel
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 // Định dạng tiền tệ
 val currencyFormat: NumberFormat = NumberFormat.getNumberInstance(Locale.GERMAN) // Ví dụ: 1.000.000
@@ -47,8 +50,12 @@ fun GioHangScreen(
 ) {
     val gioHangList by gioHangViewModel.gioHangList.collectAsState()
     val tongTien by gioHangViewModel.tongTien.collectAsState()
+    val submitting by gioHangViewModel.submitting.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text("Giỏ Hàng Của Bạn", color = Color.White) },
@@ -119,6 +126,7 @@ fun GioHangScreen(
 
             // Nút "Xác Nhận Đặt Món"
             Button(
+                enabled = !submitting,
                 onClick = {
                     gioHangViewModel.xacNhanDatMon(
                         onSuccess = {
@@ -128,7 +136,7 @@ fun GioHangScreen(
 
                         },
                         onError = { msg ->
-                            println("Lỗi xác nhận đặt món: $msg")
+                            scope.launch { snackbar.showSnackbar(msg) }
                         }
                     )
                 },
@@ -142,7 +150,7 @@ fun GioHangScreen(
                     .padding(horizontal = 16.dp, vertical = 16.dp)
                     .height(50.dp)
             ) {
-                Text("Xác Nhận Đặt Món")
+                Text(if (submitting) "Đang xác nhận…" else "Xác Nhận Đặt Món")
             }
 
         }

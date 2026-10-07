@@ -6,6 +6,11 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "menu_items")
 public class ThucDon {
+    @Column(nullable = false)
+    private boolean active = true;
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

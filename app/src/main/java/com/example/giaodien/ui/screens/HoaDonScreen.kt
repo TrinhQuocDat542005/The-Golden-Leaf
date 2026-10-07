@@ -65,7 +65,7 @@ fun HoaDonScreen(
     val tongTienThanhToan = (PHI_DAT_BAN + tongTienMonAn).toFloat()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchLatestDatBan { errorMessage ->
+        viewModel.fetchCurrentDatBan(gioHangViewModel.currentDatBanId.value) { errorMessage ->
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(
                     message = errorMessage,

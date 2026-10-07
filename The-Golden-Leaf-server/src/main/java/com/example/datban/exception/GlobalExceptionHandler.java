@@ -22,6 +22,23 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    ResponseEntity<ApiError> handleForbidden(Exception exception, HttpServletRequest request) {
+        return response(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "Không có quyền truy cập đơn đặt bàn", request, Map.of());
+    }
+
+    @ExceptionHandler({org.springframework.web.bind.ServletRequestBindingException.class,
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+            org.springframework.web.method.annotation.HandlerMethodValidationException.class})
+    ResponseEntity<ApiError> handleRequestParameters(Exception exception, HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "Header hoặc tham số không hợp lệ", request, Map.of());
+    }
+
+    @ExceptionHandler(org.springframework.dao.PessimisticLockingFailureException.class)
+    ResponseEntity<ApiError> handleLockConflict(Exception exception, HttpServletRequest request) {
+        return response(HttpStatus.CONFLICT, "CONCURRENT_UPDATE", "Đơn đang được xử lý, vui lòng thử lại", request, Map.of());
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception, HttpServletRequest request) {
         return response(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", exception.getMessage(), request, Map.of());

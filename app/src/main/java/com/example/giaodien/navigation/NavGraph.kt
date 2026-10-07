@@ -124,6 +124,7 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.HoaDon.route) {
             HoaDonScreen(
                 navController = navController,
+                viewModel = datBanViewModel,
                 gioHangViewModel = gioHangViewModel,
                 hoaDonViewModel = hoaDonViewModel // <-- truyền instance ở đây
             )
@@ -276,6 +277,9 @@ fun AppNavGraph(navController: NavHostController) {
             val khungGioChon = entry.arguments?.getString("khungGioChon") ?: ""
             val viTriBan = entry.arguments?.getString("viTriBan") ?: ""
             val banConLai = entry.arguments?.getInt("banConLai") ?: 0
+            val bookingIntentId = androidx.compose.runtime.saveable.rememberSaveable { java.util.UUID.randomUUID().toString() }
+            val submitting = datBanViewModel.submitting.collectAsState().value
+            val bookingError = datBanViewModel.error.collectAsState().value
 
             NhapSoLuongScreen(
                 navController = navController,
@@ -283,6 +287,8 @@ fun AppNavGraph(navController: NavHostController) {
                 khungGioChon = khungGioChon,
                 viTriBan = viTriBan,
                 banConLai = banConLai,
+                submitting = submitting,
+                error = bookingError,
                 onDatBan = { soLuong, ghiChu ->
                     val currentUser = FirebaseAuth.getInstance().currentUser
                     val datBan = DatBan(
@@ -298,11 +304,12 @@ fun AppNavGraph(navController: NavHostController) {
 
                     datBanViewModel.datBan(
                         datBan = datBan,
+                        intentId = bookingIntentId,
                         onSuccess = { savedDatBan ->
                             datBanViewModel.setDatBan(savedDatBan) // <-- QUAN TRỌNG
                             val datBanId = savedDatBan.idDat
                             if (datBanId != null) {
-                                gioHangViewModel.setDatBanId(datBanId) // ⚡ cập nhật idDat cho giỏ hàng
+                                gioHangViewModel.setDatBanId(datBanId, savedDatBan.holdExpiresAt)
                             }
                             navController.navigate(Screen.ChonMonAn.route)
                         },

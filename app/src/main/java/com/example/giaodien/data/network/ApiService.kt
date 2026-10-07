@@ -23,7 +23,19 @@
         suspend fun syncUser(@Body request: TokenRequest): UserResponse
 
         @POST("api/datban/save")
-        suspend fun createDatBan(@Body datBan: DatBan): DatBan
+        suspend fun createDatBan(@Body datBan: DatBan, @Header("Idempotency-Key") key: String): DatBan
+
+        @GET("api/datban/{id}")
+        suspend fun getDatBan(@Path("id") id: Long): DatBan
+
+        @POST("api/datban/{id}/confirm")
+        suspend fun confirmDatBan(@Path("id") id: Long): DatBan
+
+        @POST("api/datban/{id}/cancel")
+        suspend fun cancelDatBan(@Path("id") id: Long): DatBan
+
+        @PUT("api/giohang/{idDat}")
+        suspend fun replaceGioHang(@Path("idDat") idDat: Long, @Body items: List<GioHangMonAn>): List<GioHangResponse>
 
         @GET("api/datban/latest")
         suspend fun getLatestDatBan(): DatBan

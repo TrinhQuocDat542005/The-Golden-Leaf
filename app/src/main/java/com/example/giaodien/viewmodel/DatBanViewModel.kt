@@ -1,6 +1,12 @@
 package com.example.giaodien.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
+import com.example.giaodien.data.network.userMessage
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CancellationException
+import java.util.UUID
 import androidx.lifecycle.viewModelScope
 import com.example.giaodien.data.model.DatBan
 import com.example.giaodien.data.repository.DatBanRepository
@@ -9,14 +15,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class DatBanViewModel : ViewModel() {
+class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
 
     private val repository = DatBanRepository()
+    private val _submitting = MutableStateFlow(false)
+    val submitting: StateFlow<Boolean> = _submitting
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
     // Dữ liệu DatBan tạm thời
     private val _datBan = MutableStateFlow<DatBan?>(null)
     val datBan: StateFlow<DatBan?> get() = _datBan
-    // ✅ THÊM STATEFLOW MỚI: Dữ liệu đặt bàn mới nhất (cho màn hình Hóa đơn)
+    // Invoice screens load the exact booking ID belonging to the current flow.
     private val _latestDatBan = MutableStateFlow<DatBan?>(null)
     val latestDatBan: StateFlow<DatBan?> get() = _latestDatBan
     // Cho phép truy cập trực tiếp DatBan hiện tại
@@ -29,32 +39,63 @@ class DatBanViewModel : ViewModel() {
 
     fun datBan(
         datBan: DatBan,
-        // Thay đổi kiểu của onSuccess để nó nhận DatBan đã được tạo
-        onSuccess: (DatBan) -> Unit, // <--- ĐÃ SỬA
+        intentId: String,
+        onSuccess: (DatBan) -> Unit,
         onError: (String) -> Unit
     ) {
+        if (_submitting.value) return
+        _submitting.value = true
+        _error.value = null
+        val fingerprint = intentId + Json.encodeToString(datBan)
+        if (savedState.get<String>("bookingRequest") != fingerprint) {
+            savedState["bookingRequest"] = fingerprint
+            savedState["bookingKey"] = UUID.randomUUID().toString()
+        }
+        val key = checkNotNull(savedState.get<String>("bookingKey"))
         viewModelScope.launch {
             try {
-                // Giả định repository.datBan() trả về đối tượng DatBan đã được server cập nhật ID
-                val createdDatBan = repository.datBan(datBan) // SỬA: Hứng kết quả trả về
+                val createdDatBan = repository.datBan(datBan, key)
+                if (createdDatBan.status in setOf("CANCELLED", "EXPIRED")) {
+                    savedState.remove<String>("bookingRequest")
+                    savedState.remove<String>("bookingKey")
+                    val message = "Lượt giữ chỗ đã hết hạn hoặc đã hủy. Vui lòng đặt lại."
+                    _error.value = message
+                    onError(message)
+                    return@launch
+                }
+                savedState["currentBookingId"] = createdDatBan.idDat
 
                 _datBan.value = createdDatBan // Cập nhật DatBan đã có ID
-                onSuccess(createdDatBan) // <--- TRUYỀN DATBAN CÓ ID VÀO CALLBACK
+                onSuccess(createdDatBan)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                onError(e.message ?: "Lỗi không xác định")
+                val message = e.userMessage()
+                _error.value = message
+                onError(message)
+            } finally {
+                _submitting.value = false
             }
         }
     }
-    // ✅ THÊM HÀM MỚI: Tải DatBan mới nhất
-    fun fetchLatestDatBan(onError: (String) -> Unit) {
+    // Never use the global latest booking to associate a customer's cart/invoice.
+    fun fetchCurrentDatBan(id: Long?, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val result = repository.getLatestDatBan()
+                val bookingId = id ?: savedState.get<Long>("currentBookingId")
+                if (bookingId == null) {
+                    _latestDatBan.value = null
+                    onError("Chưa có thông tin đơn đặt bàn hiện tại.")
+                    return@launch
+                }
+                val result = repository.getDatBan(bookingId)
                 _latestDatBan.value = result // Cập nhật state
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Xử lý lỗi, ví dụ: không tìm thấy bản ghi nào hoặc lỗi mạng/server
                 _latestDatBan.value = null
-                onError(e.message ?: "Không tìm thấy đơn đặt bàn mới nhất hoặc lỗi kết nối.")
+                onError(e.userMessage())
             }
         }
     }

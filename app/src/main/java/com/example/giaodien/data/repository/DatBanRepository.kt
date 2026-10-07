@@ -5,9 +5,10 @@ import com.example.giaodien.data.network.RetrofitInstance
 
 class DatBanRepository {
 
-    suspend fun datBan(datBan: DatBan): DatBan {
-        return RetrofitInstance.api.createDatBan(datBan)
+    suspend fun datBan(datBan: DatBan, key: String): DatBan {
+        return RetrofitInstance.api.createDatBan(datBan, key)
     }
+    suspend fun getDatBan(id: Long): DatBan = RetrofitInstance.api.getDatBan(id)
     // ✅ THÊM HÀM MỚI: Lấy DatBan mới nhất từ Server
     suspend fun getLatestDatBan(): DatBan {
         // Hàm này tự động gửi email qua token nhờ AuthInterceptor

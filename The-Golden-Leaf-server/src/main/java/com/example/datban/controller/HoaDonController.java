@@ -18,7 +18,7 @@ public class HoaDonController {
     }
 
     @PostMapping("/create")
-    public InvoiceResponse createHoaDon(@Valid @RequestBody HoaDonRequest req) {
-        return InvoiceResponse.from(service.saveHoaDon(req));
+    public InvoiceResponse createHoaDon(@Valid @RequestBody HoaDonRequest req, java.security.Principal principal) {
+        return InvoiceResponse.from(service.saveHoaDon(req, principal == null ? null : principal.getName()));
     }
 }

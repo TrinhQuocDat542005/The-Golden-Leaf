@@ -42,7 +42,8 @@ class DatbanApplicationTests {
 
 	@Test
 	void invalidBookingReturnsStandardError() throws Exception {
-		mockMvc.perform(post("/api/datban/save")
+        mockMvc.perform(post("/api/datban/save")
+                .header("Idempotency-Key", "invalid-booking-test")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{"email":"khong-phai-email","ten":"","ngay":null,"khungGio":"","soLuong":0,"viTriBan":""}

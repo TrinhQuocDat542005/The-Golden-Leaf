@@ -30,6 +30,7 @@ fun ThanhToanScreen(
     val tienAn = viewModel.tienAn
     val tongTien = tienBan + tienAn
     val trangThai by viewModel.trangThaiThanhToan.collectAsState()
+    val processing by viewModel.processing.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -44,14 +45,14 @@ fun ThanhToanScreen(
     LaunchedEffect(trangThai) {
         when (trangThai) {
             "success" -> {
-                snackbarHostState.showSnackbar("Thanh toán thành công!")
+                snackbarHostState.showSnackbar("Đã lập hóa đơn. Thanh toán cần được nhà hàng xác nhận.")
                 // Điều hướng về TrangChuScreen và xóa tất cả back stack
                 navController.navigate("trang_chu") {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             }
             "error" -> {
-                snackbarHostState.showSnackbar("Thanh toán thất bại. Vui lòng thử lại!")
+                snackbarHostState.showSnackbar("Chưa lập được hóa đơn. Vui lòng kiểm tra đơn và thử lại!")
             }
         }
     }
@@ -76,10 +77,11 @@ fun ThanhToanScreen(
             }
 
             Button(
+                enabled = !processing,
                 onClick = { viewModel.thanhToan(method) },
                 colors = ButtonDefaults.buttonColors(containerColor = BrightRed)
             ) {
-                Text("Xác nhận thanh toán", color = Color.White)
+                Text(if (processing) "Đang lập hóa đơn…" else "Lập hóa đơn", color = Color.White)
             }
         }
     }

@@ -33,10 +33,12 @@ fun NhapSoLuongScreen(
     khungGioChon: String,
     viTriBan: String,
     banConLai: Int,
+    submitting: Boolean = false,
+    error: String? = null,
     onDatBan: (soLuong: Int, ghiChu: String) -> Unit
 ) {
-    var soLuong by remember { mutableStateOf(1) }
-    var ghiChu by remember { mutableStateOf("") }
+    var soLuong by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(1) }
+    var ghiChu by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -165,7 +167,7 @@ fun NhapSoLuongScreen(
 
                             // Nút tăng
                             Button(
-                                onClick = { if (soLuong < banConLai) soLuong++ },
+                                onClick = { if (soLuong < minOf(80, banConLai)) soLuong++ },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                                 shape = CircleShape,
                                 modifier = Modifier.size(56.dp)
@@ -220,7 +222,9 @@ fun NhapSoLuongScreen(
                 Spacer(Modifier.height(40.dp))
 
                 // Nút "Tiếp tục"
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp)) }
                 Button(
+                    enabled = !submitting && soLuong in 1..minOf(80, banConLai),
                     onClick = {
                         onDatBan(soLuong, ghiChu)
                     },
@@ -232,7 +236,7 @@ fun NhapSoLuongScreen(
                         .padding(horizontal = 16.dp)
                 ) {
                     Text(
-                        "Đặt bàn",
+                        if (submitting) "Đang giữ chỗ…" else "Đặt bàn",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White

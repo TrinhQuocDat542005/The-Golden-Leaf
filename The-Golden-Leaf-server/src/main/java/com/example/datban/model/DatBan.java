@@ -1,6 +1,7 @@
 package com.example.datban.model;
 
 import java.time.LocalDate;
+import java.time.Instant;
 import jakarta.persistence.*;
 
 @Entity
@@ -32,6 +33,31 @@ public class DatBan {
 
     @Column(name = "preferred_area_name", nullable = false)
     private String viTriBan;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BookingStatus status = BookingStatus.HOLDING;
+
+    @Column(name = "idempotency_key", unique = true, length = 128)
+    private String idempotencyKey;
+
+    @Column(name = "reserved_tables", nullable = false)
+    private int reservedTables;
+
+    @Column(name = "hold_expires_at")
+    private Instant holdExpiresAt;
+
+    @Version
+    private long version;
+
+    public BookingStatus getStatus() { return status; }
+    public void setStatus(BookingStatus status) { this.status = status; }
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String key) { this.idempotencyKey = key; }
+    public int getReservedTables() { return reservedTables; }
+    public void setReservedTables(int count) { this.reservedTables = count; }
+    public Instant getHoldExpiresAt() { return holdExpiresAt; }
+    public void setHoldExpiresAt(Instant expiry) { this.holdExpiresAt = expiry; }
 
     // Constructor không tham số
     public DatBan() {}

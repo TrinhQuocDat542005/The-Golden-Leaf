@@ -12,5 +12,8 @@ data class DatBan(
     val khungGio: String,
     val soLuong: Int,
     val ghiChu: String,
-    val viTriBan: String   // thêm dòng này
+    val viTriBan: String,
+    val status: String = "HOLDING",
+    val holdExpiresAt: String? = null,
+    val reservedTables: Int = 0
 )

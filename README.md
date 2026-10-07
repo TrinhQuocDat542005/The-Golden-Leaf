@@ -24,7 +24,7 @@ The Golden Leaf hướng tới số hóa toàn bộ hành trình dùng bữa: kh
 Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Android, Spring Boot REST API và hạ tầng MySQL chạy bằng Docker Compose. Schema dữ liệu được quản lý bằng Flyway, contract API được chuẩn hóa bằng DTO và có OpenAPI/Swagger để kiểm thử tích hợp.
 
 > [!NOTE]
-> Dự án đang trong giai đoạn phát triển chủ động. Nền tảng build/development và contract dữ liệu/API đã hoàn thành; các ràng buộc đặt bàn, bảo mật production và quy trình vận hành nâng cao đang nằm trong roadmap tiếp theo.
+> Dự án đang trong giai đoạn phát triển chủ động. Nền tảng build/development, contract dữ liệu/API và transaction đặt bàn đã triển khai; bảo mật production và quy trình vận hành nâng cao là các giai đoạn tiếp theo. Kết quả kiểm thử được ghi trong tài liệu từng milestone.
 
 ## Trạng thái phát triển
 
@@ -32,7 +32,7 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 | --- | :---: | --- |
 | Nền tảng phát triển | ✅ Hoàn thành | Build tái lập, Docker Compose, environment template, health check |
 | Dữ liệu & API contract | ✅ Hoàn thành | Flyway V1, 17 bảng nghiệp vụ, DTO, lỗi API chuẩn, Swagger |
-| Luồng đặt bàn an toàn | 🚧 Tiếp theo | Transaction, chống đặt trùng, idempotency, kiểm thử concurrency |
+| Luồng đặt bàn an toàn | ✅ Đã triển khai | Transaction, giữ chỗ có hạn, chống đặt trùng, idempotency, test concurrency |
 | Xác thực & phân quyền | 📋 Kế hoạch | Firebase bắt buộc ở production, ownership và role-based access |
 | Thông báo & vận hành | 📋 Kế hoạch | FCM outbox, audit log, dashboard và quan sát hệ thống |
 | Production readiness | 📋 Kế hoạch | CI/CD, backup, monitoring, hardening và runbook triển khai |
@@ -207,6 +207,9 @@ Backend sử dụng profile `dev` mặc định. Có thể đặt `SPRING_PROFIL
 | `SERVER_PORT` | `8080` | Port của backend |
 | `FIREBASE_ENABLED` | `false` | Khởi tạo Firebase Admin SDK |
 | `REQUIRE_AUTH` | `false` | Bắt buộc Bearer token cho API |
+| `BOOKING_HOLD_DURATION` | `PT15M` | Thời gian giữ chỗ |
+| `RESTAURANT_TIME_ZONE` | `Asia/Ho_Chi_Minh` | Múi giờ nhà hàng |
+| `BOOKING_TABLE_FEE` | `200000.00` | Phí bàn trên mỗi đơn |
 | `FIREBASE_CREDENTIALS_PATH` | đường dẫn local | Service-account JSON bên trong runtime |
 | `FIREBASE_CREDENTIALS_HOST_PATH` | file mẫu | File được mount vào container |
 
@@ -242,14 +245,18 @@ $env:WEATHER_API_KEY='your-production-key'
 | `GET` | `/api/thucdon` | Lấy danh sách thực đơn |
 | `GET` | `/api/thucdon/{id}` | Lấy chi tiết món ăn |
 | `GET` | `/api/ban-slot` | Tra cứu bàn theo ngày, giờ và khu vực |
-| `POST` | `/api/ban-slot/dat` | Đánh dấu bàn đã đặt |
-| `POST` | `/api/ban-slot/tra` | Trả bàn về trạng thái trống |
-| `POST` | `/api/datban/save` | Tạo yêu cầu đặt bàn |
+| `POST` | `/api/datban/save` | Tạo đơn và giữ sức chứa, cần `Idempotency-Key` |
+| `GET` | `/api/datban/{id}` | Đọc đúng đơn đặt bàn theo ID |
+| `POST` | `/api/datban/{id}/confirm` | Xác nhận đặt bàn, đóng băng giỏ hàng |
+| `POST` | `/api/datban/{id}/cancel` | Hủy đơn và trả sức chứa đúng một lần |
 | `GET` | `/api/datban/latest` | Lấy đặt bàn gần nhất của người dùng |
-| `POST` | `/api/giohang/datmon` | Thêm món vào đơn đặt bàn |
+| `PUT` | `/api/giohang/{idDat}` | Thay thế toàn bộ giỏ hàng, có thể rỗng |
+| `POST` | `/api/giohang/datmon` | API cũ, nay thay thế toàn bộ giỏ hàng |
 | `POST` | `/api/hoadon/create` | Tạo hóa đơn |
 
 Request, response và schema lỗi chuẩn được mô tả trong [REST API contract](docs/api-contract.md). Khi backend đang chạy, Swagger UI là nguồn tương tác nhanh nhất để thử từng endpoint.
+
+Hai API sửa sức chứa trực tiếp `/api/ban-slot/dat` và `/api/ban-slot/tra` đã được ngừng thao tác dữ liệu; chúng trả `409 BOOKING_REQUIRED`. Giữ/trả chỗ phải đi qua lifecycle của đơn. Xác nhận đặt bàn hoặc tạo hóa đơn chưa phải xác nhận thanh toán.
 
 ## Database
 
@@ -294,7 +301,7 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [x] Tách secret khỏi source, bổ sung environment template.
 - [x] Thiết lập Flyway V1 và chuẩn hóa kiểu dữ liệu tiền tệ.
 - [x] Bổ sung DTO, global error response và OpenAPI/Swagger.
-- [ ] Làm luồng đặt bàn nguyên tử, chống double-booking và hỗ trợ idempotency.
+- [x] Làm luồng đặt bàn nguyên tử, chống double-booking và hỗ trợ idempotency.
 - [ ] Hoàn thiện Firebase authentication, ownership và phân quyền khách/nhân viên/admin.
 - [ ] Hoàn thiện payment state machine, callback verification và reconciliation.
 - [ ] Xây dựng notification outbox, retry và FCM delivery tracking.
@@ -305,6 +312,7 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 
 - [REST API contract](docs/api-contract.md) — endpoint, payload, validation và error envelope.
 - [Database schema](docs/database-schema.md) — bảng, quan hệ, kiểu dữ liệu và chiến lược migration.
+- [Tuần 3 — Booking integrity](docs/week-3-booking-integrity.md) — lifecycle, cấu hình, kiểm thử concurrency và giới hạn triển khai.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.
 - [OpenAPI configuration](The-Golden-Leaf-server/src/main/java/com/example/datban/config/OpenApiConfig.java) — metadata tài liệu API.
 
