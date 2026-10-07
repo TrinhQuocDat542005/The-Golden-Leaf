@@ -1,5 +1,7 @@
 package com.example.giaodien.viewmodel
 
+import com.example.giaodien.BuildConfig
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.giaodien.data.model.ForecastItem
@@ -18,7 +20,7 @@ import java.time.ZoneId
 //    private val _weather = MutableStateFlow<WeatherResponse?>(null)
 //    val weather: StateFlow<WeatherResponse?> = _weather
 //
-//    private val apiKey = "5b9c46aa412ad72dedf807c4f01bb140" // 🔑 Thay bằng key của bạn
+//    private val apiKey = BuildConfig.WEATHER_API_KEY
 //
 //    fun loadWeather(city: String) {
 //        viewModelScope.launch {
@@ -34,9 +36,10 @@ class WeatherViewModel : ViewModel() {
     private val _forecast = MutableStateFlow<ForecastResponse?>(null)
     val forecast: StateFlow<ForecastResponse?> = _forecast
 
-    private val apiKey = "5b9c46aa412ad72dedf807c4f01bb140" // Thay bằng key của bạn
+    private val apiKey = BuildConfig.WEATHER_API_KEY
 
     fun loadForecast(city: String) {
+        if (apiKey.isBlank()) return
         viewModelScope.launch {
             val response = RetrofitClient.api.getForecast(city, apiKey)
             if (response.isSuccessful) {

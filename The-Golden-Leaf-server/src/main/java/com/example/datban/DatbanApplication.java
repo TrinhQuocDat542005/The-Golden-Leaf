@@ -2,12 +2,12 @@ package com.example.datban;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 public class DatbanApplication {
     public static void main(String[] args) {
         SpringApplication.run(DatbanApplication.class, args);
-        System.out.println("🚀 Server đang chạy tại http://localhost:8080");
     }
     
 }

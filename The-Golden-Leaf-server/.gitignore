@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -32,20 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
-=======
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
->>>>>>> 1566ac4c9ca36defff57f10c912984f828a7cd12
+
+### Runtime secrets and local configuration ###
+.env
+src/main/resources/firebase/serviceAccountKey.json
+uploads/

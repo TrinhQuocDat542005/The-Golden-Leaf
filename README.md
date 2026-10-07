@@ -149,3 +149,77 @@ Notification APIs
 GET /api/notifications?userId=...
 
 POST /api/notifications/{id}/read
+
+## Chạy dự án local
+
+### Yêu cầu
+
+- JDK 17 (không dùng JDK 25 để chạy Gradle của Android).
+- Android Studio/Android SDK, compile SDK 36.
+- Docker Desktop nếu chạy backend bằng container.
+
+### Backend bằng Docker
+
+```powershell
+cd The-Golden-Leaf-server
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+Backend chạy tại `http://localhost:8080`. Health check nằm tại
+`http://localhost:8080/actuator/health`. phpMyAdmin là công cụ tùy chọn:
+
+```powershell
+docker compose --profile tools up --build
+```
+
+Profile local mặc định tắt Firebase authentication để backend có thể khởi động
+không cần secret. Khi cần kiểm tra Firebase, đặt `FIREBASE_ENABLED=true`,
+`REQUIRE_AUTH=true` và cập nhật `FIREBASE_CREDENTIALS_HOST_PATH` trong `.env`.
+Không commit `.env` hoặc service-account JSON.
+
+### Backend không dùng Docker
+
+Khởi động MySQL theo `The-Golden-Leaf-server/docker-compose.yml`, sau đó:
+
+```powershell
+cd The-Golden-Leaf-server
+$env:DB_URL='jdbc:mysql://localhost:3308/datban_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
+$env:DB_USERNAME='datban'
+$env:DB_PASSWORD='local-datban-password'
+.\mvnw.cmd spring-boot:run
+```
+
+Chạy test backend không cần MySQL bên ngoài:
+
+```powershell
+.\mvnw.cmd test
+```
+
+### Android
+
+Sao chép `local.properties.example` thành `local.properties` và sửa `sdk.dir`.
+App debug mặc định gọi `http://10.0.2.2:8080/`, phù hợp Android Emulator.
+
+```powershell
+# Có thể đổi URL cho thiết bị thật hoặc staging.
+$env:API_BASE_URL='http://192.168.1.10:8080/'
+$env:WEATHER_API_KEY='your-local-key'
+.\gradlew.bat assembleDebug
+```
+
+Release không dùng URL local. Trước khi build phải cung cấp URL production:
+
+```powershell
+$env:PRODUCTION_API_BASE_URL='https://api.example.com/'
+$env:WEATHER_API_KEY='your-production-key'
+.\gradlew.bat assembleRelease
+```
+
+### Profiles backend
+
+- `dev`: MySQL, cho phép cấu hình bằng biến môi trường, authentication mặc định tắt.
+- `test`: H2 in-memory, không cần MySQL/Firebase.
+- `prod`: bắt buộc nhận database và Firebase credentials từ môi trường; schema chỉ được validate.
+
+Các biến môi trường mẫu nằm trong `The-Golden-Leaf-server/.env.example`.

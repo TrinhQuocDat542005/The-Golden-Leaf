@@ -1,8 +1,8 @@
 package com.example.giaodien.data.repository
 
 import com.example.giaodien.data.network.ApiService
-import com.example.giaodien.data.network.model.TokenRequest
-import com.example.giaodien.data.network.model.UserResponse
+import com.example.giaodien.data.model.TokenRequest
+import com.example.giaodien.data.model.UserResponse
 
 /**
  * UserRepository chịu trách nhiệm xử lý logic dữ liệu người dùng,
@@ -12,7 +12,7 @@ import com.example.giaodien.data.network.model.UserResponse
 class UserRepository(private val apiService: ApiService) {
 
     suspend fun synchronizeUser(idToken: String): UserResponse {
-        val request = TokenRequest(token = idToken)
+        val request = TokenRequest(idToken = idToken)
         return apiService.syncUser(request)
     }
 }

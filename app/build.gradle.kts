@@ -9,6 +9,18 @@ plugins {
     kotlin("plugin.compose") // bắt buộc với Kotlin 2.0 + Compose
 }
 
+val debugApiBaseUrl = providers.gradleProperty("API_BASE_URL")
+    .orElse(providers.environmentVariable("API_BASE_URL"))
+    .orElse("http://10.0.2.2:8080/")
+
+val releaseApiBaseUrl = providers.gradleProperty("PRODUCTION_API_BASE_URL")
+    .orElse(providers.environmentVariable("PRODUCTION_API_BASE_URL"))
+    .orElse("https://api.example.invalid/")
+
+val weatherApiKey = providers.gradleProperty("WEATHER_API_KEY")
+    .orElse(providers.environmentVariable("WEATHER_API_KEY"))
+    .orElse("")
+
 
 android {
 // ... (phần android block giữ nguyên)
@@ -26,8 +38,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"${debugApiBaseUrl.get()}\"")
+            buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey.get()}\"")
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", "\"${releaseApiBaseUrl.get()}\"")
+            buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey.get()}\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -36,15 +54,16 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.3"
@@ -87,7 +106,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
-    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
@@ -99,10 +118,10 @@ dependencies {
     // ---------------------------------------------
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
 
-    implementation("com.google.firebase:firebase-firestore-ktx:24.16.0") {
+    implementation("com.google.firebase:firebase-firestore-ktx") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
-    implementation("com.google.firebase:firebase-auth-ktx:22.4.0") {
+    implementation("com.google.firebase:firebase-auth-ktx") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
     implementation("com.google.firebase:firebase-messaging-ktx") {
@@ -118,9 +137,6 @@ dependencies {
     // ---------------------------------------------
     implementation("com.google.dagger:hilt-android:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation(libs.ui)
-    implementation(libs.androidx.foundation)
-    implementation(libs.androidx.ui.text)
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
 
     // ---------------------------------------------
@@ -146,4 +162,8 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+kapt {
+    correctErrorTypes = true
 }

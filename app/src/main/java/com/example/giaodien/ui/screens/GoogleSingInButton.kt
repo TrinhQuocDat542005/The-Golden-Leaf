@@ -51,8 +51,7 @@ fun GoogleSignInButton(
     // Khởi tạo Main Thread Handler
     val mainHandler = Handler(Looper.getMainLooper())
 
-    // LẤY TỪ CẤU HÌNH CỦA BẠN: Client Type 3 (Web Client ID)
-    val webClientId = "751205260991-460l4lns5mfi8fk3bpm5mg4igh9suhos.apps.googleusercontent.com"
+    val webClientId = context.getString(R.string.default_web_client_id)
 
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken(webClientId)
@@ -102,7 +101,7 @@ fun GoogleSignInButton(
                                 // 4. Đồng bộ hóa với Backend (OkHttpClient)
                                 val request = Request.Builder()
                                    // .url("http://10.0.2.2:8080/api/auth/sync")
-                                    .url("http://10.0.2.2:8080/api/auth/sync")
+                                    .url("${com.example.giaodien.BuildConfig.API_BASE_URL}api/auth/sync")
                                     .post(body) // POST mới đúng
                                     .build()
 

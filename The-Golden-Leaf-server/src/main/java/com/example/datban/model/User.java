@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id; // Không dùng GeneratedValue nữa
 
 @Entity
+@jakarta.persistence.Table(name = "users")
 public class User {
 
     // 💡 THAY ĐỔI 1: Sử dụng Firebase UID (String) làm khóa chính @Id

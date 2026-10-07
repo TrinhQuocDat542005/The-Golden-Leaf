@@ -1,4 +1,4 @@
-    package com.example.giaodien.data.network.model
+    package com.example.giaodien.data.model
 
     import kotlinx.serialization.Serializable
 

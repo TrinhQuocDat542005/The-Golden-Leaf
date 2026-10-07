@@ -2,7 +2,6 @@
 
     import com.example.giaodien.data.model.Notification
     import com.example.giaodien.data.model.*
-    import com.example.giaodien.data.network.model.*
     import retrofit2.http.*
     import com.example.giaodien.data.model.LichSuDonDayDuDTO // Sử dụng DTO này
     interface ApiService {

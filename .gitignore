@@ -13,6 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+.env
+**/.env
+*.jks
+*.keystore
 # Firebase/Google Cloud Secret Keys
 serviceAccountKey.json
 firebase-service-account.json

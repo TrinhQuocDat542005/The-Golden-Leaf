@@ -1,0 +1,6 @@
+target
+.git
+.idea
+.env
+uploads
+src/main/resources/firebase/serviceAccountKey.json

@@ -1,5 +1,6 @@
 package com.example.giaodien.data.network
 
+import com.example.giaodien.BuildConfig
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -16,8 +17,7 @@ import okhttp3.Interceptor
 
 object RetrofitInstance {
 
-    // ⭐ Dùng cho Emulator. Nếu chạy trên điện thoại thật → đổi sang IP máy: "http://192.168.x.x:8080/"
-    private const val BASE_URL = "http://10.0.2.2:8080/"
+    private val BASE_URL = BuildConfig.API_BASE_URL
 
     private val json = Json {
         ignoreUnknownKeys = true

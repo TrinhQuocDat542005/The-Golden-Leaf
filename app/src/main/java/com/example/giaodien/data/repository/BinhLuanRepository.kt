@@ -2,7 +2,7 @@ package com.example.giaodien.data.repository
 
 import com.example.giaodien.data.model.BinhLuan
 import com.example.giaodien.data.network.RetrofitInstance
-import com.example.giaodien.data.network.model.BinhLuanRequest
+import com.example.giaodien.data.model.BinhLuanRequest
 
 
 class BinhLuanRepository {

@@ -12,8 +12,8 @@ import android.util.Log
 // 💡 Imports cho Network và Repository
 import com.example.giaodien.data.network.RetrofitInstance
 import com.example.giaodien.data.repository.UserRepository
-import com.example.giaodien.data.network.model.TokenRequest
-import com.example.giaodien.data.network.model.UserResponse
+import com.example.giaodien.data.model.TokenRequest
+import com.example.giaodien.data.model.UserResponse
 
 // --- Định nghĩa UiState ---
 sealed class LoginUiState {
