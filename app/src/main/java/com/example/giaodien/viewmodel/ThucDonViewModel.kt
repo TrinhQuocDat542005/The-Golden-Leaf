@@ -21,14 +21,8 @@
                 try {
                     val list = repository.getAll()
 
-                    // Đặt base URL theo môi trường bạn chạy
-                    val baseUrl = "http://10.0.2.2:8080/uploads/"
-                    // Nếu chạy điện thoại thật: đổi thành IP máy bạn
-                    // val baseUrl = "http://192.168.1.5:8080/uploads/"
-
                     val updatedList = list.map { item ->
-                        // Ghép URL ảnh đầy đủ
-                        item.copy(anh = baseUrl + item.anh)
+                        item.copy(anh = com.example.giaodien.data.model.menuImageUrl(item.anh, com.example.giaodien.BuildConfig.API_BASE_URL))
                     }
 
                     _thucDonList.value = updatedList

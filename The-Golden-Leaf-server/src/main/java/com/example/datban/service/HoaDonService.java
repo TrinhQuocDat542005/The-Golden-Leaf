@@ -34,7 +34,7 @@ public class HoaDonService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public HoaDon saveHoaDon(HoaDonRequest req, String actorEmail) {
         var booking = lifecycle.lock(req.idDat(), actorEmail);
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.ASSIGNED) {
             throw new BusinessRuleException("INVALID_BOOKING_STATE", "Cần xác nhận đặt bàn trước khi lập hóa đơn");
         }
         var existing = repo.findByIdDat(req.idDat());
@@ -61,5 +61,29 @@ public class HoaDonService {
                 || req.tongTien().compareTo(fee.add(foodTotal)) != 0) {
             throw new BusinessRuleException("INVALID_INVOICE_TOTAL", "Tổng tiền không khớp dữ liệu trên máy chủ");
         }
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public HoaDon ensureInvoice(Long id, String actorEmail) {
+        var booking = lifecycle.lock(id, actorEmail);
+        var existing = repo.findByIdDat(id);
+        if (existing.isPresent()) return existing.get();
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.ASSIGNED) {
+            throw new BusinessRuleException("INVALID_BOOKING_STATE", "Cần xác nhận đặt bàn trước khi lập hóa đơn");
+        }
+        BigDecimal food = items.findByIdDat(id).stream().map(i -> i.getThanhTien()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return saveHoaDon(new HoaDonRequest(id, tableFee, food, tableFee.add(food)), actorEmail);
+    }
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public com.example.datban.dto.PaymentQuote preview(Long id,String actorEmail) {
+        var booking=lifecycle.lock(id,actorEmail);
+        var existing=repo.findByIdDat(id);
+        if(existing.isPresent()) {
+            var invoice=existing.get();return new com.example.datban.dto.PaymentQuote(id,invoice.getTienBan(),invoice.getTienAn(),invoice.getTongTien(),invoice.getCurrency());
+        }
+        if(booking.getStatus()!=BookingStatus.CONFIRMED && booking.getStatus()!=BookingStatus.ASSIGNED)
+            throw new BusinessRuleException("INVALID_BOOKING_STATE","Cần xác nhận đặt bàn trước khi xem tổng tiền");
+        BigDecimal food=items.findByIdDat(id).stream().map(i->i.getThanhTien()).reduce(BigDecimal.ZERO,BigDecimal::add);
+        return new com.example.datban.dto.PaymentQuote(id,tableFee,food,tableFee.add(food),"VND");
     }
 }

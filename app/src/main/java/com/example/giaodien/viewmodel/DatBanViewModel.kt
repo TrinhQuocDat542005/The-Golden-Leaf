@@ -33,6 +33,19 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     val currentDatBan: DatBan?
         get() = _datBan.value
 
+    private val auth = FirebaseAuth.getInstance()
+    private val accountListener = FirebaseAuth.AuthStateListener { firebase ->
+        val uid = firebase.currentUser?.uid
+        if (uid == null || savedState.get<String>("bookingOwnerUid") != uid) {
+            savedState.remove<String>("bookingRequest"); savedState.remove<String>("bookingKey")
+            savedState.remove<Long>("currentBookingId")
+            _datBan.value = null; _latestDatBan.value = null
+        }
+        savedState["bookingOwnerUid"] = uid
+    }
+    init { auth.addAuthStateListener(accountListener) }
+    override fun onCleared() { auth.removeAuthStateListener(accountListener); super.onCleared() }
+
     fun setDatBan(datBan: DatBan) {
         _datBan.value = datBan
     }
@@ -52,9 +65,11 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
             savedState["bookingKey"] = UUID.randomUUID().toString()
         }
         val key = checkNotNull(savedState.get<String>("bookingKey"))
+        val owner = auth.currentUser?.uid
         viewModelScope.launch {
             try {
                 val createdDatBan = repository.datBan(datBan, key)
+                if (auth.currentUser?.uid != owner) return@launch
                 if (createdDatBan.status in setOf("CANCELLED", "EXPIRED")) {
                     savedState.remove<String>("bookingRequest")
                     savedState.remove<String>("bookingKey")
@@ -80,6 +95,7 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     }
     // Never use the global latest booking to associate a customer's cart/invoice.
     fun fetchCurrentDatBan(id: Long?, onError: (String) -> Unit) {
+        val owner = auth.currentUser?.uid
         viewModelScope.launch {
             try {
                 val bookingId = id ?: savedState.get<Long>("currentBookingId")
@@ -89,6 +105,7 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
                     return@launch
                 }
                 val result = repository.getDatBan(bookingId)
+                if (auth.currentUser?.uid != owner) return@launch
                 _latestDatBan.value = result // Cập nhật state
             } catch (e: CancellationException) {
                 throw e

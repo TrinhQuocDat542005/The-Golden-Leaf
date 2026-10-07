@@ -1,88 +1,51 @@
 package com.example.giaodien.ui.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import com.example.giaodien.R
 import com.example.giaodien.viewmodel.HoaDonViewModel
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.delay
+
 @Composable
-fun ThanhToanScreen(
-    navController: NavController,
-    method: String,
-    viewModel: HoaDonViewModel
-){
-    val idDat = viewModel.idDat
-    val tienBan = viewModel.tienBan
-    val tienAn = viewModel.tienAn
-    val tongTien = tienBan + tienAn
-    val trangThai by viewModel.trangThaiThanhToan.collectAsState()
+fun ThanhToanScreen(navController: NavController, method: String, viewModel: HoaDonViewModel) {
+    val payment by viewModel.payment.collectAsState()
     val processing by viewModel.processing.collectAsState()
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    val qrImage = when (method) {
-        "MoMo" -> R.drawable.qr_momo
-        "VNPay" -> R.drawable.qr_vnpay
-        "Ngân hàng" -> R.drawable.qr_bank
-        "Thẻ tín dụng" -> R.drawable.qr_credit
-        else -> R.drawable.qr_default
+    val error by viewModel.error.collectAsState()
+    LaunchedEffect(viewModel.idDat) { viewModel.thanhToan("Ngân hàng") }
+    LaunchedEffect(payment?.status) {
+        while (payment?.status == "PENDING") { delay(15000); viewModel.refreshPayment() }
     }
-
-    LaunchedEffect(trangThai) {
-        when (trangThai) {
-            "success" -> {
-                snackbarHostState.showSnackbar("Đã lập hóa đơn. Thanh toán cần được nhà hàng xác nhận.")
-                // Điều hướng về TrangChuScreen và xóa tất cả back stack
-                navController.navigate("trang_chu") {
-                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                }
+    Scaffold { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("Thanh toán chuyển khoản", style = MaterialTheme.typography.headlineSmall)
+            Text("Đơn #${viewModel.idDat}")
+            payment?.let { p ->
+                Card { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("${java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi-VN")).apply { maximumFractionDigits = 2 }.format(p.amount)} ${p.currency}", style = MaterialTheme.typography.headlineMedium)
+                    Text("Ngân hàng: ${p.bankName}")
+                    Text("Số tài khoản: ${p.accountNumber}")
+                    Text("Chủ tài khoản: ${p.accountName}")
+                    Text("Nội dung chuyển khoản: ${p.reference}", style = MaterialTheme.typography.titleMedium)
+                    if (p.accountNumber.isBlank()) Text("Chưa có thông tin tài khoản nhận tiền. Liên hệ nhà hàng trước khi chuyển.", color = MaterialTheme.colorScheme.error)
+                } }
+                Text(when (p.status) {
+                    "PENDING" -> "Chờ nhân viên đối soát. Chuyển đúng số tiền và nội dung trên; không chuyển lần nữa nếu đã gửi tiền."
+                    "PAID" -> "Nhà hàng đã xác nhận nhận tiền."
+                    "REFUND_REQUIRED" -> "Đơn đã hủy, đang chờ nhà hàng hoàn tiền."
+                    "REFUNDED" -> "Nhà hàng đã ghi nhận hoàn tiền."
+                    "CANCELLED" -> "Yêu cầu thanh toán đã hủy. Không tiếp tục chuyển tiền."
+                    else -> p.status
+                })
             }
-            "error" -> {
-                snackbarHostState.showSnackbar("Chưa lập được hóa đơn. Vui lòng kiểm tra đơn và thử lại!")
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Button(enabled = !processing, onClick = { if (payment == null) viewModel.thanhToan("Ngân hàng") else viewModel.refreshPayment() }) {
+                Text(if (processing) "Đang kiểm tra…" else "Kiểm tra trạng thái")
             }
-        }
-    }
-
-
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text("ID Đặt bàn: #$idDat", style = MaterialTheme.typography.titleMedium)
-            Text("Tiền bàn: ${String.format("%,.0f", tienBan)} VND")
-            Text("Tiền món ăn: ${String.format("%,.0f", tienAn)} VND")
-            Text("Tổng tiền: ${String.format("%,.0f", tongTien)} VND", style = MaterialTheme.typography.titleLarge, color = BrightRed)
-
-            Card(shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(8.dp)) {
-                Image(painter = painterResource(id = qrImage), contentDescription = "QR Code", modifier = Modifier.size(220.dp))
-            }
-
-            Button(
-                enabled = !processing,
-                onClick = { viewModel.thanhToan(method) },
-                colors = ButtonDefaults.buttonColors(containerColor = BrightRed)
-            ) {
-                Text(if (processing) "Đang lập hóa đơn…" else "Lập hóa đơn", color = Color.White)
-            }
+            TextButton(onClick = { navController.navigate("trang_chu") { launchSingleTop = true } }) { Text("Về trang chủ") }
+            Text("Không có QR mẫu hoặc thanh toán MoMo/VNPay giả. Chỉ xác nhận của nhà hàng mới đổi trạng thái sang đã thanh toán.", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

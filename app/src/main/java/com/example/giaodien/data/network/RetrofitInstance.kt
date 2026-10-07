@@ -24,25 +24,21 @@ object RetrofitInstance {
         prettyPrint = true
     }
 
-    // Ghi log toàn bộ request / response
+    // Không ghi body hoặc token; bản release tắt log mạng.
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        redactHeader("Authorization")
+        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
     }
 
-    // ✅ Interceptor lấy Firebase ID Token và gắn vào Header Authorization
-    // Trong RetrofitInstance
-    // ✅ INTERCEPTOR ĐÃ SỬA: Bắt buộc làm mới token (true) và sử dụng runBlocking an toàn hơn
+    // Dùng token cache; authenticator bên dưới refresh một lần khi nhận 401.
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
         val user = FirebaseAuth.getInstance().currentUser
 
-        // ⚠️ Lưu ý: Việc sử dụng runBlocking trong Interceptor vẫn là một giải pháp tạm thời,
-        // nhưng cần thiết vì Interceptor không phải là hàm suspend.
-        // Đặt nó ở đây giúp code đơn giản hơn.
-        val token = runBlocking {
-            // Đặt thành TRUE để luôn nhận token MỚI NHẤT
-            user?.getIdToken(true)?.await()?.token
-        }
+        // Retrofit chạy interceptor đồng bộ trên network thread.
+        val token = try { runBlocking { user?.getIdToken(false)?.await()?.token } }
+            catch (error: Exception) { throw java.io.IOException("Không lấy được token đăng nhập", error) }
+        if (user?.uid != FirebaseAuth.getInstance().currentUser?.uid) throw java.io.IOException("Tài khoản đã thay đổi")
 
         val newRequest = if (token != null) {
             originalRequest.newBuilder()
@@ -54,6 +50,15 @@ object RetrofitInstance {
     }
 
     private val okHttpClient = OkHttpClient.Builder()
+        .authenticator { _, response ->
+            // One refresh only. OkHttp executes this on its network thread, never the Compose thread.
+            if (response.priorResponse != null) null else {
+                val user = FirebaseAuth.getInstance().currentUser
+                val fresh = try { runBlocking { user?.getIdToken(true)?.await()?.token } } catch (_: Exception) { null }
+                if (fresh == null || FirebaseAuth.getInstance().currentUser?.uid != user?.uid) null
+                else response.request.newBuilder().header("Authorization", "Bearer $fresh").build()
+            }
+        }
         .addInterceptor(authInterceptor)
         .addInterceptor(loggingInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)

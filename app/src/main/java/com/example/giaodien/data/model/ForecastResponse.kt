@@ -1,8 +1,7 @@
 package com.example.giaodien.data.model
-import java.time.Instant
-import java.time.ZoneId
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import org.threeten.bp.Instant
+import org.threeten.bp.ZoneId
+import org.threeten.bp.LocalDateTime
 
 data class ForecastResponse(
     val list: List<ForecastItem>

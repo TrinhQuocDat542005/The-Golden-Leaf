@@ -11,6 +11,8 @@ import kotlinx.serialization.Serializable
 data class LichSuDonDayDuDTO(
     val id: Long? = null,
     val idDat: Long,
+    val status: String = "UNKNOWN",
+    val paymentStatus: String? = null,
     val soBan: String? = null,
     // Server trả về LocalDateTime, client nhận String
     val thoiGianPhanBan: String? = null,

@@ -27,11 +27,15 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-datban_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${DB_USERNAME:-datban}
       DB_PASSWORD: ${DB_PASSWORD:-local-datban-password}
       FIREBASE_ENABLED: ${FIREBASE_ENABLED:-false}
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:-}
+      PAYMENT_BANK_NAME: ${PAYMENT_BANK_NAME:-}
+      PAYMENT_ACCOUNT_NUMBER: ${PAYMENT_ACCOUNT_NUMBER:-}
+      PAYMENT_ACCOUNT_NAME: ${PAYMENT_ACCOUNT_NAME:-}
       REQUIRE_AUTH: ${REQUIRE_AUTH:-false}
       BOOKING_HOLD_DURATION: ${BOOKING_HOLD_DURATION:-PT15M}
       RESTAURANT_TIME_ZONE: ${RESTAURANT_TIME_ZONE:-Asia/Ho_Chi_Minh}

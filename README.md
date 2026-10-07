@@ -24,7 +24,7 @@ The Golden Leaf hướng tới số hóa toàn bộ hành trình dùng bữa: kh
 Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Android, Spring Boot REST API và hạ tầng MySQL chạy bằng Docker Compose. Schema dữ liệu được quản lý bằng Flyway, contract API được chuẩn hóa bằng DTO và có OpenAPI/Swagger để kiểm thử tích hợp.
 
 > [!NOTE]
-> Dự án đang trong giai đoạn phát triển chủ động. Nền tảng build/development, contract dữ liệu/API và transaction đặt bàn đã triển khai; bảo mật production và quy trình vận hành nâng cao là các giai đoạn tiếp theo. Kết quả kiểm thử được ghi trong tài liệu từng milestone.
+> Đã triển khai milestone tuần 1–5: đặt bàn nguyên tử, xác thực/phân quyền, chuyển khoản do nhân viên đối soát, thông báo và dashboard vận hành. Chưa triển khai production hoặc nghiệm thu Firebase/ngân hàng thật; xem checklist cấu hình và giới hạn trong [runbook tuần 4–5](docs/weeks-4-5-security-operations.md).
 
 ## Trạng thái phát triển
 
@@ -33,8 +33,9 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 | Nền tảng phát triển | ✅ Hoàn thành | Build tái lập, Docker Compose, environment template, health check |
 | Dữ liệu & API contract | ✅ Hoàn thành | Flyway V1, 17 bảng nghiệp vụ, DTO, lỗi API chuẩn, Swagger |
 | Luồng đặt bàn an toàn | ✅ Đã triển khai | Transaction, giữ chỗ có hạn, chống đặt trùng, idempotency, test concurrency |
-| Xác thực & phân quyền | 📋 Kế hoạch | Firebase bắt buộc ở production, ownership và role-based access |
-| Thông báo & vận hành | 📋 Kế hoạch | FCM outbox, audit log, dashboard và quan sát hệ thống |
+| Xác thực & phân quyền | ✅ Đã triển khai | Firebase ID token, kiểm tra thu hồi, email xác minh, ownership UID, CUSTOMER/STAFF/ADMIN |
+| Chuyển khoản & hoàn tiền | ✅ Đã triển khai | Hóa đơn từ server, tài khoản nhận tiền snapshot, đối soát thủ công, audit và chống ghi nhận trùng |
+| Thông báo & vận hành | ✅ Đã triển khai | Inbox, FCM outbox/lease/retry, phân bàn, nhận khách, hoàn tất và dashboard nhân viên |
 | Production readiness | 📋 Kế hoạch | CI/CD, backup, monitoring, hardening và runbook triển khai |
 
 ## Tính năng cốt lõi
@@ -44,15 +45,17 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 - Duyệt thực đơn và xem thông tin món ăn.
 - Chọn ngày, khung giờ và khu vực ngồi.
 - Tạo yêu cầu đặt bàn và thêm món vào đơn.
-- Xem thông tin hóa đơn và phương thức thanh toán.
+- Xem hóa đơn tính bởi server và tài khoản chuyển khoản thực tế; theo dõi chờ đối soát, đã thu, chờ hoàn/đã hoàn.
+- Lịch sử đơn theo tài khoản và hộp thư thông báo; push FCM khi đã cấu hình.
 - Giao diện Android hiện đại xây dựng bằng Jetpack Compose.
 - Tích hợp nền tảng Firebase cho xác thực và thông báo.
 
 ### Vận hành nhà hàng
 
-- Quản lý thực đơn qua giao diện Thymeleaf nền tảng.
-- Theo dõi dữ liệu bàn, khung giờ, đặt bàn và hóa đơn.
-- API dành cho thao tác đặt bàn, đặt món và trả bàn.
+- Dashboard `/staff.html`: lọc ngày, chi tiết đơn, phân bàn, nhận khách, hoàn tất và hủy.
+- Nhân viên ghi nhận chuyển khoản/hoàn tiền sau khi kiểm tra sao kê; không tự động chuyển tiền.
+- Admin quản lý món/ảnh, bàn thực tế, quyền truy cập, khóa tài khoản và xem audit.
+- Đồng bộ sức chứa với bàn thực tế, bảo toàn chỗ đang giữ; theo dõi và thử lại push lỗi.
 - Database migration có phiên bản, dễ tái tạo trên môi trường mới.
 - Health check và tài liệu API phục vụ triển khai, tích hợp.
 
@@ -61,7 +64,7 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 ```mermaid
 flowchart LR
     U[Khách hàng] --> A[Android App<br/>Jetpack Compose]
-    S[Nhân viên nhà hàng] --> W[Admin Web<br/>Thymeleaf]
+    S[Nhân viên nhà hàng] --> W[Staff Dashboard<br/>Bearer token]
 
     A -->|REST / JSON| B[Spring Boot API]
     W --> B
@@ -78,7 +81,7 @@ flowchart LR
 
 Luồng dữ liệu chính:
 
-1. Ứng dụng xác thực người dùng qua Firebase và gửi token khi backend bật chế độ bảo vệ.
+1. Ứng dụng xác thực qua Firebase và gửi ID token; production bắt buộc token hợp lệ, email xác minh và tài khoản đang hoạt động.
 2. Android gọi REST API bằng Retrofit; backend xác thực, kiểm tra nghiệp vụ và trả DTO ổn định.
 3. Spring Data JPA truy cập MySQL; Flyway là nguồn duy nhất quản lý thay đổi schema.
 4. Swagger UI mô tả contract thực tế để mobile, backend và QA cùng kiểm tra.
@@ -106,6 +109,7 @@ The-Golden-Leaf/
 │   ├── src/main/java/...        # Controller, service, repository, model
 │   ├── src/main/resources/
 │   │   ├── db/migration/        # Flyway migrations
+│   │   ├── static/staff.*      # Dashboard nhân viên/admin
 │   │   └── templates/           # Giao diện quản trị Thymeleaf
 │   ├── Dockerfile
 │   └── docker-compose.yml
@@ -149,6 +153,7 @@ Khi container đã healthy, các dịch vụ mặc định sẽ có tại:
 | --- | --- |
 | REST API | `http://localhost:8080` |
 | Health check | `http://localhost:8080/actuator/health` |
+| Dashboard nhân viên | `http://localhost:8080/staff.html` (cần cấu hình Firebase và quyền) |
 | Swagger UI | `http://localhost:8080/swagger-ui.html` |
 | OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
 | MySQL từ máy host | `localhost:3308` |
@@ -212,6 +217,12 @@ Backend sử dụng profile `dev` mặc định. Có thể đặt `SPRING_PROFIL
 | `BOOKING_TABLE_FEE` | `200000.00` | Phí bàn trên mỗi đơn |
 | `FIREBASE_CREDENTIALS_PATH` | đường dẫn local | Service-account JSON bên trong runtime |
 | `FIREBASE_CREDENTIALS_HOST_PATH` | file mẫu | File được mount vào container |
+| `FIREBASE_WEB_API_KEY` | Rỗng | Firebase Web API key cho đăng nhập dashboard, cùng project Android/Admin SDK |
+| `PAYMENT_BANK_NAME` | Rỗng | Tên ngân hàng thực tế của nhà hàng |
+| `PAYMENT_ACCOUNT_NUMBER` | Rỗng | Số tài khoản nhận tiền |
+| `PAYMENT_ACCOUNT_NAME` | Rỗng | Chủ tài khoản nhận tiền |
+
+Các API payment/inbox/lịch sử/nhân viên/admin **luôn yêu cầu xác thực**, kể cả khi `REQUIRE_AUTH=false`. Chế độ này chỉ giữ tương thích development cho một số API cũ; không dùng công khai. Để trống cấu hình ngân hàng sẽ chặn tạo yêu cầu thanh toán mới, không trả tài khoản/QR mẫu.
 
 ### Android
 
@@ -253,6 +264,11 @@ $env:WEATHER_API_KEY='your-production-key'
 | `PUT` | `/api/giohang/{idDat}` | Thay thế toàn bộ giỏ hàng, có thể rỗng |
 | `POST` | `/api/giohang/datmon` | API cũ, nay thay thế toàn bộ giỏ hàng |
 | `POST` | `/api/hoadon/create` | Tạo hóa đơn |
+| `GET` | `/api/payments/bookings/{id}/quote` | Xem tổng tiền từ server, không tạo hóa đơn/thanh toán |
+| `POST` | `/api/payments/bookings/{id}` | Tạo/replay yêu cầu chuyển khoản |
+| `GET` | `/api/notifications` | Inbox riêng của tài khoản |
+| `GET` | `/api/staff/bookings` | Hàng đợi vận hành STAFF/ADMIN |
+| `POST` | `/api/staff/bookings/{id}/verify-payment` | Ghi nhận tiền thực nhận theo sao kê |
 
 Request, response và schema lỗi chuẩn được mô tả trong [REST API contract](docs/api-contract.md). Khi backend đang chạy, Swagger UI là nguồn tương tác nhanh nhất để thử từng endpoint.
 
@@ -268,6 +284,7 @@ Các nguyên tắc dữ liệu hiện tại:
 - Khóa ngoại, unique constraint và index phục vụ các truy vấn nghiệp vụ chính.
 - Cột version được chuẩn bị cho optimistic locking ở dữ liệu tranh chấp.
 - Schema V1 gồm 17 bảng cho người dùng, thực đơn, bàn, đặt bàn, hóa đơn, thanh toán, đánh giá, yêu thích, thông báo và audit.
+- V2 bảo vệ booking; V3 bổ sung mã đối soát/hoàn tiền và outbox delivery; V4 lưu snapshot tài khoản nhận tiền. Không sửa migration đã áp dụng.
 
 > [!WARNING]
 > Database được tạo từ bản prototype trước khi có Flyway cần được sao lưu rồi migrate hoặc tạo mới trước khi chạy `V1__initial_production_schema.sql`.
@@ -290,6 +307,7 @@ Test backend dùng H2 in-memory nên không yêu cầu MySQL hoặc Firebase bê
 ```powershell
 ./gradlew.bat testDebugUnitTest
 ./gradlew.bat assembleDebug
+./gradlew.bat lintDebug
 ```
 
 Trước khi mở pull request, nên chạy cả test backend lẫn build Android để phát hiện sớm lỗi contract giữa hai phía.
@@ -302,10 +320,12 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [x] Thiết lập Flyway V1 và chuẩn hóa kiểu dữ liệu tiền tệ.
 - [x] Bổ sung DTO, global error response và OpenAPI/Swagger.
 - [x] Làm luồng đặt bàn nguyên tử, chống double-booking và hỗ trợ idempotency.
-- [ ] Hoàn thiện Firebase authentication, ownership và phân quyền khách/nhân viên/admin.
-- [ ] Hoàn thiện payment state machine, callback verification và reconciliation.
-- [ ] Xây dựng notification outbox, retry và FCM delivery tracking.
-- [ ] Bổ sung test service, repository, integration và end-to-end.
+- [x] Firebase authentication, ownership UID và phân quyền khách/nhân viên/admin.
+- [x] Payment state machine và đối soát chuyển khoản/hoàn tiền thủ công (không gateway/callback).
+- [x] Notification outbox, retry, lease recovery và FCM delivery tracking.
+- [x] Dashboard vận hành, audit và kiểm tra sức chứa bàn thực tế.
+- [x] Test tích hợp H2/MySQL, concurrency, bảo mật và Android contract; build/lint debug.
+- [ ] Nghiệm thu end-to-end trên thiết bị, Firebase và tài khoản ngân hàng thật.
 - [ ] Thiết lập CI/CD, logging có cấu trúc, metrics, backup và runbook production.
 
 ## Tài liệu kỹ thuật
@@ -313,6 +333,7 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [REST API contract](docs/api-contract.md) — endpoint, payload, validation và error envelope.
 - [Database schema](docs/database-schema.md) — bảng, quan hệ, kiểu dữ liệu và chiến lược migration.
 - [Tuần 3 — Booking integrity](docs/week-3-booking-integrity.md) — lifecycle, cấu hình, kiểm thử concurrency và giới hạn triển khai.
+- [Tuần 4–5 — Security & operations](docs/weeks-4-5-security-operations.md) — phạm vi hoàn thành, phân quyền, thanh toán thủ công, thông báo và checklist đưa vào vận hành.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.
 - [OpenAPI configuration](The-Golden-Leaf-server/src/main/java/com/example/datban/config/OpenApiConfig.java) — metadata tài liệu API.
 

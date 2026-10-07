@@ -1,6 +1,8 @@
 package com.example.datban.dto;
 
 public class TokenRequest {
+    @jakarta.validation.constraints.NotBlank
+    @jakarta.validation.constraints.Size(max = 16384)
     private String idToken;
 
     // Constructors

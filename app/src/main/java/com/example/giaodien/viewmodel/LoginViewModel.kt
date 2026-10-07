@@ -94,6 +94,13 @@ class LoginViewModel(
             return
         }
 
+        if (!firebaseUser.isEmailVerified) {
+            firebaseUser.sendEmailVerification()
+            auth.signOut()
+            _uiState.value = LoginUiState.Error("Email chưa xác minh. Kiểm tra thư xác minh rồi đăng nhập lại.")
+            return
+        }
+
         // Lấy Firebase ID Token
         firebaseUser.getIdToken(true).addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -102,11 +109,10 @@ class LoginViewModel(
                     viewModelScope.launch {
                         try {
                             val userProfile = userRepository.synchronizeUser(idToken)
-                            Log.i("SyncSuccess", "UID: ${userProfile.uid}")
                             _uiState.value = LoginUiState.Success(userEmail)
                         } catch (e: Exception) {
                             Log.e("SyncError", e.message ?: "Error")
-                            _uiState.value = LoginUiState.Error(e.message ?: "Sync failed")
+                            _uiState.value = LoginUiState.Error("Chưa đồng bộ được tài khoản. Kiểm tra kết nối và thử lại.")
                         }
                     }
                 } else {

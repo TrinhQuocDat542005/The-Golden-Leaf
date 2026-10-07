@@ -1,0 +1,3 @@
+ALTER TABLE payments ADD COLUMN bank_name VARCHAR(100) NULL;
+ALTER TABLE payments ADD COLUMN account_number VARCHAR(64) NULL;
+ALTER TABLE payments ADD COLUMN account_name VARCHAR(255) NULL;

@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 @Repository
 public interface DatBanRepository extends JpaRepository<DatBan, Long> {
     Optional<DatBan> findByIdempotencyKey(String key);
+    Optional<DatBan> findTopByUserUidOrderByIdDatDesc(String uid);
 
     interface SlotIdentity {
         LocalDate getNgay();

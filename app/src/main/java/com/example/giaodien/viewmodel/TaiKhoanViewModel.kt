@@ -15,17 +15,29 @@ class TaiKhoanViewModel(private val repository: TaiKhoanRepository) : ViewModel(
     private val _choXacNhan = MutableStateFlow<List<LichSuDonDayDuDTO>>(emptyList())
     val choXacNhan: StateFlow<List<LichSuDonDayDuDTO>> = _choXacNhan
     val isLoading = MutableStateFlow(true)
+    val errorMessage = MutableStateFlow<String?>(null)
     private val _lichSuDonDat = MutableStateFlow<List<LichSuDonDayDuDTO>>(emptyList())
     val lichSuDonDat: StateFlow<List<LichSuDonDayDuDTO>> = _lichSuDonDat
+    private val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+    private val listener = com.google.firebase.auth.FirebaseAuth.AuthStateListener {
+        _choXacNhan.value = emptyList(); _lichSuDonDat.value = emptyList(); errorMessage.value = null
+        if (it.currentUser != null) loadData()
+    }
+    init { auth.addAuthStateListener(listener) }
+    override fun onCleared() { auth.removeAuthStateListener(listener); super.onCleared() }
 
     fun loadData() {
+        val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
             isLoading.value = true
+            errorMessage.value = null
             try {
-                _choXacNhan.value = repository.getChoXacNhan()
-                _lichSuDonDat.value = repository.getLichSuDonDat()
+                val pending = repository.getChoXacNhan()
+                val history = repository.getLichSuDonDat()
+                if (auth.currentUser?.uid == uid) { _choXacNhan.value = pending; _lichSuDonDat.value = history }
             } catch (e: Exception) {
-                println("Lỗi tải dữ liệu: ${e.message}")
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                errorMessage.value = "Chưa tải được lịch sử. Kiểm tra kết nối và thử lại."
             } finally {
                 isLoading.value = false
             }
@@ -41,8 +53,8 @@ class TaiKhoanViewModel(private val repository: TaiKhoanRepository) : ViewModel(
                 loadData()
 
             } catch (e: Exception) {
-                e.printStackTrace()
-                // TODO: Xử lý lỗi (ví dụ: hiển thị Toast "Không thể hủy đơn hàng")
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                errorMessage.value = "Không thể hủy đơn ở trạng thái hiện tại. Vui lòng kiểm tra lại."
             }
         }
     }

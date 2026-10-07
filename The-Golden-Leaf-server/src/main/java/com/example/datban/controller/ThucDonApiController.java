@@ -20,11 +20,13 @@ public class ThucDonApiController {
 
     @GetMapping
     public List<MenuItemResponse> getAllThucDon() {
-        return thucDonService.getAllMonAn().stream().map(MenuItemResponse::from).toList();
+        return thucDonService.getAllMonAn().stream().filter(com.example.datban.model.ThucDon::isActive).map(MenuItemResponse::from).toList();
     }
 
     @GetMapping("/{id}")
     public MenuItemResponse getThucDonById(@PathVariable Long id) {
-        return MenuItemResponse.from(thucDonService.getMonAnById(id));
+        var item = thucDonService.getMonAnById(id);
+        if (!item.isActive()) throw new com.example.datban.exception.ResourceNotFoundException("Không tìm thấy món đang phục vụ");
+        return MenuItemResponse.from(item);
     }
 }

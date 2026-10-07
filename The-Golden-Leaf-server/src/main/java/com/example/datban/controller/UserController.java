@@ -1,55 +1,41 @@
 package com.example.datban.controller;
 
-import com.example.datban.dto.TokenRequest; // 💡 Import DTO Request
-import com.example.datban.dto.UserResponse; // 💡 Import DTO Response
-import com.example.datban.model.User;
-import com.example.datban.service.AuthService; // 💡 Import Service
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.example.datban.dto.*;
+import com.example.datban.exception.ApiError;
+import com.example.datban.service.AuthService;
+import com.example.datban.security.RestaurantPrincipal;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import java.time.Instant;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class UserController {
-
-    // 💡 KHẮC PHỤC: Sử dụng AuthService thay vì gọi UserRepository trực tiếp
-    private final AuthService authService; 
-
-    @Autowired
-    public UserController(AuthService authService) {
-        this.authService = authService;
+    private final AuthService auth;
+    private final String webApiKey;
+    public UserController(AuthService auth,@Value("${app.firebase.web-api-key:}") String webApiKey) {
+        this.auth=auth;this.webApiKey=webApiKey;
     }
-
-    /**
-     * Endpoint chính để đồng bộ hóa và xác thực người dùng sau khi đăng nhập (Google, Email/Password, etc.).
-     * Nhận Firebase ID Token và trả về thông tin người dùng đã được đồng bộ hóa.
-     */
-    @PostMapping("/sync") // 💡 Đổi tên endpoint cho rõ ràng hơn (sync thay vì google)
-    public ResponseEntity<?> synchronizeUser(@RequestBody TokenRequest tokenRequest) {
+    @GetMapping("/web-config") public Object config() {return Map.of("apiKey",webApiKey);}
+    @GetMapping("/me") public Object me() {return RestaurantPrincipal.required();}
+    @PostMapping("/sync")
+    public ResponseEntity<?> sync(@Valid @RequestBody TokenRequest token,HttpServletRequest request) {
         try {
-            // 1. Chuyển giao toàn bộ trách nhiệm xác thực và đồng bộ cho AuthService
-            User user = authService.synchronizeUser(tokenRequest.getIdToken());
-
-            // 2. Chuyển đổi User Model thành UserResponse DTO
-            UserResponse response = new UserResponse(
-                user.getUid(),
-                user.getEmail(),
-                user.getTen(),
-                user.getFirebaseProvider()
-            );
-
-            // 3. Trả về thông tin người dùng thành công (HTTP 200 OK)
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            // Log lỗi chi tiết trên server
-            e.printStackTrace();
-            
-            // 4. Trả về lỗi nếu Token không hợp lệ hoặc có vấn đề đồng bộ
-            return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED) // HTTP 401
-                .body("Authentication failed or synchronization error: " + e.getMessage());
+            var user=auth.synchronizeUser(token.getIdToken());
+            return ResponseEntity.ok(new UserResponse(user.getUid(),user.getEmail(),user.getTen(),user.getFirebaseProvider()));
+        } catch (org.springframework.security.access.AccessDeniedException ex) {
+            return error(403,"ACCESS_DENIED","Cần xác minh email hoặc tài khoản đã bị khóa",request);
+        } catch (org.springframework.dao.DataAccessException | IllegalStateException ex) {
+            return error(503,"AUTH_UNAVAILABLE","Dịch vụ xác thực chưa sẵn sàng",request);
+        } catch (Exception ex) {
+            return error(401,"UNAUTHENTICATED","Token không hợp lệ hoặc đã hết hạn",request);
         }
+    }
+    private ResponseEntity<ApiError> error(int status,String code,String message,HttpServletRequest request) {
+        return ResponseEntity.status(status).body(new ApiError(Instant.now(),status,HttpStatus.valueOf(status).getReasonPhrase(),code,message,request.getRequestURI(),Map.of()));
     }
 }

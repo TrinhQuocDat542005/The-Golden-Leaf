@@ -19,12 +19,17 @@ public class BanSlotInitializer {
     private final BanSlotRepository repo;
     private final Clock clock;
     private final ZoneId zone;
+    private final com.example.datban.service.InventoryService inventory;
+    private final boolean requirePhysical;
 
     public BanSlotInitializer(BanSlotRepository repo, Clock clock,
-            @Value("${app.booking.zone:Asia/Ho_Chi_Minh}") String zone) {
+            @Value("${app.booking.zone:Asia/Ho_Chi_Minh}") String zone,
+            com.example.datban.service.InventoryService inventory,
+            @Value("${app.booking.require-physical-inventory:false}") boolean requirePhysical) {
         this.repo = repo;
         this.clock = clock;
         this.zone = ZoneId.of(zone);
+        this.inventory = inventory; this.requirePhysical = requirePhysical;
     }
 
     @Bean
@@ -33,6 +38,7 @@ public class BanSlotInitializer {
     @Scheduled(cron = "0 5 0 * * *", zone = "${app.booking.zone:Asia/Ho_Chi_Minh}")
     public void refreshSlots() {
         LocalDate today = LocalDate.now(clock.withZone(zone));
+        int count = requirePhysical ? inventory.physicalCount() : 30;
         // Retain historical inventory for expiry/cancellation; never reset remaining capacity.
         for (int i = 0; i < 7; i++) {
             LocalDate date = today.plusDays(i);
@@ -41,8 +47,8 @@ public class BanSlotInitializer {
                     BanSlot slot = new BanSlot();
                     slot.setNgay(date);
                     slot.setKhungGio(label);
-                    slot.setSoBanBanDau(30);
-                    slot.setSoBanConLai(30);
+                    slot.setSoBanBanDau(count);
+                    slot.setSoBanConLai(count);
                     try {
                         repo.saveAndFlush(slot);
                     } catch (DataIntegrityViolationException conflict) {

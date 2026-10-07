@@ -22,10 +22,14 @@ public class BookingLifecycleService {
     private final Clock clock;
     private final Duration holdDuration;
     private final ZoneId restaurantZone;
+    private final BookingEvents events;
+    private final InventoryService inventory;
+    private final boolean requirePhysical;
 
     public BookingLifecycleService(DatBanRepository bookings, BanSlotRepository slots, Clock clock,
             @Value("${app.booking.hold-duration:PT15M}") Duration holdDuration,
-            @Value("${app.booking.zone:Asia/Ho_Chi_Minh}") String zone) {
+            @Value("${app.booking.zone:Asia/Ho_Chi_Minh}") String zone, BookingEvents events, InventoryService inventory,
+            @Value("${app.booking.require-physical-inventory:false}") boolean requirePhysical) {
         if (holdDuration.isNegative() || holdDuration.isZero()) {
             throw new IllegalArgumentException("Booking hold duration must be positive");
         }
@@ -34,6 +38,8 @@ public class BookingLifecycleService {
         this.clock = clock;
         this.holdDuration = holdDuration;
         this.restaurantZone = ZoneId.of(zone);
+        this.events = events;
+        this.inventory = inventory; this.requirePhysical = requirePhysical;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -44,6 +50,8 @@ public class BookingLifecycleService {
         // Match MySQL's case-insensitive key uniqueness consistently on all database engines.
         key = key.toLowerCase(java.util.Locale.ROOT);
         checkOwner(request, actorEmail);
+        var principal = com.example.datban.security.RestaurantPrincipal.current();
+        if (principal != null) request.setUserUid(principal.uid());
         BanSlot slot = slots.lockSlot(request.getNgay(), request.getKhungGio())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khung giờ đã chọn"));
         var replay = bookings.findByIdempotencyKey(key);
@@ -56,6 +64,9 @@ public class BookingLifecycleService {
             return existing;
         }
         LocalDate today = LocalDate.now(clock.withZone(restaurantZone));
+        if (requirePhysical && (slot.getSoBanBanDau() == 0 || slot.getSoBanBanDau() > inventory.physicalCount())) {
+            throw rule("INVENTORY_NOT_CONFIGURED", "Cần đồng bộ sức chứa khung giờ với bàn thực tế trước khi nhận đơn");
+        }
         if (request.getNgay().isBefore(today) || request.getNgay().isAfter(today.plusDays(6))) {
             throw rule("INVALID_BOOKING_DATE", "Chỉ nhận đặt bàn trong 7 ngày tính từ hôm nay");
         }
@@ -70,6 +81,7 @@ public class BookingLifecycleService {
         for (DatBan expired : bookings.lockExpiredInSlot(request.getNgay(), request.getKhungGio(),
                 BookingStatus.HOLDING, clock.instant())) {
             release(expired, slot, BookingStatus.EXPIRED);
+            events.emit(expired, "EXPIRED", "Đơn #" + expired.getIdDat() + " hết thời gian giữ chỗ.");
         }
         int required = (request.getSoLuong() + 7) / 8;
         if (slot.getSoBanConLai() < required) {
@@ -111,6 +123,7 @@ public class BookingLifecycleService {
         requireHolding(booking);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setHoldExpiresAt(null);
+        events.emit(booking, "CONFIRMED", "Đơn #" + id + " đã xác nhận đặt bàn.");
         return booking;
     }
 
@@ -120,11 +133,12 @@ public class BookingLifecycleService {
         if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.EXPIRED) {
             return booking;
         }
-        if (booking.getStatus() != BookingStatus.HOLDING && booking.getStatus() != BookingStatus.CONFIRMED) {
+        if (booking.getStatus() != BookingStatus.HOLDING && booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.ASSIGNED) {
             throw rule("INVALID_BOOKING_STATE", "Không thể hủy đơn ở trạng thái hiện tại");
         }
         BanSlot slot = slots.findByNgayAndKhungGio(booking.getNgay(), booking.getKhungGio()).orElseThrow();
         release(booking, slot, isExpired(booking) ? BookingStatus.EXPIRED : BookingStatus.CANCELLED);
+        events.cancelled(booking);
         return booking;
     }
 
@@ -134,6 +148,7 @@ public class BookingLifecycleService {
         if (isExpired(booking)) {
             BanSlot slot = slots.findByNgayAndKhungGio(booking.getNgay(), booking.getKhungGio()).orElseThrow();
             release(booking, slot, BookingStatus.EXPIRED);
+            events.emit(booking, "EXPIRED", "Đơn #" + id + " hết thời gian giữ chỗ.");
         }
     }
 
@@ -153,6 +168,12 @@ public class BookingLifecycleService {
     }
 
     public static void checkOwner(DatBan booking, String actorEmail) {
+        var principal = com.example.datban.security.RestaurantPrincipal.current();
+        if (principal != null && actorEmail != null && booking.getUserUid() != null
+                && !principal.uid().equals(booking.getUserUid())) {
+            throw new org.springframework.security.access.AccessDeniedException("Không có quyền truy cập đơn đặt bàn");
+        }
+        if (principal != null && actorEmail != null && principal.uid().equals(booking.getUserUid())) return;
         if (actorEmail != null && !actorEmail.equalsIgnoreCase(booking.getEmail())) {
             throw new org.springframework.security.access.AccessDeniedException("Không có quyền truy cập đơn đặt bàn");
         }

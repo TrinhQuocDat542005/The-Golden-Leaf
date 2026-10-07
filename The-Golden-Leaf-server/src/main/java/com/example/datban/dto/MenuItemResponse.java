@@ -13,7 +13,7 @@ public record MenuItemResponse(
 ) {
     public static MenuItemResponse from(ThucDon item) {
         return new MenuItemResponse(
-                item.getIdThucDon(), item.getTenMon(), item.getGia(), item.getMoTa(), item.getAnh(),
-                item.getNhom() == null ? null : item.getNhom().name());
+                item.getIdThucDon(), item.getTenMon(), item.getGia(), item.getMoTa() == null ? "" : item.getMoTa(), item.getAnh() == null ? "" : item.getAnh(),
+                item.getNhom() == null ? "" : item.getNhom().name());
     }
 }

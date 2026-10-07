@@ -64,6 +64,7 @@ class BookingIntegrityTests {
     @BeforeEach
     void reset() {
         clock.set(NOW);
+        for (String table : List.of("audit_logs", "notification_deliveries", "notifications", "device_tokens", "payments", "booking_tables")) jdbc.update("DELETE FROM " + table);
         invoiceRepo.deleteAll();
         items.deleteAll();
         bookings.deleteAll();

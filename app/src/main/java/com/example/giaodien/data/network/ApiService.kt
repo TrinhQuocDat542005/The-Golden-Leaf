@@ -6,6 +6,19 @@
     import com.example.giaodien.data.model.LichSuDonDayDuDTO // Sử dụng DTO này
     interface ApiService {
 
+        @GET("api/payments/bookings/{id}/quote")
+        suspend fun getPaymentQuote(@Path("id") id: Long): PaymentQuote
+        @POST("api/payments/bookings/{id}")
+        suspend fun createPayment(@Path("id") id: Long): Payment
+        @GET("api/payments/bookings/{id}")
+        suspend fun getPayment(@Path("id") id: Long): Payment
+        @POST("api/devices")
+        suspend fun registerDevice(@Body token: DeviceTokenRequest)
+        @GET("api/notifications/unread-count")
+        suspend fun getUnreadNotificationCount(): UnreadNotificationCount
+        @HTTP(method = "DELETE", path = "api/devices", hasBody = true)
+        suspend fun unregisterDevice(@Body token: DeviceTokenRequest)
+
         @GET("api/thucdon")
         suspend fun getThucDon(): List<ThucDon>
         @GET("api/thucdon/{id}")

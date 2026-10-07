@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.sp
 import com.example.giaodien.R
 import com.example.giaodien.viewmodel.WeatherViewModel
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
+import org.threeten.bp.Instant
+import org.threeten.bp.ZoneId
 
 @Composable
 fun ViTriBanScreen(

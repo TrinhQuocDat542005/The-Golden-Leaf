@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.example.giaodien.data.model.ForecastResponse
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
+import org.threeten.bp.Instant
+import org.threeten.bp.LocalDate
+import org.threeten.bp.ZoneId
 
 
 //class WeatherViewModel : ViewModel() {

@@ -25,10 +25,16 @@ public class DatBanServiceImpl implements DatBanService {
 
     @Override
     public DatBan getLatestDatBan(String email) {
+        var principal = com.example.datban.security.RestaurantPrincipal.current();
+        if (principal != null) {
+            var owned = datBanRepository.findTopByUserUidOrderByIdDatDesc(principal.uid());
+            if (owned.isPresent()) return owned.get();
+        }
         DatBan booking = datBanRepository.findTopByEmailOrderByIdDatDesc(email);
         if (booking == null) {
             throw new ResourceNotFoundException("Không tìm thấy lượt đặt bàn gần nhất");
         }
+        com.example.datban.service.BookingLifecycleService.checkOwner(booking, email);
         return booking;
     }
 

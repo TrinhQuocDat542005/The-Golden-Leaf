@@ -81,12 +81,17 @@ fun TaiKhoanScreen(
     val choXacNhan by viewModel.choXacNhan.collectAsState()
     val lichSuDonDat by viewModel.lichSuDonDat.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadData()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF2F2F2))) {
+        errorMessage?.let { message ->
+            AlertDialog(onDismissRequest = { viewModel.errorMessage.value = null }, title = { Text("Thông báo") },
+                text = { Text(message) }, confirmButton = { TextButton(onClick = { viewModel.errorMessage.value = null }) { Text("Đóng") } })
+        }
 
         // ===== HEADER (ĐÃ CHỈNH SỬA) =====
         Box(
@@ -463,7 +468,7 @@ fun DonDatCard(
                     )
                 } else {
                     Text(
-                        text = "Chờ",
+                        text = com.example.giaodien.data.model.bookingStatusLabel(item.status),
                         color = Color(0xFFFFCDD2),
                         fontSize = 14.sp
                     )
@@ -473,6 +478,7 @@ fun DonDatCard(
             // Thêm một đường kẻ chia cách
             Spacer(modifier = Modifier.height(8.dp))
             Divider(color = Color.White.copy(alpha = 0.3f), thickness = 1.dp)
+            Text(com.example.giaodien.data.model.paymentStatusLabel(item.paymentStatus), color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
             Spacer(modifier = Modifier.height(8.dp))
 
             // Hàng chứa Tổng tiền và các nút
@@ -490,6 +496,9 @@ fun DonDatCard(
 
                 // Các nút Chi Tiết và Hủy Đặt (Căn phải)
                 Row(horizontalArrangement = Arrangement.End) {
+                    if (item.status in listOf("CONFIRMED", "ASSIGNED")) {
+                        TextButton(onClick = { navController.navigate(Screen.ThanhToan.createRoute("Ngân hàng", item.idDat, item.tienBan ?: 0.0, item.tienAn ?: 0.0)) }) { Text("Thanh toán", color = Color.White) }
+                    }
                     // Nút Chi Tiết
                     OutlinedButton(
                         onClick = {
@@ -506,7 +515,7 @@ fun DonDatCard(
                     Spacer(Modifier.width(8.dp))
 
                     // Nút Hủy Đặt
-                    if (isCancellable) {
+                    if (isCancellable && item.status in listOf("HOLDING", "CONFIRMED", "ASSIGNED")) {
                         Button(
                             onClick = {
                                 // 🔑 Hiển thị hộp thoại xác nhận khi bấm Hủy

@@ -16,6 +16,11 @@ public class DatBan {
     @Column(name = "customer_email", nullable = false)
     private String email;
 
+    @Column(name = "user_uid")
+    private String userUid;
+    public String getUserUid() { return userUid; }
+    public void setUserUid(String uid) { this.userUid = uid; }
+
     @Column(name = "customer_name", nullable = false)
     private String ten;
 

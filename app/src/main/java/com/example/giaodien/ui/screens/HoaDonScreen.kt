@@ -39,8 +39,8 @@ val TextSecondary = Color(Color.White.value).copy(alpha = 0.7f)
 val BrightRed = Color(0xFFD32F2F) // MÀU ĐỎ TƯƠI MỚI!
 
 
-// 1. Hằng số Phí đặt bàn
-const val PHI_DAT_BAN = 200000
+private fun invoiceMoney(amount: Double): String = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi-VN"))
+    .apply { maximumFractionDigits = 2 }.format(amount) + " VND"
 
 @Composable
 fun HoaDonScreen(
@@ -52,9 +52,11 @@ fun HoaDonScreen(
 ) {
     val latestDatBan by viewModel.latestDatBan.collectAsState()
     val gioHangList by gioHangViewModel.gioHangList.collectAsState()
-    val tongTienMonAn = remember(gioHangList) {
-        gioHangList.sumOf { it.thucDon.gia * it.quantity }
-    }
+    val quote by hoaDonViewModel.quote.collectAsState()
+    val quoteError by hoaDonViewModel.error.collectAsState()
+    val tienBan = quote?.tienBan ?: 0.0
+    val tongTienMonAn = quote?.tienAn ?: 0.0
+    LaunchedEffect(latestDatBan?.idDat) { latestDatBan?.idDat?.let { hoaDonViewModel.loadQuote(it) } }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -62,7 +64,6 @@ fun HoaDonScreen(
     // ✅ Trạng thái hiển thị modal thanh toán
     val showPaymentDialog = remember { mutableStateOf(false) }
     val selectedMethod = remember { mutableStateOf<String?>(null) }
-    val tongTienThanhToan = (PHI_DAT_BAN + tongTienMonAn).toFloat()
 
     LaunchedEffect(Unit) {
         viewModel.fetchCurrentDatBan(gioHangViewModel.currentDatBanId.value) { errorMessage ->
@@ -133,9 +134,13 @@ fun HoaDonScreen(
 
                         else -> {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                ThongTinDatBanCard(datBan)
+                                ThongTinDatBanCard(datBan, tienBan)
                                 MonAnDaChonCard(gioHangList)
-                                TongKetCard(tongTienMonAn)
+                                if (quote != null && quote?.idDat == datBan.idDat) TongKetCard(tongTienMonAn, tienBan)
+                                else {
+                                    Text(quoteError ?: "Đang lấy hóa đơn từ server…", color = TextSecondary)
+                                    if (quoteError != null) TextButton(onClick = { datBan.idDat?.let { hoaDonViewModel.loadQuote(it) } }) { Text("Thử lại") }
+                                }
                                 ThankYouMessage()
                             }
                         }
@@ -147,6 +152,7 @@ fun HoaDonScreen(
 
             // ================== NÚT THANH TOÁN ==================
             Button(
+                enabled = quote != null && quote?.idDat == latestDatBan?.idDat,
                 onClick = { showPaymentDialog.value = true },
                 colors = ButtonDefaults.buttonColors(containerColor = BrightRed, contentColor = Color.White),
                 modifier = Modifier
@@ -189,7 +195,7 @@ fun HoaDonScreen(
                                 Spacer(Modifier.height(16.dp))
 
                                 // Radio buttons chọn phương thức
-                                val methods = listOf("MoMo", "VNPay", "Ngân hàng", "Thẻ tín dụng")
+                                val methods = listOf("Ngân hàng")
                                 methods.forEach { method ->
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -236,7 +242,7 @@ fun HoaDonScreen(
                                                 // Set thông tin thanh toán
                                                 hoaDonViewModel.setThongTinThanhToan(
                                                     idDat = latestDatBan?.idDat ?: 0L,
-                                                    tienBan = PHI_DAT_BAN.toDouble(),
+                                                    tienBan = tienBan,
                                                     tienAn = tongTienMonAn
                                                 )
 
@@ -245,7 +251,7 @@ fun HoaDonScreen(
                                                     Screen.ThanhToan.createRoute(
                                                         method = method,
                                                         idDat = latestDatBan?.idDat ?: 0L,
-                                                        tienBan = PHI_DAT_BAN.toDouble(),
+                                                        tienBan = tienBan,
                                                         tienAn = tongTienMonAn
                                                     )
                                                 )
@@ -275,7 +281,7 @@ fun HoaDonScreen(
 
 // Composable cho Form Thông tin Đặt bàn (Bao gồm Phí đặt bàn)
 @Composable
-fun ThongTinDatBanCard(datBan: com.example.giaodien.data.model.DatBan) {
+fun ThongTinDatBanCard(datBan: com.example.giaodien.data.model.DatBan, tienBan: Double) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = CardBackground)
@@ -310,7 +316,7 @@ fun ThongTinDatBanCard(datBan: com.example.giaodien.data.model.DatBan) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Phí đặt bàn:", style = MaterialTheme.typography.bodyLarge, color = TextPrimary)
-                Text("${String.format("%,d", PHI_DAT_BAN)} VND",
+                Text(invoiceMoney(tienBan),
                     style = MaterialTheme.typography.bodyLarge,
                     color = BrightRed,
                     fontWeight = FontWeight.SemiBold)
@@ -354,7 +360,7 @@ fun MonAnDaChonCard(gioHangList: List<GioHangItem>) {
 
                         // Tổng tiền cho món đó (căn phải)
                         val tongTienMon = item.thucDon.gia * item.quantity
-                        Text("${String.format("%,.0f", tongTienMon)} VND", style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
+                        Text(invoiceMoney(tongTienMon), style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
                     }
                 }
             }
@@ -364,8 +370,8 @@ fun MonAnDaChonCard(gioHangList: List<GioHangItem>) {
 
 // Composable cho Form Tổng kết cuối cùng
 @Composable
-fun TongKetCard(tongTienMonAn: Double) {
-    val tongTien = PHI_DAT_BAN + tongTienMonAn
+fun TongKetCard(tongTienMonAn: Double, tienBan: Double) {
+    val tongTien = tienBan + tongTienMonAn
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -381,10 +387,10 @@ fun TongKetCard(tongTienMonAn: Double) {
             Divider(Modifier.padding(vertical = 8.dp), color = Color.Gray.copy(alpha = 0.3f))
 
             // Chi tiết tổng tiền món ăn
-            ThongTinItem("Tổng tiền Món ăn:", "${String.format("%,.0f", tongTienMonAn)} VND", TextPrimary, BrightRed)
+            ThongTinItem("Tổng tiền Món ăn:", invoiceMoney(tongTienMonAn), TextPrimary, BrightRed)
 
             // Chi tiết phí đặt bàn (để dễ đối chiếu)
-            ThongTinItem("Phí đặt bàn:", "${String.format("%,d", PHI_DAT_BAN)} VND", TextPrimary, BrightRed)
+            ThongTinItem("Phí đặt bàn:", invoiceMoney(tienBan), TextPrimary, BrightRed)
 
             Spacer(modifier = Modifier.height(12.dp))
             Divider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.5f))
@@ -398,7 +404,7 @@ fun TongKetCard(tongTienMonAn: Double) {
             ) {
                 Text("THÀNH TIỀN:", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
                 Text(
-                    "${String.format("%,.0f", tongTien)} VND",
+                    invoiceMoney(tongTien),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = BrightRed // Màu Đỏ Đô nổi bật

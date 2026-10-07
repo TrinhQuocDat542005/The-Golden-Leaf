@@ -82,6 +82,12 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.BAD_REQUEST, "MALFORMED_JSON", "Nội dung JSON không hợp lệ", request, Map.of());
     }
 
+    // Framework multipart limits are returned as 413, without echoing the uploaded content.
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> handleUploadLimit(Exception exception,HttpServletRequest request) {
+        return response(HttpStatus.PAYLOAD_TOO_LARGE,"IMAGE_TOO_LARGE","Ảnh vượt quá kích thước cho phép",request,Map.of());
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpected(Exception exception, HttpServletRequest request) {
         log.error("Unexpected API error for {}", request.getRequestURI(), exception);

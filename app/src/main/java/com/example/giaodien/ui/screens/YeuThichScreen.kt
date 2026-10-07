@@ -94,7 +94,7 @@ fun FavoriteItemCard(item: ThucDon, viewModel: YeuThichViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = "http://10.0.2.2:8080/uploads/${item.anh}",
+                model = com.example.giaodien.data.model.menuImageUrl(item.anh, com.example.giaodien.BuildConfig.API_BASE_URL),
                 contentDescription = item.tenMon,
                 modifier = Modifier
                     .size(100.dp)

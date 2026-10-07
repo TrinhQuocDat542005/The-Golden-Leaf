@@ -6,7 +6,8 @@ import com.example.giaodien.data.network.ApiService
 class NotificationRepository(private val api: ApiService) {
 
     suspend fun getUserNotifications(userId: Long?, userEmail: String?): List<Notification> =
-        api.getNotifications(userId, userEmail)
+        api.getNotifications(null, null) // Server resolves the UID from the verified bearer token.
 
     suspend fun markRead(id: Long) = api.markNotificationRead(id)
+    suspend fun unreadCount(): Int = api.getUnreadNotificationCount().count
 }
