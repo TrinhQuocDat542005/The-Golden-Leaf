@@ -182,6 +182,7 @@ jobs:
             build/week8/*.log
             build/week8/android-logcat.txt
             build/week8/android-*.png
+            build/week8/android-*-window.txt
             build/week8/instrumentation-results.*
           retention-days: 14
   security:

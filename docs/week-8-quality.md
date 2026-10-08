@@ -83,6 +83,14 @@ Lần chạy 1e51d9a đã boot emulator nhưng AGP UTP dừng ở console/test-r
 
 Ở revision `1485ad9`, API 35 đạt smoke event cards và HTTP journey nhưng screenshot guard trả accessibility root null. Guard đọc `mCurrentFocus` từ `dumpsys window windows` thay vì phụ thuộc accessibility tree vừa kết nối; focus null/khác app vẫn fail. API 25 ở lượt trước bị hủy khi APK install chưa trả kết quả, không coi đó là native tests đã chạy. Các lệnh install chuyển sang non-streaming với timeout 120 giây mỗi APK; native runner timeout 180 giây, có log tên từng giai đoạn và pipefail. Thời gian chờ có giới hạn, không biến timeout thành success.
 
+[CI 00df85c](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37801079206) đạt đủ bốn native tests API 25, đã kiểm tra hai PNG không bị system dialog che: slot đầy không chọn được, slot còn bàn bật Continue và lỗi mạng có retry/Continue disabled. API 35 vẫn bị guard chặn vì không tìm thấy focus trong windows-only dump; **không gộp kết quả hai revisions để gọi toàn bộ matrix đạt**. Helper lấy full WindowManager dump để hỗ trợ phần display của Android mới, lưu window diagnostics trong artifact cả khi lỗi. Không bỏ guard hoặc chấp nhận focus null.
+
+### Ảnh native Android API 25
+
+PNG gốc từ artifact `android-emulator-api-25` (ID `11561507730`), revision `00df85c4c910f0f3232057d2775a98a3d0480fef`, ngày 08/10/2026. Không retouch/crop, không phải ảnh web mobile-width. Fixture synthetic Compose component, **không phải toàn bộ navigation/login của app**.
+
+<img src="assets/android-api25-slot-selection.png" alt="Android API 25: slot đầy khóa chọn, slot còn bàn được chọn và bật Tiếp tục" width="260"> <img src="assets/android-api25-network-error.png" alt="Android API 25: lỗi mạng có thử lại, Tiếp tục bị khóa" width="260">
+
 ## Lint và quyền riêng tư log
 
 Native instrumentation ở revision `6394e9b` đã thực sự chạy đủ bốn tests và phát hiện lỗi, không được tính là nghiệm thu: fixture cart thiếu `tenMon`/`giaMon` bắt buộc, selector ngày tìm số ngày trong khi UI dùng tên thứ, và API 25 hết heap khi decode icon `map.png` 4000×4000 (allocation khoảng 441 MB). Cart fixture lấy dữ liệu menu thật, selector dùng tag ISO date của nút ngày, icon bản đồ đổi sang vector và ảnh thumbnail dùng Coil với kích thước đo được. Assertions và gate đủ bốn tests vẫn giữ nguyên; phải xác nhận lại trên cả hai API.

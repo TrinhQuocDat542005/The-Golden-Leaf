@@ -32,8 +32,11 @@ class Week8InstrumentedTest {
         // Compose's accessibility root can be null immediately after UiAutomation connects.
         // WindowManager focus still identifies system dialogs; never accept unknown focus.
         val windows = android.os.ParcelFileDescriptor.AutoCloseInputStream(
-            instrumentation.uiAutomation.executeShellCommand("dumpsys window windows")
+            // Newer Android versions report current focus under the display section,
+            // not the windows-only section. The complete dump supports both API levels.
+            instrumentation.uiAutomation.executeShellCommand("dumpsys window")
         ).bufferedReader().use { it.readText() }
+        java.io.File(instrumentation.targetContext.filesDir,"week8-$name-window.txt").writeText(windows)
         val foreground = windows.lineSequence().firstOrNull { it.contains("mCurrentFocus=") }
         check(foreground != null && Regex("\\bcom\\.example\\.giaodien(?:\\.test)?/").containsMatchIn(foreground)) {
             "Native screenshot is obscured or has unknown window focus: $foreground"

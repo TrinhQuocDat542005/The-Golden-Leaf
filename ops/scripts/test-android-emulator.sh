@@ -20,6 +20,11 @@ demo_pid=$!
 emulator_pid=''
 cleanup() {
   if [[ -n "$emulator_pid" ]]; then timeout 5 "$adb_bin" -s emulator-5580 logcat -d -t 2000 > build/week8/android-logcat.txt 2>&1 || true; fi
+  if [[ -n "$emulator_pid" ]]; then
+    for shot in slot-selection network-error; do
+      timeout 5 "$adb_bin" -s emulator-5580 exec-out run-as com.example.giaodien cat "files/week8-$shot-window.txt" > "build/week8/android-$shot-window.txt" 2>/dev/null || true
+    done
+  fi
   [[ -z "$emulator_pid" ]] || kill "$emulator_pid" 2>/dev/null || true
   kill "$demo_pid" 2>/dev/null || true
   [[ -z "$emulator_pid" ]] || wait "$emulator_pid" 2>/dev/null || true
