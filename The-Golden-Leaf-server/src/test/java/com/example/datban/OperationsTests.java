@@ -212,9 +212,21 @@ class OperationsTests {
         assertThat(slots.findByNgayAndKhungGio(DATE,"11:00-15:00").orElseThrow().getSoBanConLai()).isEqualTo(30);
     }
     @Test void parallelPaymentCreationProducesOnePayment() throws Exception {
-        Long id=booking("customer",8).getIdDat();var pool=Executors.newFixedThreadPool(2);
-        try {var calls=pool.invokeAll(List.<Callable<Map<String,Object>>>of(()->ops.payment(id,"customer@example.com",true),()->ops.payment(id,"customer@example.com",true)));
-            assertThat(calls.get(0).get().get("id")).isEqualTo(calls.get(1).get().get("id"));assertThat(count("payments")).isEqualTo(1);
+        var pool=Executors.newFixedThreadPool(6);
+        try {
+            // Repeat coordinated bursts to expose nested slot-lock contention on MySQL,
+            // not just two requests that may execute sequentially on a fast runner.
+            for (int round=0;round<12;round++) {
+                Long id=booking("customer",8).getIdDat();var start=new CyclicBarrier(6);
+                var requests=new ArrayList<Callable<Map<String,Object>>>();
+                for(int worker=0;worker<6;worker++) requests.add(()->{
+                    start.await(10,TimeUnit.SECONDS);return ops.payment(id,"customer@example.com",true);
+                });
+                var calls=pool.invokeAll(requests,30,TimeUnit.SECONDS);
+                var paymentId=calls.get(0).get().get("id");
+                for(var call:calls) assertThat(call.get().get("id")).isEqualTo(paymentId);
+                assertThat(count("payments")).isEqualTo(round+1);
+            }
         }finally{pool.shutdownNow();}
     }
     @Test void physicalTableCannotBeAssignedTwiceAndConflictRollsBack() throws Exception {
