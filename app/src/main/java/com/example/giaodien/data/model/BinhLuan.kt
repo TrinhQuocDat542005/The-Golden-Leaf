@@ -12,7 +12,8 @@ data class ThucDonRef(
 data class BinhLuan(
     val id: Long,
     val thucDon: ThucDonRef, // đổi từ Long sang object
-    val userEmail: String,
+    val authorName: String,
+    val rating: Int,
     val noiDung: String,
     val createdAt: String
 )

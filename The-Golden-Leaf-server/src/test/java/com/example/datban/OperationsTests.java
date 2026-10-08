@@ -47,6 +47,60 @@ class OperationsTests {
     @Autowired TestClock clock;
     @Autowired MockMvc mvc;
 
+    private long engagementMenu() {
+        db.update("INSERT INTO menu_items(name,price,active) VALUES('Engagement fixture',50000,TRUE)");
+        return db.queryForObject("SELECT MAX(id) FROM menu_items",Long.class);
+    }
+    @Test void favoritesRequireAuthenticationAndIgnoreForgedIdentity() throws Exception {
+        long id=engagementMenu();
+        mvc.perform(get("/api/yeu-thich/list")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/yeu-thich/add").param("userId","uid-other").param("idThucDon",""+id).header("Authorization","Bearer customer")).andExpect(status().isOk());
+        mvc.perform(get("/api/yeu-thich/list").param("userId","uid-customer").header("Authorization","Bearer other")).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(delete("/api/yeu-thich/remove").param("userId","uid-customer").param("idThucDon",""+id).header("Authorization","Bearer other")).andExpect(status().isOk());
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM favorites WHERE user_uid='uid-customer'",Integer.class)).isEqualTo(1);
+    }
+    @Test void favoriteRetriesAreIdempotentAndInactiveMenuCannotBeAdded() throws Exception {
+        long id=engagementMenu();
+        for(int i=0;i<2;i++) mvc.perform(post("/api/yeu-thich/add").param("idThucDon",""+id).header("Authorization","Bearer customer")).andExpect(status().isOk());
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM favorites",Integer.class)).isEqualTo(1);
+        db.update("UPDATE menu_items SET active=FALSE WHERE id=?",id);
+        mvc.perform(get("/api/yeu-thich/list").header("Authorization","Bearer customer")).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(post("/api/yeu-thich/add").param("idThucDon",""+id).header("Authorization","Bearer other")).andExpect(status().isNotFound());
+        for(int i=0;i<2;i++) mvc.perform(delete("/api/yeu-thich/remove").param("idThucDon",""+id).header("Authorization","Bearer customer")).andExpect(status().isOk());
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM favorites",Integer.class)).isZero();
+    }
+    @Test void reviewsUpsertOwnFeedbackAndNeverExposeIdentity() throws Exception {
+        long id=engagementMenu();
+        String body="{\"thucDonId\":"+id+",\"noiDung\":\"  Good food  \",\"rating\":4,\"userId\":\"uid-other\"}";
+        for(int i=0;i<2;i++) mvc.perform(post("/api/binhluan/add").header("Authorization","Bearer customer").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.noiDung").value("Good food")).andExpect(jsonPath("$.rating").value(4))
+                .andExpect(jsonPath("$.userEmail").doesNotExist()).andExpect(jsonPath("$.userUid").doesNotExist());
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM reviews WHERE user_uid='uid-customer'",Integer.class)).isEqualTo(1);
+        mvc.perform(post("/api/binhluan/add").header("Authorization","Bearer other").contentType(MediaType.APPLICATION_JSON).content(body.replace("Good food","Other review"))).andExpect(status().isOk());
+        mvc.perform(get("/api/binhluan/"+id).header("Authorization","Bearer customer")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
+        db.update("UPDATE reviews SET status='HIDDEN' WHERE user_uid='uid-customer'");
+        mvc.perform(post("/api/binhluan/add").header("Authorization","Bearer customer").contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
+        mvc.perform(get("/api/binhluan/"+id).header("Authorization","Bearer customer")).andExpect(jsonPath("$.length()").value(1));
+    }
+    @Test void concurrentFavoriteRetriesCreateOneRow() throws Exception {
+        long id=engagementMenu(); var pool=Executors.newFixedThreadPool(8);
+        try {
+            var tasks=new ArrayList<Callable<Integer>>();
+            for(int i=0;i<8;i++) tasks.add(()->mvc.perform(post("/api/yeu-thich/add").param("idThucDon",""+id).header("Authorization","Bearer customer")).andReturn().getResponse().getStatus());
+            for(var result:pool.invokeAll(tasks,30,TimeUnit.SECONDS)) assertThat(result.get()).isEqualTo(200);
+            assertThat(db.queryForObject("SELECT COUNT(*) FROM favorites",Integer.class)).isEqualTo(1);
+        } finally { pool.shutdownNow(); }
+    }
+    @Test void reviewInputIsBoundedAndProtected() throws Exception {
+        long id=engagementMenu();
+        mvc.perform(get("/api/binhluan/"+id)).andExpect(status().isUnauthorized());
+        for(String body:List.of("{\"thucDonId\":"+id+",\"noiDung\":\" \",\"rating\":5}",
+                "{\"thucDonId\":"+id+",\"noiDung\":\"valid\",\"rating\":6}",
+                "{\"thucDonId\":"+id+",\"noiDung\":\"valid\"}",
+                "{\"thucDonId\":"+id+",\"noiDung\":\""+"x".repeat(2001)+"\",\"rating\":5}"))
+            mvc.perform(post("/api/binhluan/add").header("Authorization","Bearer customer").contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM reviews",Integer.class)).isZero();
+    }
     @TestConfiguration
     static class Fakes {
         @Bean @Primary TokenVerifier verifier() {
@@ -70,7 +124,7 @@ class OperationsTests {
     }
     @BeforeEach void reset() throws Exception {
         SecurityContextHolder.clearContext();clock.value.set(NOW);push.sent=0;push.failure=null;
-        for(String table:List.of("audit_logs","notification_deliveries","notifications","device_tokens","payments","booking_tables","invoices","booking_items","bookings","user_roles","users","menu_items","restaurant_tables","time_slots")) db.update("DELETE FROM "+table);
+        for(String table:List.of("audit_logs","notification_deliveries","notifications","device_tokens","payments","booking_tables","invoices","booking_items","bookings","reviews","favorites","user_roles","users","menu_items","restaurant_tables","time_slots")) db.update("DELETE FROM "+table);
         for(String token:List.of("customer","other","staff","admin")) auth.authenticate(token);
         grantFixture("staff","STAFF");grantFixture("admin","ADMIN");
         BanSlot slot=new BanSlot();slot.setNgay(DATE);slot.setKhungGio("11:00-15:00");slot.setSoBanBanDau(30);slot.setSoBanConLai(30);slots.saveAndFlush(slot);

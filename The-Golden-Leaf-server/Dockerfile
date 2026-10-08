@@ -8,7 +8,7 @@ RUN mvn -B -DskipTests package
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl libssl3 libfreetype6 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --create-home spring \
     && mkdir -p /app/uploads \

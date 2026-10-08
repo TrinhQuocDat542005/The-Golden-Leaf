@@ -15,9 +15,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
-
-    private val repository = DatBanRepository()
+class DatBanViewModel @JvmOverloads constructor(
+    private val savedState: SavedStateHandle,
+    private val repository: DatBanRepository = DatBanRepository(),
+    private val session: com.example.giaodien.data.network.AccountSession = com.example.giaodien.data.network.FirebaseAccountSession()
+) : ViewModel() {
     private val _submitting = MutableStateFlow(false)
     val submitting: StateFlow<Boolean> = _submitting
     private val _error = MutableStateFlow<String?>(null)
@@ -33,18 +35,18 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     val currentDatBan: DatBan?
         get() = _datBan.value
 
-    private val auth = FirebaseAuth.getInstance()
-    private val accountListener = FirebaseAuth.AuthStateListener { firebase ->
-        val uid = firebase.currentUser?.uid
+    private var accountGeneration = 0
+    private val unsubscribe = session.observe {
+        val uid = session.uid()
         if (uid == null || savedState.get<String>("bookingOwnerUid") != uid) {
+            accountGeneration++
             savedState.remove<String>("bookingRequest"); savedState.remove<String>("bookingKey")
             savedState.remove<Long>("currentBookingId")
-            _datBan.value = null; _latestDatBan.value = null
+            _datBan.value = null; _latestDatBan.value = null; _error.value = null
         }
         savedState["bookingOwnerUid"] = uid
     }
-    init { auth.addAuthStateListener(accountListener) }
-    override fun onCleared() { auth.removeAuthStateListener(accountListener); super.onCleared() }
+    override fun onCleared() { unsubscribe(); super.onCleared() }
 
     fun setDatBan(datBan: DatBan) {
         _datBan.value = datBan
@@ -65,11 +67,12 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
             savedState["bookingKey"] = UUID.randomUUID().toString()
         }
         val key = checkNotNull(savedState.get<String>("bookingKey"))
-        val owner = auth.currentUser?.uid
+        val owner = session.uid()
+        val generation = accountGeneration
         viewModelScope.launch {
             try {
                 val createdDatBan = repository.datBan(datBan, key)
-                if (auth.currentUser?.uid != owner) return@launch
+                if (session.uid() != owner || generation != accountGeneration) return@launch
                 if (createdDatBan.status in setOf("CANCELLED", "EXPIRED")) {
                     savedState.remove<String>("bookingRequest")
                     savedState.remove<String>("bookingKey")
@@ -85,6 +88,7 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                if (session.uid() != owner || generation != accountGeneration) return@launch
                 val message = e.userMessage()
                 _error.value = message
                 onError(message)
@@ -95,7 +99,8 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     }
     // Never use the global latest booking to associate a customer's cart/invoice.
     fun fetchCurrentDatBan(id: Long?, onError: (String) -> Unit) {
-        val owner = auth.currentUser?.uid
+        val owner = session.uid()
+        val generation = accountGeneration
         viewModelScope.launch {
             try {
                 val bookingId = id ?: savedState.get<Long>("currentBookingId")
@@ -105,11 +110,12 @@ class DatBanViewModel(private val savedState: SavedStateHandle) : ViewModel() {
                     return@launch
                 }
                 val result = repository.getDatBan(bookingId)
-                if (auth.currentUser?.uid != owner) return@launch
+                if (session.uid() != owner || generation != accountGeneration) return@launch
                 _latestDatBan.value = result // Cập nhật state
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                if (session.uid() != owner || generation != accountGeneration) return@launch
                 // Xử lý lỗi, ví dụ: không tìm thấy bản ghi nào hoặc lỗi mạng/server
                 _latestDatBan.value = null
                 onError(e.userMessage())

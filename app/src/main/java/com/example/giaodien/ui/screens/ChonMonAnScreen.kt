@@ -48,6 +48,9 @@ fun ChonMonAnScreen(
     yeuThichViewModel: YeuThichViewModel = viewModel()
 ) {
     val thucDonList by viewModel.thucDonList.collectAsState()
+    val menuError by viewModel.error.collectAsState()
+    val menuLoading by viewModel.loading.collectAsState()
+    val favoriteError by yeuThichViewModel.error.collectAsState()
     val favoriteList by yeuThichViewModel.favoriteList.collectAsState(initial = emptyList())
     val submitting by gioHangViewModel.submitting.collectAsState()
     val holdExpiresAt by gioHangViewModel.holdExpiresAt.collectAsState()
@@ -57,8 +60,8 @@ fun ChonMonAnScreen(
 
     LaunchedEffect(Unit) { viewModel.loadThucDon() }
     LaunchedEffect(userId) { yeuThichViewModel.loadFavorites(userId) }
+    val baseUrl = com.example.giaodien.BuildConfig.API_BASE_URL
 
-    val baseUrl = "http://10.0.2.2:8080/uploads/"
 
     Scaffold(containerColor = Color.Black, snackbarHost = { SnackbarHost(snackbar) }) { innerPadding ->
         Box(
@@ -67,6 +70,9 @@ fun ChonMonAnScreen(
                 .padding(innerPadding)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
+                if (menuLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                menuError?.let { Text(it, color = Color.White); TextButton(onClick = viewModel::loadThucDon) { Text("Thử tải thực đơn") } }
+                favoriteError?.let { Text(it, color = Color.White); TextButton(onClick = { yeuThichViewModel.loadFavorites(userId) }) { Text("Thử tải yêu thích") } }
 
                 // Header
                 val zeroCorner = CornerSize(0.dp)

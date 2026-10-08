@@ -16,3 +16,7 @@ Include affected revision, safe reproduction steps using synthetic data, expecte
 - `.env`, private keys, keystores, uploads/backups and test reports do not belong in bug reports. Public Firebase client config is not an Admin SDK service-account key.
 
 Dependency update configuration is provided; updates are reviewed, not auto-merged. CI passing does not mean a dependency/image was independently audited.
+
+## Dependency and image gate (week 8)
+
+CI scans the packaged Java dependency inventory and the built image OS/Java packages with a digest-pinned Trivy image. It fails on incomplete inventories or fixable HIGH/CRITICAL findings, except exact CVE/package/version entries in `scripts/security-exceptions.json`. Lower-severity and unfixed findings remain in reports, not silently dropped. Exceptions require rationale, a primary advisory and an expiry; they are not approval for public deployment. See [the current evidence and residual risk](docs/week-8-quality.md#security-gate-và-ngoại-lệ-có-hạn).

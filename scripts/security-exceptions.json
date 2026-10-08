@@ -1,0 +1,10 @@
+[
+  {
+    "id": "CVE-2026-47884",
+    "package": "org.springframework:spring-webmvc",
+    "version": "6.2.19",
+    "expires": "2026-11-08T00:00:00Z",
+    "advisory": "https://spring.io/security/cve-2026-47884/",
+    "reason": "Not reachable in current portfolio: no XsltView/XsltViewResolver or implicit wildcard MVC view. Legacy MVC returns explicit Thymeleaf view names. Exact-version exception; source gate rejects XsltView introduction. Spring 6.2.20 fix is enterprise-only; reassess before expiry/any public deployment. Finding remains in full scan report."
+  }
+]

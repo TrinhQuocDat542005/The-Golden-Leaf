@@ -1,0 +1,15 @@
+{
+  "AndroidGradlePluginVersion": 1,
+  "AutoboxingStateCreation": 2,
+  "GradleDependency": 21,
+  "IconDuplicates": 1,
+  "IconExtension": 1,
+  "IconLocation": 22,
+  "InsecureBaseConfiguration": 1,
+  "NewerVersionAvailable": 12,
+  "RedundantLabel": 1,
+  "SimilarGradleDependency": 6,
+  "UnusedResources": 14,
+  "UseKtx": 2,
+  "UseTomlInstead": 20
+}

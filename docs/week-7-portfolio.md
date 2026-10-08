@@ -1,5 +1,7 @@
 # Tuần 7 — Portfolio, demo và bàn giao
 
+Đây là snapshot nghiệm thu tuần 7. Kết quả và thay đổi mới hơn nằm trong [báo cáo tuần 8](week-8-quality.md); giữ nguyên số liệu lịch sử bên dưới.
+
 ## Mục tiêu đã điều chỉnh
 
 The Golden Leaf là **dự án portfolio GitHub**, không phải job triển khai cho nhà hàng thật. Tuần 7 ưu tiên bản demo có thể chạy lại, bằng chứng kỹ thuật, ảnh giao diện thật và tài liệu trình diễn. Không mua hosting/domain, tạo tài khoản ngân hàng, public backend hoặc bật giao dịch thật. Tài liệu production tuần 6 là một hạng mục kỹ thuật tham khảo, không phải yêu cầu hoàn thành portfolio.

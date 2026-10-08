@@ -44,13 +44,14 @@ fun ViTriBanScreen(
 
     // --- Load forecast từ ViewModel ---
     val forecastState by weatherViewModel.forecast.collectAsState()
-    LaunchedEffect(Unit) { weatherViewModel.loadForecast("Hanoi") }
+    val weatherMessage by weatherViewModel.message.collectAsState()
+    LaunchedEffect(Unit) { weatherViewModel.loadForecast() }
 
     // --- Lọc theo ngày + khung giờ ---
     val filteredWeather = remember(forecastState, ngayChon, khungStartHour, khungEndHour) {
         forecastState?.list?.filter { entry ->
             val dateTime = Instant.ofEpochSecond(entry.dt)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
                 .toLocalDateTime()
             val entryDate = dateTime.toLocalDate()
             val entryHour = dateTime.hour
@@ -154,7 +155,7 @@ fun ViTriBanScreen(
                             .shadow(4.dp, RoundedCornerShape(12.dp))
                     ) {
                         if (averageTemp == null) {
-                            Text("Đang tải hoặc không có dữ liệu thời tiết", color = Color.White)
+                            Text(weatherMessage ?: "Đang tải hoặc không có dữ liệu thời tiết", color = Color.White)
                         } else {
                             // Hàng 1: Ngày và Khung giờ
                             Text("📅 Ngày: $ngayHienThi", color = Color.LightGray, fontSize = 14.sp)

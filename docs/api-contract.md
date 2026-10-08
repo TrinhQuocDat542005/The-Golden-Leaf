@@ -70,6 +70,22 @@ Booking codes also include `INVALID_IDEMPOTENCY_KEY`, `IDEMPOTENCY_CONFLICT`, `I
 `BOOKING_REQUIRED`, `CAPACITY_CONFLICT`, `INVALID_CART`, `MENU_ITEM_UNAVAILABLE` and `ACCESS_DENIED`.
 Missing headers, invalid query parameters and invalid cart elements return `400 VALIDATION_FAILED`.
 
+## Week 8 favorites and reviews
+
+These routes require authenticated CUSTOMER/STAFF/ADMIN identity, including in auth-disabled development mode. Demo accepts only its synthetic session tokens. Ownership is exclusively the verified principal; a forged `userId` query parameter does not select another account.
+
+| Method | Path | Contract |
+|---|---|---|
+| GET | `/api/yeu-thich/list` | Up to 100 current active menu DTOs, most recent first; only the caller's favorites |
+| POST | `/api/yeu-thich/add?idThucDon=1` | Positive ID, active menu required; idempotent add; `200` empty body |
+| DELETE | `/api/yeu-thich/remove?idThucDon=1` | Positive ID; idempotent own removal, also works for an inactive menu; `200` empty body |
+| GET | `/api/binhluan/1` | Positive active menu ID; latest 100 `PUBLISHED` reviews ordered by update time/ID |
+| POST | `/api/binhluan/add` | `{ "thucDonId": 1, "noiDung": "Synthetic feedback", "rating": 4 }`; creates/updates caller's one review for this menu |
+
+Review response: `{ "id": 1, "thucDon": { "idThucDon": 1 }, "authorName": "Khách hàng", "rating": 4, "noiDung": "Synthetic feedback", "createdAt": "2026-10-08T00:00:00Z" }`. No UID, email or profile fields. Content is required, nonblank, at most 2000 characters; rating is a required integer 1–5. Whitespace is trimmed. Editing a hidden review never implicitly republishes it. No moderation endpoint is added in this milestone. This corrects the old Android request/response contract (rating and anonymous author replace the prototype email field).
+
+Invalid input returns `400 VALIDATION_FAILED`, missing authentication `401`, inactive/missing menu `404`; standard error envelope still applies. Repeated/concurrent adds are serialized per account and protected by existing unique constraints. No migration checksum is changed.
+
 ## Week 4–5 protected endpoints
 
 CUSTOMER endpoints also accept staff/admin tokens, but still enforce ownership of customer data. STAFF routes accept STAFF or ADMIN; ADMIN routes require ADMIN. Legacy `/nhahang/**` reads require STAFF/ADMIN and writes require ADMIN. All new routes below require bearer authentication except auth sync (which verifies its body token) and public web config.

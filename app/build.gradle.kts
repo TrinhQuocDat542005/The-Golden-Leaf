@@ -23,6 +23,9 @@ val weatherApiKey = providers.gradleProperty("WEATHER_API_KEY")
     .orElse(providers.environmentVariable("WEATHER_API_KEY"))
     .orElse("")
 
+// Only the disposable component/API test build disables Firebase's auto-init provider.
+val week8IsolatedTests = providers.gradleProperty("week8IsolatedTests").map { it == "true" }.orElse(false)
+
 
 android {
 // ... (phần android block giữ nguyên)
@@ -36,17 +39,21 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.giaodien.Week8TestRunner"
     }
 
     buildTypes {
         debug {
             manifestPlaceholders["allowCleartext"] = "true"
+            manifestPlaceholders["firebaseInitEnabled"] = (!week8IsolatedTests.get()).toString()
+            buildConfigField("boolean", "WEEK8_ISOLATED_TESTS", week8IsolatedTests.get().toString())
             buildConfigField("String", "API_BASE_URL", "\"${debugApiBaseUrl.get()}\"")
             buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey.get()}\"")
         }
         release {
             manifestPlaceholders["allowCleartext"] = "false"
+            manifestPlaceholders["firebaseInitEnabled"] = "true"
+            buildConfigField("boolean", "WEEK8_ISOLATED_TESTS", "false")
             isMinifyEnabled = false
             buildConfigField("String", "API_BASE_URL", "\"${releaseApiBaseUrl.get()}\"")
             buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey.get()}\"")
@@ -58,6 +65,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -99,6 +107,7 @@ configurations.all {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     // ---------------------------------------------
     // CORE & COMPOSE
     // ---------------------------------------------
@@ -159,6 +168,7 @@ dependencies {
     // TESTING
     // ---------------------------------------------
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,8 +34,12 @@ fun SoDoBanScreen(
 ) {
     // Lấy state từ ViewModel
     val slots by banSlotViewModel.slots.collectAsState()
+    val now by produceState(initialValue = java.time.Instant.now()) {
+        while (true) { kotlinx.coroutines.delay(15_000); value = java.time.Instant.now() }
+    }
+    val clock = java.time.Clock.fixed(now, java.time.ZoneOffset.UTC)
     val daySlots: List<BanSlot> = slots.filter { slot ->
-        slot.ngay.substring(0, 10) == ngayChon && slot.khungGio == khungGioChon
+        slot.ngay.take(10) == ngayChon && slot.khungGio == khungGioChon
     }
 
     val selectedSlot = daySlots.firstOrNull()
@@ -145,6 +147,7 @@ fun SoDoBanScreen(
                     contentPadding = PaddingValues(bottom = 70.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    item { Text("Sơ đồ minh họa sức chứa, không phải mã/vị trí bàn thực tế.", color = Color.White, fontSize = 12.sp) }
                     item { FacilityRow() }
 
                     var currentIndex = 0
@@ -176,7 +179,9 @@ fun SoDoBanScreen(
         }
 
         Button(
+            enabled = selectedSlot?.let { com.example.giaodien.data.model.BookingAvailability.selectable(it, clock) } == true,
             onClick = {
+                if (selectedSlot?.let { com.example.giaodien.data.model.BookingAvailability.selectable(it) } != true) return@Button
                 navController.navigate(
                     Screen.ViTriBan.createRoute(
                         ngayChon = ngayChon,

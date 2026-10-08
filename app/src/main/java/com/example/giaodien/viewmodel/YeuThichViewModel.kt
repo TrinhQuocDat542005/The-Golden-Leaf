@@ -3,56 +3,48 @@ package com.example.giaodien.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.giaodien.data.model.ThucDon
+import com.example.giaodien.data.repository.FavoriteRepository
 import com.example.giaodien.data.repository.YeuThichRepository
+import com.example.giaodien.data.network.AccountSession
+import com.example.giaodien.data.network.FirebaseAccountSession
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class YeuThichViewModel : ViewModel() {
-
-    private val repository = YeuThichRepository()
-
+class YeuThichViewModel(
+    private val repository: FavoriteRepository = YeuThichRepository(),
+    private val session: AccountSession = FirebaseAccountSession()
+) : ViewModel() {
     private val _favoriteList = MutableStateFlow<List<ThucDon>>(emptyList())
     val favoriteList: StateFlow<List<ThucDon>> = _favoriteList
-
-    // Load danh sách yêu thích (cập nhật từ server)
-    fun loadFavorites(userId: String) {
-        viewModelScope.launch {
-            try {
-                _favoriteList.value = repository.getFavorites(userId)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+    private var generation = 0
+    private var owner = session.uid()
+    private val unsubscribe = session.observe {
+        if (owner != session.uid()) { owner = session.uid(); generation++; _favoriteList.value = emptyList(); _error.value = null; _loading.value = false }
     }
-
-    // Toggle yêu thích
-    fun toggleFavorite(userId: String, mon: ThucDon) {
-        viewModelScope.launch {
-            try {
-                val exists = _favoriteList.value.any { it.idThucDon == mon.idThucDon }
-                if (exists) {
-                    repository.removeFavorite(userId, mon.idThucDon)
-                } else {
-                    repository.addFavorite(userId, mon.idThucDon)
-                }
-                loadFavorites(userId)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+    override fun onCleared() { unsubscribe(); super.onCleared() }
+    // Compatibility argument only: identity is never sent as server authority.
+    fun loadFavorites(userId: String) = run { repository.list() }
+    fun toggleFavorite(userId: String, mon: ThucDon) = run {
+        if (_favoriteList.value.any { it.idThucDon == mon.idThucDon }) repository.remove(mon.idThucDon) else repository.add(mon.idThucDon)
+        repository.list()
     }
-
-    // Xóa món khỏi danh sách yêu thích
-    fun removeFavorite(mon: ThucDon) {
+    fun removeFavorite(mon: ThucDon) = run { repository.remove(mon.idThucDon); repository.list() }
+    private fun run(action: suspend () -> List<ThucDon>) {
+        if (_loading.value) return
+        if (session.uid() == null) { _error.value = "Vui lòng đăng nhập để dùng yêu thích."; return }
+        val uid = session.uid(); val request = generation
+        _loading.value = true; _error.value = null
         viewModelScope.launch {
-            try {
-                val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                repository.removeFavorite(userId, mon.idThucDon)
-                loadFavorites(userId)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            try { val result = action(); if (request == generation && uid == session.uid()) _favoriteList.value = result }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { if (request == generation && uid == session.uid()) _error.value = "Không cập nhật được yêu thích. Vui lòng thử lại." }
+            finally { if (request == generation && uid == session.uid()) _loading.value = false }
         }
     }
 }

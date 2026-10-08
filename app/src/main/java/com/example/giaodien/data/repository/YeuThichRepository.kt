@@ -1,21 +1,18 @@
 package com.example.giaodien.data.repository
 
 import com.example.giaodien.data.model.ThucDon
+import com.example.giaodien.data.model.menuImageUrl
+import com.example.giaodien.BuildConfig
+import com.example.giaodien.data.network.ApiService
 import com.example.giaodien.data.network.RetrofitInstance
 
-class YeuThichRepository {
-
-    private val api = RetrofitInstance.api
-
-    suspend fun getFavorites(userId: String): List<ThucDon> {
-        return api.getFavorites(userId)
-    }
-
-    suspend fun addFavorite(userId: String, idThucDon: Long) {
-        api.addFavorite(userId, idThucDon)
-    }
-
-    suspend fun removeFavorite(userId: String, idThucDon: Long) {
-        api.removeFavorite(userId, idThucDon)
-    }
+interface FavoriteRepository {
+    suspend fun list(): List<ThucDon>
+    suspend fun add(id: Long)
+    suspend fun remove(id: Long)
+}
+class YeuThichRepository(private val api: ApiService = RetrofitInstance.api) : FavoriteRepository {
+    override suspend fun list() = api.getFavorites().map { it.copy(anh = menuImageUrl(it.anh, BuildConfig.API_BASE_URL)) }
+    override suspend fun add(id: Long) = api.addFavorite(id)
+    override suspend fun remove(id: Long) = api.removeFavorite(id)
 }

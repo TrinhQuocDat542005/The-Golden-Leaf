@@ -29,7 +29,8 @@ data class GioHangItem(
 class GioHangViewModel(
     // ⚠️ Thêm ApiService vào constructor để thực hiện gọi API
     private val apiService: ApiService,
-    private val savedState: SavedStateHandle
+    private val savedState: SavedStateHandle,
+    private val session: com.example.giaodien.data.network.AccountSession = com.example.giaodien.data.network.FirebaseAccountSession()
 ) : ViewModel() {
 
     // 1. BIẾN LƯU TRỮ ID ĐẶT BÀN (DÙNG ĐỂ LIÊN KẾT GIỎ HÀNG)
@@ -56,19 +57,19 @@ class GioHangViewModel(
     )
     val gioHangList: StateFlow<List<GioHangItem>> = _gioHangList
 
-    private val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
-    private val accountListener = com.google.firebase.auth.FirebaseAuth.AuthStateListener { firebase ->
-        val uid = firebase.currentUser?.uid
+    private var accountGeneration = 0
+    private val unsubscribe = session.observe {
+        val uid = session.uid()
         if (uid == null || savedState.get<String>("cartOwnerUid") != uid) {
+            accountGeneration++
             _gioHangList.value = emptyList(); _currentDatBanId.value = null; _holdExpiresAt.value = null
             savedState.remove<Long>("bookingId"); savedState.remove<String>("holdExpiresAt"); savedState.remove<String>("cart")
         }
         savedState["cartOwnerUid"] = uid
     }
-    override fun onCleared() { auth.removeAuthStateListener(accountListener); super.onCleared() }
+    override fun onCleared() { unsubscribe(); super.onCleared() }
 
     init {
-        auth.addAuthStateListener(accountListener)
         viewModelScope.launch {
             _gioHangList.collect { savedState["cart"] = Json.encodeToString(it) }
         }
@@ -147,18 +148,19 @@ class GioHangViewModel(
         }
 
         _submitting.value = true
-        val owner = auth.currentUser?.uid
+        val owner = session.uid()
+        val generation = accountGeneration
         viewModelScope.launch {
             try {
                 // Persist a full snapshot, then confirm; both calls can be safely retried.
                 val serverItems = apiService.replaceGioHang(datBanId, danhSachGioHang)
-                if (auth.currentUser?.uid != owner) return@launch
+                if (session.uid() != owner || generation != accountGeneration) return@launch
                 _gioHangList.value = gioHang.map { item ->
                     val serverItem = serverItems.first { it.idThucDon == item.thucDon.idThucDon }
                     item.copy(thucDon = item.thucDon.copy(gia = serverItem.giaMon, tenMon = serverItem.tenMon))
                 }
                 apiService.confirmDatBan(datBanId)
-                if (auth.currentUser?.uid != owner) return@launch
+                if (session.uid() != owner || generation != accountGeneration) return@launch
                 _holdExpiresAt.value = null
                 savedState["holdExpiresAt"] = null
 
@@ -166,7 +168,7 @@ class GioHangViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                onError(e.userMessage())
+                if (session.uid() == owner && generation == accountGeneration) onError(e.userMessage())
             } finally {
                 _submitting.value = false
             }
@@ -177,11 +179,12 @@ class GioHangViewModel(
         val id = _currentDatBanId.value ?: return
         if (_submitting.value) return
         _submitting.value = true
-        val owner = auth.currentUser?.uid
+        val owner = session.uid()
+        val generation = accountGeneration
         viewModelScope.launch {
             try {
                 apiService.cancelDatBan(id)
-                if (auth.currentUser?.uid != owner) return@launch
+                if (session.uid() != owner || generation != accountGeneration) return@launch
                 _gioHangList.value = emptyList()
                 _currentDatBanId.value = null
                 _holdExpiresAt.value = null
@@ -191,7 +194,7 @@ class GioHangViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                onError(e.userMessage())
+                if (session.uid() == owner && generation == accountGeneration) onError(e.userMessage())
             } finally {
                 _submitting.value = false
             }

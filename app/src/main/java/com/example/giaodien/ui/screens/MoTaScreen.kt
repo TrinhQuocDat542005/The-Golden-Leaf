@@ -48,6 +48,9 @@ fun MoTaScreen(
 
     val binhLuanList by binhLuanViewModel.binhLuanList.collectAsState()
     val loadingBinhLuan by binhLuanViewModel.loading.collectAsState()
+    val reviewError by binhLuanViewModel.error.collectAsState()
+    val sendingReview by binhLuanViewModel.sending.collectAsState()
+    val menuError by thucDonViewModel.error.collectAsState()
 
     // Lấy các món cùng nhóm (khác chính món đang xem)
     val monCungNhom = mon?.let { current ->
@@ -59,12 +62,16 @@ fun MoTaScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            if (menuError != null) Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(menuError!!)
+                TextButton(onClick = thucDonViewModel::loadThucDon) { Text("Thử lại") }
+            } else CircularProgressIndicator()
         }
         return
     }
 
     var newComment by remember { mutableStateOf("") }
+    var rating by remember { mutableStateOf(5) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -181,6 +188,10 @@ fun MoTaScreen(
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
+                reviewError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = { binhLuanViewModel.loadBinhLuan(id) }, enabled = !sendingReview) { Text("Thử tải lại") }
+                }
                 if (loadingBinhLuan) {
                     Box(
                         modifier = Modifier
@@ -191,7 +202,7 @@ fun MoTaScreen(
                         CircularProgressIndicator()
                     }
                 } else {
-                    if (binhLuanList.isEmpty()) {
+                    if (binhLuanList.isEmpty() && reviewError == null) {
                         Text(
                             text = "Chưa có bình luận nào. Hãy là người đầu tiên!",
                             style = MaterialTheme.typography.bodyMedium,
@@ -216,13 +227,22 @@ fun MoTaScreen(
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+                Text("Một đánh giá/món; gửi lại để cập nhật. Tác giả hiển thị ẩn danh.")
+                Row {
+                    (1..5).forEach { score ->
+                        TextButton(onClick = { rating = score }, enabled = !sendingReview) {
+                            Text(if (score == rating) "$score ★" else "$score ☆")
+                        }
+                    }
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     TextField(
                         value = newComment,
-                        onValueChange = { newComment = it },
+                        onValueChange = { if (it.length <= 2000) newComment = it },
+                        enabled = !sendingReview,
                         placeholder = { Text("Viết bình luận...") },
                         colors = TextFieldDefaults.colors(
                             focusedIndicatorColor = Color.Transparent,
@@ -238,15 +258,14 @@ fun MoTaScreen(
                     Button(
                         onClick = {
                             if (newComment.isNotBlank()) {
-                                binhLuanViewModel.addBinhLuan(id, newComment)
-                                newComment = ""
+                                binhLuanViewModel.addBinhLuan(id, newComment, rating) { newComment = "" }
                             }
                         },
-                        enabled = newComment.isNotBlank(),
+                        enabled = newComment.isNotBlank() && !sendingReview && !loadingBinhLuan,
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        Text("Gửi")
+                        Text(if (sendingReview) "Đang gửi…" else "Gửi")
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -298,7 +317,7 @@ fun BinhLuanItem(binhLuan: BinhLuan) {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
-                text = binhLuan.userEmail,
+                text = "${binhLuan.authorName} · ${binhLuan.rating}/5 ★",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary // Tên người dùng nổi bật

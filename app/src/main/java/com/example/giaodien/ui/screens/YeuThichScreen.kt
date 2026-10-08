@@ -30,8 +30,9 @@ fun YeuThichScreen(
     yeuThichViewModel: YeuThichViewModel = viewModel()
 ) {
     val favoriteList by yeuThichViewModel.favoriteList.collectAsState(initial = emptyList())
+    val loading by yeuThichViewModel.loading.collectAsState()
+    val error by yeuThichViewModel.error.collectAsState()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-    val baseUrl = "http://10.0.2.2:8080/images/" // ví dụ, thư mục chứa ảnh trên server
 
     // Load danh sách yêu thích khi vào màn hình
     LaunchedEffect(userId) {
@@ -53,14 +54,17 @@ fun YeuThichScreen(
         containerColor = Color.Black
     ) { padding ->
 
-        if (favoriteList.isEmpty()) {
+        if (loading || error != null || favoriteList.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
+                if (loading) CircularProgressIndicator() else if (error != null) Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(error!!, color = Color.White)
+                    TextButton(onClick = { yeuThichViewModel.loadFavorites(userId) }) { Text("Thử lại") }
+                } else Text(
                     "Danh sách yêu thích đang trống.",
                     color = Color.White.copy(alpha = 0.7f)
                 )

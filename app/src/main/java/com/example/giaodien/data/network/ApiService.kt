@@ -28,8 +28,7 @@
 
         @POST("api/binhluan/add")
         suspend fun addBinhLuan(
-            @Body request: BinhLuanRequest,
-            @Header("Authorization") token: String
+            @Body request: BinhLuanRequest
         ): BinhLuan
 
         @POST("api/auth/sync")
@@ -84,17 +83,15 @@
 
 
         @GET("api/yeu-thich/list")
-        suspend fun getFavorites(@Query("userId") userId: String): List<ThucDon>
+        suspend fun getFavorites(): List<ThucDon>
 
         @POST("api/yeu-thich/add")
         suspend fun addFavorite(
-            @Query("userId") userId: String,
             @Query("idThucDon") idThucDon: Long
         )
 
         @DELETE("api/yeu-thich/remove")
         suspend fun removeFavorite(
-            @Query("userId") userId: String,
             @Query("idThucDon") idThucDon: Long
         )
 

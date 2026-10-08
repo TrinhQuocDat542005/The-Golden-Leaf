@@ -29,7 +29,6 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
     onLoginSuccess: (String) -> Unit
 ) {
-    Log.d("NavTest", "LoginScreen is displayed")
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -94,7 +93,7 @@ fun LoginScreen(
 
                     // 5️⃣ Nút Google Sign-In
                     GoogleSignInButton(onSignInSuccess = { userEmail ->
-                        onLoginSuccess(userEmail)
+                        viewModel.handleExternalSignInSuccess(userEmail)
                     })
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -110,7 +109,7 @@ fun LoginScreen(
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
                         )
-                        is LoginUiState.Success -> onLoginSuccess((uiState as LoginUiState.Success).userEmail)
+                        is LoginUiState.Success -> LaunchedEffect(uiState) { onLoginSuccess((uiState as LoginUiState.Success).userEmail) }
                         else -> {}
                     }
                 }

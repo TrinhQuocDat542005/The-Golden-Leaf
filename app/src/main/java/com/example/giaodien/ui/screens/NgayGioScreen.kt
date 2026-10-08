@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.giaodien.R
 import com.example.giaodien.data.model.BanSlot
+import com.example.giaodien.data.model.BookingAvailability
 import com.example.giaodien.navigation.Screen
 import com.example.giaodien.viewmodel.BanSlotViewModel
 import org.threeten.bp.LocalDate
@@ -37,10 +38,16 @@ fun NgayGioScreen(viewModel: BanSlotViewModel, navController: NavController) {
     // Đặt đoạn code này ngay đầu hàm NgayGioScreen
     LaunchedEffect(key1 = Unit) {
         // Tải lại dữ liệu mới nhất mỗi khi màn hình NgayGioScreen được hiển thị
-        viewModel.fetchBanSlots()
+        if (viewModel.slots.value.isNotEmpty()) viewModel.fetchBanSlots()
     }
     val slots by viewModel.slots.collectAsState() // realtime
-    val today = LocalDate.now()
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val now by produceState(initialValue = java.time.Instant.now()) {
+        while (true) { kotlinx.coroutines.delay(15_000); value = java.time.Instant.now() }
+    }
+    val clock = java.time.Clock.fixed(now, java.time.ZoneOffset.UTC)
+    val today = LocalDate.parse(BookingAvailability.today(clock).toString())
     val weekDays = (0..6).map { today.plusDays(it.toLong()) }
 
     var selectedDate by remember { mutableStateOf(today) }
@@ -62,6 +69,11 @@ fun NgayGioScreen(viewModel: BanSlotViewModel, navController: NavController) {
             AddressSearch()
             Spacer(modifier = Modifier.height(16.dp))
             RestaurantInfo()
+            if (loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            error?.let {
+                Text(it, color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = viewModel::fetchBanSlots) { Text("Thử lại") }
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             DateTimeSelectionBlock(
@@ -69,6 +81,7 @@ fun NgayGioScreen(viewModel: BanSlotViewModel, navController: NavController) {
                 selectedDate = selectedDate,
                 slots = slots, // truyền trực tiếp slots
                 selectedKhungGio = selectedKhungGio,
+                clock = clock,
                 onDateSelected = { newDate ->
                     selectedDate = newDate
                     selectedKhungGio = null
@@ -80,12 +93,14 @@ fun NgayGioScreen(viewModel: BanSlotViewModel, navController: NavController) {
         }
 
         ContinueButton(
-            isEnabled = selectedKhungGio != null,
+            isEnabled = !loading && error == null && slots.any {
+                it.ngay.take(10) == selectedDate.toString() && it.khungGio == selectedKhungGio && BookingAvailability.selectable(it, clock)
+            },
             onClick = {
                 // lọc realtime để lấy slot
-                val daySlots = slots.filter { it.ngay.substring(0, 10) == selectedDate.toString() }
+                val daySlots = slots.filter { it.ngay.take(10) == selectedDate.toString() }
                 val slot = daySlots.firstOrNull { it.khungGio == selectedKhungGio }
-                slot?.let {
+                slot?.takeIf { BookingAvailability.selectable(it) }?.let {
                     navController.navigate(
                         Screen.SoDoBan.createRoute(
                             ngayChon = selectedDate.toString(),
@@ -104,13 +119,14 @@ fun DateTimeSelectionBlock(
     slots: List<BanSlot>,
     selectedKhungGio: String?,
     onDateSelected: (LocalDate) -> Unit,
-    onSlotSelected: (String) -> Unit
+    onSlotSelected: (String) -> Unit,
+    clock: java.time.Clock = java.time.Clock.systemUTC()
 ) {
     val selectedDateStr = selectedDate.format(DateTimeFormatter.ISO_DATE)
 
     // 1. Lọc và nhóm các slot của ngày được chọn
     val slotsByKhungGio: Map<String, List<BanSlot>> = slots
-        .filter { it.ngay.substring(0, 10) == selectedDateStr }
+        .filter { it.ngay.take(10) == selectedDateStr }
         .groupBy { it.khungGio }
 
     // 2. Tính tổng số bàn trống của ngày
@@ -188,6 +204,7 @@ fun DateTimeSelectionBlock(
 
                     // Lấy số bàn trống cho khung giờ này
                     val availableSlotsInKhungGio = slotsByKhungGio[khungGio]?.sumOf { it.soBanConLai } ?: 0
+                    val selectable = slotsByKhungGio[khungGio]?.any { BookingAvailability.selectable(it, clock) } == true
 
                     Row(
                         modifier = Modifier
@@ -199,7 +216,7 @@ fun DateTimeSelectionBlock(
                                 if (isSelected) LightGreen else Color.Transparent,
                                 RoundedCornerShape(8.dp)
                             )
-                            .clickable { onSlotSelected(khungGio) }
+                            .clickable(enabled = selectable) { onSlotSelected(khungGio) }
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -270,7 +287,7 @@ fun AddressSearch() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextField(
-            value = "333 Tô Ký, Quận 12, tp.HCM.",
+            value = "The Golden Leaf · Nhà hàng minh họa tại TP.HCM",
             onValueChange = {},
             readOnly = true,
             modifier = Modifier
@@ -315,7 +332,7 @@ fun RestaurantInfo() {
             painter = painterResource(id = R.drawable.nhahang),
             contentDescription = "Restaurant Image",
             modifier = Modifier
-                .size(220.dp)
+                .size(96.dp)
                 .clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         )
@@ -324,18 +341,18 @@ fun RestaurantInfo() {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "THE SALT",
-                fontSize = 28.sp,
+                text = "THE GOLDEN LEAF",
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
             Text(
-                text = "995 Quang Trung, Gò Vấp",
-                fontSize = 24.sp,
+                text = "TP.HCM · Địa điểm portfolio minh họa",
+                fontSize = 14.sp,
                 color = Color.Gray
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "feedback", fontSize = 22.sp, color = Color.Gray)
+            Text(text = "Khu vực là nguyện vọng; nhân viên phân bàn thực tế.", fontSize = 12.sp, color = Color.Gray)
         }
     }
 }

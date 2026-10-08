@@ -16,6 +16,11 @@
         android:usesCleartextTraffic="${allowCleartext}"
 
         android:theme="@style/Theme.GiaoDien">
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="${applicationId}.firebaseinitprovider"
+            android:exported="false"
+            android:enabled="${firebaseInitEnabled}" />
         <service android:name=".notifications.RestaurantMessagingService" android:exported="false">
             <intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT" /></intent-filter>
         </service>

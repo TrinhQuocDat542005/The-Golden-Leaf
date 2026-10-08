@@ -60,6 +60,9 @@
         yeuThichViewModel: YeuThichViewModel = viewModel()
     ) {
         val thucDonList by thucDonViewModel.thucDonList.collectAsState(initial = emptyList())
+        val menuError by thucDonViewModel.error.collectAsState()
+        val menuLoading by thucDonViewModel.loading.collectAsState()
+        val favoriteError by yeuThichViewModel.error.collectAsState()
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         val DeepRed = Color(0xFF8B0000)
 
@@ -86,7 +89,7 @@
         }
 
 
-        LaunchedEffect(true) {
+        LaunchedEffect(userId) {
             thucDonViewModel.loadThucDon()
             yeuThichViewModel.loadFavorites(userId)
         }
@@ -99,6 +102,9 @@
                     .padding(innerPadding)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
+                    if (menuLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    menuError?.let { Text(it, color = Color.White); TextButton(onClick = thucDonViewModel::loadThucDon) { Text("Thử tải thực đơn") } }
+                    favoriteError?.let { Text(it, color = Color.White); TextButton(onClick = { yeuThichViewModel.loadFavorites(userId) }) { Text("Thử tải yêu thích") } }
 
                     // Header - KHÔNG ĐỔI
                     val zeroCorner = androidx.compose.foundation.shape.CornerSize(0.dp)
@@ -134,7 +140,7 @@
                         }
                         // Text ở giữa Box
                         Text(
-                            text = "The Kitchen\nBy The River",
+                            text = "The Golden Leaf",
                             style = MaterialTheme.typography.headlineMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 28.sp

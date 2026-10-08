@@ -9,7 +9,7 @@
 
   [![Android](https://img.shields.io/badge/Android-Jetpack_Compose-3DDC84?logo=android&logoColor=white)](https://developer.android.com/compose)
   [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
-  [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.6-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+  [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.16-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
   [![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/17/)
   [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
   [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
@@ -29,6 +29,8 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 
 > [!NOTE]
 > Tuần 1–7 đã có source, kiểm thử, CI và bản demo portfolio. Demo dùng dữ liệu tổng hợp, không nhận tiền hoặc gửi push thật. Không cần mua hosting/domain để chạy thử. Bộ cấu hình production là tài liệu kỹ thuật tham khảo, **không phải chứng nhận đã go-live**. Bắt đầu với [hướng dẫn demo & kịch bản trình diễn](docs/week-7-portfolio.md).
+
+Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗi/retry Android, lịch theo múi giờ nhà hàng, test ViewModel và quality/security gates. [Báo cáo tuần 8](docs/week-8-quality.md) phân biệt kết quả đã chạy local với emulator/CI còn chờ nghiệm thu; không coi build APK là UI E2E đã đạt.
 
 ## Giao diện demo
 
@@ -63,6 +65,7 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 ### Trải nghiệm khách hàng
 
 - Duyệt thực đơn và xem thông tin món ăn.
+- Yêu thích riêng theo tài khoản; đánh giá 1–5 sao, cập nhật một đánh giá cho mỗi món, không công khai email/UID.
 - Chọn ngày, khung giờ và khu vực ngồi.
 - Tạo yêu cầu đặt bàn và thêm món vào đơn.
 - Xem hóa đơn tính bởi server và tài khoản chuyển khoản thực tế; theo dõi chờ đối soát, đã thu, chờ hoàn/đã hoàn.
@@ -302,6 +305,8 @@ $env:WEATHER_API_KEY='your-production-key'
 | `GET` | `/api/thucdon` | Lấy danh sách thực đơn |
 | `GET` | `/api/thucdon/{id}` | Lấy chi tiết món ăn |
 | `GET` | `/api/ban-slot` | Tra cứu bàn theo ngày, giờ và khu vực |
+| `GET / POST / DELETE` | `/api/yeu-thich/list`, `/add`, `/remove` | Danh sách/thêm/xóa yêu thích của principal, không nhận quyền từ client UID |
+| `GET / POST` | `/api/binhluan/{id}`, `/api/binhluan/add` | Đọc đánh giá ẩn danh / cập nhật điểm 1–5 và nội dung có giới hạn |
 | `POST` | `/api/datban/save` | Tạo đơn và giữ sức chứa, cần `Idempotency-Key` |
 | `GET` | `/api/datban/{id}` | Đọc đúng đơn đặt bàn theo ID |
 | `POST` | `/api/datban/{id}/confirm` | Xác nhận đặt bàn, đóng băng giỏ hàng |
@@ -367,9 +372,12 @@ JDK 17 + Node 24; lần đầu cần tải Chromium. Test tự khởi động JA
 ./gradlew.bat testDebugUnitTest
 ./gradlew.bat assembleDebug
 ./gradlew.bat lintDebug
+node scripts/check-android-quality.mjs
 ```
 
 Trước khi mở pull request, nên chạy cả test backend lẫn build Android để phát hiện sớm lỗi contract giữa hai phía.
+
+Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 Chromium E2E**. Lint hiện còn **96 warnings / 8 hints, 0 errors**; gate theo số lượng từng loại không cho tăng nợ mới, chưa phải lint sạch. Có instrumentation tests cho màn hình Compose thật và Android gọi demo API thật; CI mới có matrix API 25/35, **chưa có kết quả emulator/CI remote cho revision tuần 8**. Test dùng application fixture không Firebase, không thay thế nghiệm thu toàn bộ app hoặc Google/Firebase login thật. Chi tiết/reproduce trong [báo cáo tuần 8](docs/week-8-quality.md).
 
 ## Roadmap
 
@@ -385,6 +393,8 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [x] Dashboard vận hành, audit và kiểm tra sức chứa bàn thực tế.
 - [x] Test tích hợp H2/MySQL, concurrency, bảo mật và Android contract; build/lint debug.
 - [x] Demo portfolio riêng: H2/roles fixture, walkthrough thật, screenshot, E2E browser/video và bundle JAR.
+- [x] API yêu thích/đánh giá, Android retry/error/account isolation, restaurant timezone, ViewModel tests và quality/security gate.
+- [ ] Nghiệm thu instrumentation API 25/35 trên CI cho revision tuần 8 (test APK đã build, local emulator bị chặn bởi môi trường ảo hóa).
 - [x] CI và manual release delivery bundle; log có cấu trúc, metrics, HTTPS/hardening template.
 - [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
 - Ngoài scope hiện tại: hosting/domain, giao dịch/Firebase/FCM thật, signed Android/store release, HA và operator UAT.
@@ -398,6 +408,7 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [Tuần 4–5 — Security & operations](docs/weeks-4-5-security-operations.md) — phạm vi hoàn thành, phân quyền, thanh toán thủ công, thông báo và checklist đưa vào vận hành.
 - [Tuần 6 — Production readiness](docs/week-6-production-readiness.md) — CI/release, TLS/private metrics, backup mã hóa, restore/rollback và các gate go-live.
 - [Tuần 7 — Portfolio demo](docs/week-7-portfolio.md) — chạy không cần secret, case study, kịch bản 5–7 phút và giới hạn đã kiểm chứng.
+- [Tuần 8 — Quality & regression](docs/week-8-quality.md) — các khoảng trống đã xử lý, test/evidence, lint budget, CVE exception và gate còn chờ.
 - [Demo bundle guide](docs/demo-bundle-guide.md) — chạy JAR độc lập bằng JDK 17.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) — workflow đóng góp và báo lỗi không lộ dữ liệu.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.

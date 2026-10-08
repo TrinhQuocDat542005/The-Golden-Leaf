@@ -314,7 +314,7 @@ fun AppNavGraph(navController: NavHostController) {
                             navController.navigate(Screen.ChonMonAn.route)
                         },
                         onError = { msg ->
-                            Log.e("DatBan", "Lỗi khi đặt bàn: $msg")
+                            // DatBanViewModel already exposes a user-visible, sanitized error.
                         }
                     )
                 }

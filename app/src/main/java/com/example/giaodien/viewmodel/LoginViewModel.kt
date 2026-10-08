@@ -47,7 +47,7 @@ class LoginViewModel(
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val userEmail = auth.currentUser?.email ?: email
-                    Log.d("LoginViewModel", "Login successful, starting sync for $userEmail") // Added log
+                    if (com.example.giaodien.BuildConfig.DEBUG) Log.d("LoginViewModel", "Authenticated; syncing profile")
                     startUserSynchronization(userEmail)
                 } else {
                     _uiState.value = LoginUiState.Error(task.exception?.localizedMessage ?: "Đăng nhập thất bại")
@@ -111,7 +111,7 @@ class LoginViewModel(
                             val userProfile = userRepository.synchronizeUser(idToken)
                             _uiState.value = LoginUiState.Success(userEmail)
                         } catch (e: Exception) {
-                            Log.e("SyncError", e.message ?: "Error")
+                            Log.e("SyncError", "Profile sync failed")
                             _uiState.value = LoginUiState.Error("Chưa đồng bộ được tài khoản. Kiểm tra kết nối và thử lại.")
                         }
                     }
@@ -119,7 +119,7 @@ class LoginViewModel(
                     _uiState.value = LoginUiState.Error("Không thể lấy ID Token từ Firebase.")
                 }
             } else {
-                Log.e("LoginViewModel", "Error fetching ID Token: ${task.exception?.localizedMessage}")
+                Log.e("LoginViewModel", "ID token unavailable")
                 _uiState.value = LoginUiState.Error("Lỗi lấy Firebase Token: ${task.exception?.localizedMessage}")
             }
         }
@@ -134,12 +134,12 @@ class LoginViewModel(
             // 💡 CHỈNH SỬA: Gọi Repository thay vì ApiService trực tiếp
             val userProfile = userRepository.synchronizeUser(idToken)
 
-            Log.i("SyncSuccess", "Đồng bộ thành công! UID: ${userProfile.uid}")
+            if (com.example.giaodien.BuildConfig.DEBUG) Log.d("SyncSuccess", "Profile synchronized")
             _uiState.value = LoginUiState.Success(userEmail)
 
         } catch (e: Exception) {
             // Log lỗi chi tiết của network (ví dụ: No Internet, Timeout, 401)
-            Log.e("SyncError", "Lỗi đồng bộ Backend: ${e.message}", e)
+            Log.e("SyncError", "Profile sync failed")
             _uiState.value = LoginUiState.Error("Lỗi đồng bộ hóa dữ liệu: ${e.message}")
         }
     }
