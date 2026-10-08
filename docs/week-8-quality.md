@@ -81,6 +81,8 @@ Lần chạy 1e51d9a đã boot emulator nhưng AGP UTP dừng ở console/test-r
 
 ## Lint và quyền riêng tư log
 
+Native instrumentation ở revision `6394e9b` đã thực sự chạy đủ bốn tests và phát hiện lỗi, không được tính là nghiệm thu: fixture cart thiếu `tenMon`/`giaMon` bắt buộc, selector ngày tìm số ngày trong khi UI dùng tên thứ, và API 25 hết heap khi decode icon `map.png` 4000×4000 (allocation khoảng 441 MB). Cart fixture lấy dữ liệu menu thật, selector dùng tag ISO date của nút ngày, icon bản đồ đổi sang vector và ảnh thumbnail dùng Coil với kích thước đo được. Assertions và gate đủ bốn tests vẫn giữ nguyên; phải xác nhận lại trên cả hai API.
+
 `scripts/android-lint-budget.json` khóa số lượng theo từng issue ID: issue mới hoặc số lượng vượt budget làm CI fail; Error/Fatal luôn fail. Budget phản ánh baseline tuần 8, không phải số 93 warnings/7 hints ở tuần 6. Dependency checks thay đổi theo dữ liệu repository nên có thể cần đánh giá diff sau update, không tự tăng budget để bỏ qua lỗi.
 
 Gate chưa phân biệt vị trí/fingerprint cùng loại, nên việc sửa một warning và thêm một warning khác cùng ID có thể vẫn lọt qua; review diff vẫn bắt buộc. Chưa xử lý sạch tài nguyên/icon/dependency warnings legacy. Gate log cho phép Log tag/message tĩnh, từ chối interpolation/biến/raw exception và println/printStackTrace trong Kotlin production source. Đây là static guard, không chứng nhận runtime log không bao giờ chứa dữ liệu cá nhân.

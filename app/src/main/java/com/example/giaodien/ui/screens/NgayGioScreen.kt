@@ -1,6 +1,5 @@
 package com.example.giaodien.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,12 +9,16 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import coil.compose.AsyncImage
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -160,6 +163,7 @@ fun DateTimeSelectionBlock(
                         fontWeight = FontWeight.Bold,
                         color = if (isSelected) PrimaryRed else Color.Black,
                         modifier = Modifier
+                            .testTag("booking-date-$date")
                             .padding(horizontal = 4.dp, vertical = 8.dp)
                             .clickable { onDateSelected(date) }
                     )
@@ -312,7 +316,8 @@ fun AddressSearch() {
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
-                    painter = painterResource(id = R.drawable.map),
+                    // A vector avoids decoding the legacy 4000px map bitmap (~441 MB on API 25).
+                    imageVector = Icons.Default.LocationOn,
                     contentDescription = "Map",
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -328,8 +333,10 @@ fun RestaurantInfo() {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.nhahang),
+        // Decode to the measured thumbnail size, not the resource's density-scaled bitmap.
+        // Eager painterResource decoding can exhaust the heap on API 25.
+        AsyncImage(
+            model = R.drawable.nhahang,
             contentDescription = "Restaurant Image",
             modifier = Modifier
                 .size(96.dp)
