@@ -8,6 +8,12 @@ readonly fixture="golden-leaf-week8-${api}"
 readonly image="system-images;android-${api};google_apis;x86_64"
 readonly emulator_bin="$sdk/emulator/emulator"
 readonly adb_bin="$sdk/platform-tools/adb"
+# Use the same explicit Android-scoped locations for new CLI tools and emulator.
+# Do not override HOME or reuse a user's AVD directory.
+export ANDROID_USER_HOME="$PWD/build/week8/android-user-$api"
+export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
+export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+mkdir -p "$ANDROID_AVD_HOME"
 mkdir -p build/week8
 java -jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --spring.profiles.active=demo --server.port=18082 > build/week8/android-demo.log 2>&1 &
 demo_pid=$!
@@ -26,7 +32,8 @@ for _ in $(seq 1 90); do
 done
 curl --fail --silent http://127.0.0.1:18082/api/demo/config | grep -q '"demo":true'
 "$sdk/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "$image" emulator platform-tools
-"$sdk/cmdline-tools/latest/bin/avdmanager" create avd --force --name "$fixture" --package "$image" --device pixel <<< no
+"$sdk/cmdline-tools/latest/bin/avdmanager" create avd --force --name "$fixture" --path "$ANDROID_AVD_HOME/$fixture.avd" --package "$image" --device pixel <<< no
+[[ -f "$ANDROID_AVD_HOME/$fixture.ini" ]] || { echo 'AVD registry missing at the explicit fixture location'; "$sdk/cmdline-tools/latest/bin/avdmanager" list avd; exit 1; }
 "$emulator_bin" -avd "$fixture" -no-window -no-audio -no-snapshot -no-boot-anim -gpu swiftshader_indirect -port 5580 > build/week8/emulator.log 2>&1 &
 emulator_pid=$!
 export ANDROID_SERIAL=emulator-5580
@@ -41,4 +48,7 @@ done
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global transition_animation_scale 0
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global animator_duration_scale 0
 bash gradlew --no-daemon connectedDebugAndroidTest -Pweek8IsolatedTests=true -Pandroid.testInstrumentationRunnerArguments.demoBaseUrl=http://10.0.2.2:18082
+for shot in slot-selection network-error; do
+  "$adb_bin" -s "$ANDROID_SERIAL" exec-out run-as com.example.giaodien cat "files/week8-$shot.png" > "build/week8/android-$shot.png"
+done
 "$adb_bin" -s "$ANDROID_SERIAL" logcat -d -t 2000 > build/week8/android-logcat.txt

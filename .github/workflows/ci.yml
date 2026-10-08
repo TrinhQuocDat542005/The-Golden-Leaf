@@ -178,6 +178,7 @@ jobs:
             app/build/outputs/androidTest-results
             build/week8/*.log
             build/week8/android-logcat.txt
+            build/week8/android-*.png
           retention-days: 14
   security:
     needs: backend

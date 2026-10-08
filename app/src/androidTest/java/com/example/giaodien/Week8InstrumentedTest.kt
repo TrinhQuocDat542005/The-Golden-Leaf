@@ -26,6 +26,16 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class Week8InstrumentedTest {
     @get:Rule val compose = createComposeRule()
+    private fun screenshot(name: String) {
+        compose.waitForIdle()
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val bitmap = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
+        try {
+            java.io.File(instrumentation.targetContext.filesDir,"week8-$name.png").outputStream().use {
+                check(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it))
+            }
+        } finally { bitmap.recycle() }
+    }
     private fun slots(): List<BanSlot> {
         val date=BookingAvailability.today().toString()
         // Tomorrow is selected in the screen to avoid time-of-day dependence.
@@ -43,6 +53,7 @@ class Week8InstrumentedTest {
         compose.onNodeWithText("11:00-15:00").performClick()
         compose.onNodeWithText("Tiếp tục").assertIsEnabled()
         compose.onNodeWithText("THE GOLDEN LEAF").assertIsDisplayed()
+        screenshot("slot-selection")
     }
     @Test fun actualDateScreenShowsNetworkFailureAndRetry() {
         var fail=true
@@ -50,6 +61,7 @@ class Week8InstrumentedTest {
         compose.setContent { MaterialTheme { NgayGioScreen(vm,rememberNavController()) } }
         compose.onNodeWithText("Không tải được lịch bàn. Kiểm tra kết nối và thử lại.").assertIsDisplayed()
         compose.onNodeWithText("Tiếp tục").assertIsNotEnabled()
+        screenshot("network-error")
         fail=false; compose.onNodeWithText("Thử lại").performClick()
         compose.onNodeWithText("Không tải được lịch bàn. Kiểm tra kết nối và thử lại.").assertDoesNotExist()
     }
