@@ -87,6 +87,8 @@ Lần chạy 1e51d9a đã boot emulator nhưng AGP UTP dừng ở console/test-r
 
 ### Ảnh native Android API 25
 
+Revision `bf92d55` đã đạt bốn native tests trên cả API 25/35, xác minh lại raw events/JUnit và focus thuộc app. Hai ảnh API 25 và ảnh chọn slot API 35 đạt kiểm tra trực quan; ảnh lỗi mạng API 35 là frame trắng trước khi compositor hiển thị nội dung. Không dùng frame trắng để nghiệm thu. Screenshot helper đợi tối đa 10 giây cho header PrimaryRed thật xuất hiện trong native framebuffer; không crop/retouch hoặc thay ảnh giả. Semantics assertions vẫn giữ nguyên và timeout phải fail.
+
 PNG gốc từ artifact `android-emulator-api-25` (ID `11561507730`), revision `00df85c4c910f0f3232057d2775a98a3d0480fef`, ngày 08/10/2026. Không retouch/crop, không phải ảnh web mobile-width. Fixture synthetic Compose component, **không phải toàn bộ navigation/login của app**.
 
 <img src="assets/android-api25-slot-selection.png" alt="Android API 25: slot đầy khóa chọn, slot còn bàn được chọn và bật Tiếp tục" width="260"> <img src="assets/android-api25-network-error.png" alt="Android API 25: lỗi mạng có thử lại, Tiếp tục bị khóa" width="260">

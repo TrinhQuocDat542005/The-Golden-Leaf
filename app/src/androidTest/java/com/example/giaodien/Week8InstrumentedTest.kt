@@ -41,7 +41,29 @@ class Week8InstrumentedTest {
         check(foreground != null && Regex("\\bcom\\.example\\.giaodien(?:\\.test)?/").containsMatchIn(foreground)) {
             "Native screenshot is obscured or has unknown window focus: $foreground"
         }
-        val bitmap = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
+        // Semantics/idle can precede SurfaceFlinger's first displayed frame on API 35.
+        // Both real date-screen states have the solid PrimaryRed header: reject blank
+        // or dimmed transition frames rather than accepting a white native screenshot.
+        var rendered: android.graphics.Bitmap? = null
+        val deadline = android.os.SystemClock.uptimeMillis() + 10_000
+        while (rendered == null && android.os.SystemClock.uptimeMillis() < deadline) {
+            val frame = instrumentation.uiAutomation.takeScreenshot()
+            if (frame != null) {
+                var headerPixels = 0
+                val pixels = if (android.os.Build.VERSION.SDK_INT >= 26 && frame.config == android.graphics.Bitmap.Config.HARDWARE)
+                    checkNotNull(frame.copy(android.graphics.Bitmap.Config.ARGB_8888,false)) else frame
+                try {
+                    for (x in 1..31) for (y in 1..8) {
+                        if (pixels.getPixel(pixels.width*x/32,pixels.height*y/32) == 0xFFE5584F.toInt()) headerPixels++
+                    }
+                } finally {
+                    if (pixels !== frame) pixels.recycle()
+                }
+                if (headerPixels >= 16) rendered = frame else frame.recycle()
+            }
+            if (rendered == null) android.os.SystemClock.sleep(100)
+        }
+        val bitmap = checkNotNull(rendered) { "Date screen did not render its header before screenshot timeout" }
         try {
             java.io.File(instrumentation.targetContext.filesDir,"week8-$name.png").outputStream().use {
                 check(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it))
