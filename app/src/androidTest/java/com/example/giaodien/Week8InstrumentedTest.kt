@@ -29,9 +29,14 @@ class Week8InstrumentedTest {
     private fun screenshot(name: String) {
         compose.waitForIdle()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val foreground = instrumentation.uiAutomation.rootInActiveWindow?.packageName?.toString()
-        check(foreground == "com.example.giaodien" || foreground == "com.example.giaodien.test") {
-            "Native screenshot is obscured by another window: $foreground"
+        // Compose's accessibility root can be null immediately after UiAutomation connects.
+        // WindowManager focus still identifies system dialogs; never accept unknown focus.
+        val windows = android.os.ParcelFileDescriptor.AutoCloseInputStream(
+            instrumentation.uiAutomation.executeShellCommand("dumpsys window windows")
+        ).bufferedReader().use { it.readText() }
+        val foreground = windows.lineSequence().firstOrNull { it.contains("mCurrentFocus=") }
+        check(foreground != null && Regex("\\bcom\\.example\\.giaodien(?:\\.test)?/").containsMatchIn(foreground)) {
+            "Native screenshot is obscured or has unknown window focus: $foreground"
         }
         val bitmap = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
         try {

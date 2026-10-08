@@ -57,10 +57,13 @@ for launcher in com.google.android.apps.nexuslauncher com.android.launcher3; do
   fi
 done
 bash gradlew --no-daemon assembleDebug assembleDebugAndroidTest -Pweek8IsolatedTests=true
-"$adb_bin" -s "$ANDROID_SERIAL" install -r app/build/outputs/apk/debug/app-debug.apk
-"$adb_bin" -s "$ANDROID_SERIAL" install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+echo 'Installing isolated application APK (bounded, non-streaming)'
+timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
+echo 'Installing instrumentation APK (bounded, non-streaming)'
+timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 # Native JUnit avoids AGP UTP's incompatible emulator-console handshake; tests are unchanged.
-"$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e demoBaseUrl http://10.0.2.2:18082 com.example.giaodien.test/com.example.giaodien.Week8TestRunner | tee build/week8/instrumentation-results.txt
+echo 'Running four native instrumentation tests (bounded)'
+timeout 180 "$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e demoBaseUrl http://10.0.2.2:18082 com.example.giaodien.test/com.example.giaodien.Week8TestRunner | tee build/week8/instrumentation-results.txt
 node scripts/check-android-instrumentation.mjs
 for shot in slot-selection network-error; do
   "$adb_bin" -s "$ANDROID_SERIAL" exec-out run-as com.example.giaodien cat "files/week8-$shot.png" > "build/week8/android-$shot.png"
