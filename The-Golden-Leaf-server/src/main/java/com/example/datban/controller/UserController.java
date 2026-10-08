@@ -17,10 +17,12 @@ import java.util.Map;
 public class UserController {
     private final AuthService auth;
     private final String webApiKey;
-    public UserController(AuthService auth,@Value("${app.firebase.web-api-key:}") String webApiKey) {
-        this.auth=auth;this.webApiKey=webApiKey;
+    private final org.springframework.core.env.Environment environment;
+    public UserController(AuthService auth,@Value("${app.firebase.web-api-key:}") String webApiKey,
+            org.springframework.core.env.Environment environment) {
+        this.auth=auth;this.webApiKey=webApiKey;this.environment=environment;
     }
-    @GetMapping("/web-config") public Object config() {return Map.of("apiKey",webApiKey);}
+    @GetMapping("/web-config") public Object config() {return Map.of("apiKey",webApiKey,"demo",environment.matchesProfiles("demo"));}
     @GetMapping("/me") public Object me() {return RestaurantPrincipal.required();}
     @PostMapping("/sync")
     public ResponseEntity<?> sync(@Valid @RequestBody TokenRequest token,HttpServletRequest request) {

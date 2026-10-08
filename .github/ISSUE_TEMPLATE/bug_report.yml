@@ -1,0 +1,17 @@
+name: Bug report
+description: Reproducible behavior using synthetic data only
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include passwords, tokens, service-account keys, customer data or bank statements. See SECURITY.md for sensitive findings."
+  - type: input
+    id: revision
+    attributes: {label: Commit and environment, placeholder: "Commit SHA, OS, JDK, demo/dev/Android"}
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes: {label: Safe reproduction steps, description: "Use local demo or disposable fixtures; include expected and actual behavior."}
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes: {label: Sanitized evidence, description: "Relevant error code or test result; remove all secrets and personal data."}

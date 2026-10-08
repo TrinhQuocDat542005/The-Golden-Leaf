@@ -50,4 +50,10 @@ class HardeningIntegrationTests {
             .andExpect(header().string("X-Content-Type-Options","nosniff"));
         mvc.perform(get("/staff.html")).andExpect(status().isOk()).andExpect(header().exists("Content-Security-Policy"));
     }
+    @Test void demoSessionsAreNotInstalledOutsideDemoProfile() throws Exception {
+        mvc.perform(get("/api/demo/config")).andExpect(status().isNotFound());
+        mvc.perform(post("/api/demo/session").contentType("application/json").content("{\"persona\":\"ADMIN\"}"))
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/auth/me").header("Authorization","Bearer demo-not-a-firebase-token")).andExpect(status().isUnauthorized());
+    }
 }

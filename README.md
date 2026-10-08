@@ -3,7 +3,9 @@
 
   # The Golden Leaf
 
-  **Nền tảng đặt bàn và gọi món dành cho nhà hàng, kết nối trải nghiệm khách hàng trên Android với hệ thống vận hành tập trung.**
+  **Full-stack portfolio: đặt bàn nguyên tử, đối soát chuyển khoản và vận hành nhà hàng — Android, Spring Boot và web dashboard.**
+
+  [![CI](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml/badge.svg)](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml)
 
   [![Android](https://img.shields.io/badge/Android-Jetpack_Compose-3DDC84?logo=android&logoColor=white)](https://developer.android.com/compose)
   [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
@@ -12,19 +14,35 @@
   [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
   [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 
-  [Bắt đầu nhanh](#bắt-đầu-nhanh) · [Kiến trúc](#kiến-trúc-hệ-thống) · [API](#api-hiện-có) · [Roadmap](#roadmap) · [Tài liệu](#tài-liệu-kỹ-thuật)
+  [Chạy demo](#2-demo-portfolio-không-cần-secret) · [Ảnh thật](#giao-diện-demo) · [Case study](docs/week-7-portfolio.md#case-study-ngắn-cho-người-review) · [API](#api-hiện-có) · [Tài liệu](#tài-liệu-kỹ-thuật)
 </div>
 
 ---
 
 ## Tổng quan
 
-The Golden Leaf hướng tới số hóa toàn bộ hành trình dùng bữa: khách hàng xem thực đơn, chọn thời gian và khu vực, đặt bàn, gọi món và theo dõi hóa đơn ngay trên ứng dụng Android; phía nhà hàng có API và giao diện web nền tảng để quản lý thực đơn cùng hoạt động đặt bàn.
+The Golden Leaf là dự án portfolio mô hình hóa hành trình dùng bữa: khách xem thực đơn, đặt bàn, gọi món và theo dõi hóa đơn; nhân viên đối soát, phân bàn, nhận khách và hoàn tất. Trọng tâm không chỉ là CRUD mà là tính đúng của sức chứa, tiền và quyền truy cập khi request bị retry hoặc nhiều người thao tác đồng thời.
+
+**For reviewers:** a local web/API sandbox runs with JDK 17, without Firebase credentials, MySQL or a bank account. The Android client remains Firebase-authenticated. This repository demonstrates engineering workflows; it is not a live restaurant service or a published mobile app.
 
 Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Android, Spring Boot REST API và hạ tầng MySQL chạy bằng Docker Compose. Schema dữ liệu được quản lý bằng Flyway, contract API được chuẩn hóa bằng DTO và có OpenAPI/Swagger để kiểm thử tích hợp.
 
 > [!NOTE]
-> Đã triển khai milestone tuần 1–6: đặt bàn nguyên tử, xác thực/phân quyền, chuyển khoản thủ công, thông báo/dashboard, CI và bộ cấu hình triển khai an toàn. Chưa public production hoặc nghiệm thu Firebase/ngân hàng thật; xem [runbook tuần 6](docs/week-6-production-readiness.md) và checklist cấu hình tuần 4–5.
+> Tuần 1–7 đã có source, kiểm thử, CI và bản demo portfolio. Demo dùng dữ liệu tổng hợp, không nhận tiền hoặc gửi push thật. Không cần mua hosting/domain để chạy thử. Bộ cấu hình production là tài liệu kỹ thuật tham khảo, **không phải chứng nhận đã go-live**. Bắt đầu với [hướng dẫn demo & kịch bản trình diễn](docs/week-7-portfolio.md).
+
+## Giao diện demo
+
+Ảnh chụp từ ứng dụng đang chạy qua Chromium E2E, không phải mockup. Ngày/ID có thể khác khi chạy lại.
+
+![Portfolio demo — trải nghiệm khách trên API thật](docs/assets/demo-overview.png)
+
+<details>
+  <summary>Đơn đặt bàn, dashboard nhân viên và giao diện mobile-width</summary>
+
+  <p><img src="docs/assets/demo-booking.png" alt="Đơn demo với tổng tiền do server tính" width="900" /></p>
+  <p><img src="docs/assets/demo-dashboard.png" alt="Dashboard demo sau đối soát và phân bàn" width="900" /></p>
+  <p><img src="docs/assets/demo-mobile.png" alt="Web demo ở viewport 390 px, không phải screenshot Android" width="280" /></p>
+</details>
 
 ## Trạng thái phát triển
 
@@ -37,7 +55,8 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 | Chuyển khoản & hoàn tiền | ✅ Đã triển khai | Hóa đơn từ server, tài khoản nhận tiền snapshot, đối soát thủ công, audit và chống ghi nhận trùng |
 | Thông báo & vận hành | ✅ Đã triển khai | Inbox, FCM outbox/lease/retry, phân bàn, nhận khách, hoàn tất và dashboard nhân viên |
 | Release engineering | ✅ Đã triển khai | CI H2/MySQL/Android, manual delivery bundle, HTTPS template, hardening, metrics và backup mã hóa |
-| Go-live thực tế | 📋 Chờ cấu hình/UAT | Hosting/domain/secrets, signed Android, monitoring/backup off-host và nghiệm thu live |
+| Portfolio demo | ✅ Đã triển khai | H2 memory, 4 persona, walkthrough API thật, screenshots, browser E2E/video và JAR bundle |
+| Go-live thực tế | Ngoài phạm vi portfolio | Chưa public hosting, chưa signed Android/live Firebase/FCM/ngân hàng; không cần để review demo |
 
 ## Tính năng cốt lõi
 
@@ -116,7 +135,12 @@ The-Golden-Leaf/
 │   └── docker-compose.yml
 ├── docs/
 │   ├── api-contract.md          # REST contract và quy ước lỗi
-│   └── database-schema.md       # Thiết kế database
+│   ├── database-schema.md       # Thiết kế database
+│   ├── week-7-portfolio.md      # Demo, case study và script trình diễn
+│   └── assets/                 # Screenshot thật từ browser test
+├── tools/demo-browser/         # Playwright E2E, video/report
+├── ops/                        # Production/backup templates (không auto-deploy)
+├── .github/workflows/           # Backend/Android/infrastructure/demo CI
 ├── build.gradle.kts             # Cấu hình Gradle cấp project
 └── local.properties.example     # Mẫu cấu hình Android SDK
 ```
@@ -127,8 +151,9 @@ The-Golden-Leaf/
 
 - Git.
 - JDK 17.
-- Android Studio và Android SDK 36.
-- Docker Desktop nếu chạy backend bằng container.
+- **Demo web/API:** chỉ Git và JDK 17. Lần build đầu cần Internet.
+- **Android riêng:** Android Studio và Android SDK 36.
+- **Development MySQL/kiểm tra hạ tầng:** Docker Desktop nếu chạy bằng container.
 
 > [!IMPORTANT]
 > Dùng JDK 17 cho cả backend và Gradle Android. Không đưa `.env`, keystore hoặc Firebase service-account JSON thật vào Git.
@@ -140,10 +165,27 @@ git clone https://github.com/TrinhQuocDat542005/The-Golden-Leaf.git
 cd The-Golden-Leaf
 ```
 
-### 2. Khởi động backend bằng Docker
+### 2. Demo portfolio không cần secret
 
 ```powershell
 cd The-Golden-Leaf-server
+./mvnw.cmd spring-boot:run '-Dspring-boot.run.profiles=demo'
+```
+
+Linux/macOS: `bash mvnw spring-boot:run -Dspring-boot.run.profiles=demo` trong thư mục backend.
+
+Mở **[http://127.0.0.1:8080/demo.html](http://127.0.0.1:8080/demo.html)**. Chọn ngày mai, 4 khách và 2 salad → tạo đơn → xác nhận → tạo payment demo. Tổng mẫu **340.000 VND** do server tính. Mở `/staff.html` ở tab khác, chọn persona nhân viên để đối soát/phân bàn; admin xem audit. Không cần mật khẩu hay Firebase.
+
+DB tạm có 6 món, 4 bàn 8 ghế, 28 slots, 4 tài khoản `.invalid` và một đơn hôm nay để thử nhận khách/hoàn tất. Restart backend để reset. Không chuyển tiền, không gửi FCM, không ghi/serve uploads local. Demo chỉ bind loopback và từ chối trộn profile/DB thật.
+
+Muốn chạy không cần Maven? Tải **portfolio-demo-bundle** từ một [CI run main thành công](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml), kiểm checksum và chạy JAR với JDK 17. Artifact giữ 14 ngày, có thể cần GitHub login; không phải GitHub Release lâu dài. Xem [bundle guide](docs/demo-bundle-guide.md).
+
+**Phạm vi:** đây là demo web/API. Android vẫn cần Firebase để đăng nhập; ảnh web mobile-width không thay nghiệm thu thiết bị Android.
+
+### 3. Development backend bằng Docker (tùy chọn)
+
+```powershell
+# Chạy từ thư mục backend; không cần bước này nếu chỉ xem demo H2.
 Copy-Item .env.example .env
 docker compose up --build
 ```
@@ -167,7 +209,7 @@ docker compose --profile tools up --build
 
 phpMyAdmin sẽ chạy tại `http://localhost:8082`.
 
-### 3. Cấu hình và build Android
+### 4. Cấu hình và build Android (tùy chọn)
 
 Quay lại thư mục gốc, tạo cấu hình SDK local:
 
@@ -249,6 +291,7 @@ $env:WEATHER_API_KEY='your-production-key'
 | --- | --- | --- | --- |
 | `dev` | MySQL | Tắt mặc định | Phát triển local và Docker Compose |
 | `test` | H2 in-memory | Tắt | Test tự động, không phụ thuộc dịch vụ ngoài |
+| `demo` | H2 memory riêng, không đổi URL | Persona mẫu; Firebase/push tắt, auth/roles vẫn bật | Portfolio local-only, không trộn profile |
 | `prod` | Nhận hoàn toàn từ env | Bắt buộc | Môi trường production |
 
 ## API hiện có
@@ -303,7 +346,20 @@ cd The-Golden-Leaf-server
 ./mvnw.cmd test
 ```
 
-Test backend dùng H2 in-memory nên không yêu cầu MySQL hoặc Firebase bên ngoài.
+Test mặc định dùng H2 in-memory và không yêu cầu Firebase. Các suite MySQL opt-in dùng **schema disposable riêng** theo CI; khi chưa cấu hình fixture chúng được skip, không gọi đây là đã test MySQL local.
+
+### Browser E2E và bằng chứng demo
+
+```powershell
+cd The-Golden-Leaf-server
+./mvnw.cmd verify
+cd ../tools/demo-browser
+npm ci
+npx playwright install chromium
+npm test
+```
+
+JDK 17 + Node 24; lần đầu cần tải Chromium. Test tự khởi động JAR với demo tại port 18082, không mock API, không reuse server khác, và kiểm customer/staff/admin journey + mobile-width. HTML report/video có trong artifact **demo-browser-report-and-video** của CI. [Hướng dẫn chụp lại screenshot và trình diễn](docs/week-7-portfolio.md).
 
 ### Android
 
@@ -328,10 +384,11 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [x] Notification outbox, retry, lease recovery và FCM delivery tracking.
 - [x] Dashboard vận hành, audit và kiểm tra sức chứa bàn thực tế.
 - [x] Test tích hợp H2/MySQL, concurrency, bảo mật và Android contract; build/lint debug.
-- [ ] Nghiệm thu end-to-end trên thiết bị, Firebase và tài khoản ngân hàng thật.
+- [x] Demo portfolio riêng: H2/roles fixture, walkthrough thật, screenshot, E2E browser/video và bundle JAR.
 - [x] CI và manual release delivery bundle; log có cấu trúc, metrics, HTTPS/hardening template.
 - [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
-- [ ] Go-live: hosting/domain/secrets, image/dependency scan, alerts/backup off-host và nghiệm thu operator.
+- Ngoài scope hiện tại: hosting/domain, giao dịch/Firebase/FCM thật, signed Android/store release, HA và operator UAT.
+- Tác giả tùy chọn: video có thuyết minh, license và GitHub Release dài hạn; không coi đây là việc bắt buộc để demo local.
 
 ## Tài liệu kỹ thuật
 
@@ -340,12 +397,15 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [Tuần 3 — Booking integrity](docs/week-3-booking-integrity.md) — lifecycle, cấu hình, kiểm thử concurrency và giới hạn triển khai.
 - [Tuần 4–5 — Security & operations](docs/weeks-4-5-security-operations.md) — phạm vi hoàn thành, phân quyền, thanh toán thủ công, thông báo và checklist đưa vào vận hành.
 - [Tuần 6 — Production readiness](docs/week-6-production-readiness.md) — CI/release, TLS/private metrics, backup mã hóa, restore/rollback và các gate go-live.
+- [Tuần 7 — Portfolio demo](docs/week-7-portfolio.md) — chạy không cần secret, case study, kịch bản 5–7 phút và giới hạn đã kiểm chứng.
+- [Demo bundle guide](docs/demo-bundle-guide.md) — chạy JAR độc lập bằng JDK 17.
+- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) — workflow đóng góp và báo lỗi không lộ dữ liệu.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.
 - [OpenAPI configuration](The-Golden-Leaf-server/src/main/java/com/example/datban/config/OpenApiConfig.java) — metadata tài liệu API.
 
 ## Quy ước đóng góp
 
-1. Tạo branch theo phạm vi thay đổi, ví dụ `feat/booking-integrity` hoặc `fix/invoice-total`.
+1. Tạo branch theo phạm vi thay đổi, ví dụ `feat/booking-integrity` hoặc `fix/invoice-total`; Codex-assisted dùng `codex/<scope>`.
 2. Giữ commit nhỏ, có chủ đích và sử dụng Conventional Commits.
 3. Không commit secret, file `.env`, service-account JSON hoặc keystore thật.
 4. Cập nhật contract/migration khi thay đổi API hoặc database.

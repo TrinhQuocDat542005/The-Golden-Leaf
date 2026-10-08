@@ -4,6 +4,7 @@ let token = null;
 let assigning = null;
 let profile = null;
 let menuItems = [];
+let demoMode = false;
 const el = id => document.getElementById(id);
 const statusName = code => ({HOLDING:'Đang giữ chỗ',CONFIRMED:'Đã xác nhận',ASSIGNED:'Đã phân bàn',SEATED:'Đang phục vụ',COMPLETED:'Hoàn tất',CANCELLED:'Đã hủy',EXPIRED:'Hết giữ chỗ',PENDING:'Chờ đối soát',PAID:'Đã nhận tiền',REFUND_REQUIRED:'Chờ hoàn tiền',REFUNDED:'Đã hoàn tiền',DELIVERED:'Đã gửi',FAILED:'Gửi lỗi',SENDING:'Đang gửi'})[code] || code;
 const money = amount => new Intl.NumberFormat('vi-VN',{maximumFractionDigits:2}).format(amount||0)+' VND';
@@ -54,14 +55,27 @@ async function refresh() {
   el('deliveries').replaceChildren();deliveries.forEach(d=>{const line=document.createElement('p');line.textContent=`#${d.id} · ${statusName(d.status)} · ${d.attempts} lần · ${d.last_error||''}`;if(d.status==='FAILED')line.append(button('Thử lại',async()=>{await api(`/api/staff/deliveries/${d.id}/retry`,{});await refresh();}));el('deliveries').append(line);});
   if(profile?.roles.includes('ADMIN'))await loadMenu();
 }
+async function openWorkspace(sessionToken) {
+  token=sessionToken;
+  try {profile=await api('/api/auth/me');el('admin-panel').hidden=!profile.roles.includes('ADMIN');el('reconcile').hidden=!profile.roles.includes('ADMIN');await refresh();el('login').hidden=true;el('workspace').hidden=false;say(demoMode?'Đã vào sandbox. Mọi giao dịch dưới đây chỉ là dữ liệu demo.':'Đã đăng nhập. Phiên hết hạn sẽ yêu cầu đăng nhập lại.');}catch(error){logout();throw error;}
+}
 el('login-form').onsubmit=e=>{e.preventDefault();action(async()=>{
   const config=await fetch('/api/auth/web-config',{credentials:'omit'}).then(r=>r.json());
   if(!config.apiKey)throw Error('Chưa cấu hình FIREBASE_WEB_API_KEY. Liên hệ quản trị triển khai.');
   const response=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(config.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:el('email').value,password:el('password').value,returnSecureToken:true})});
   el('password').value='';const data=await response.json();if(!response.ok)throw Error('Đăng nhập thất bại. Kiểm tra email và mật khẩu.');
-  token=data.idToken;
-  try {profile=await api('/api/auth/me');el('admin-panel').hidden=!profile.roles.includes('ADMIN');el('reconcile').hidden=!profile.roles.includes('ADMIN');await refresh();el('login').hidden=true;el('workspace').hidden=false;say('Đã đăng nhập. Phiên hết hạn sẽ yêu cầu đăng nhập lại.');}catch(error){logout();throw error;}
+  await openWorkspace(data.idToken);
 });};
+el('demo-login').onsubmit=e=>{e.preventDefault();action(async()=>{
+  if(!demoMode)throw Error('Chế độ demo không hoạt động.');
+  const response=await fetch('/api/demo/session',{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({persona:el('demo-persona').value})});
+  if(!response.ok)throw Error('Không tạo được phiên demo.');const session=await response.json();await openWorkspace(session.token);
+});};
+fetch('/api/auth/web-config',{credentials:'omit'}).then(r=>r.ok?r.json():{}).then(config=>{
+  if(config.demo!==true)return;demoMode=true;el('demo-banner').hidden=false;el('demo-login').hidden=false;el('login-form').hidden=true;
+  el('login-help').textContent='Phiên mẫu chỉ tồn tại trong sandbox local. Không cần Firebase, email hay mật khẩu.';
+  el('menu-image').disabled=true;
+}).catch(()=>{});
 el('logout').onclick=()=>{logout();say('Đã đăng xuất.');};el('refresh').onclick=()=>action(refresh);
 el('booking-date').onchange=()=>action(refresh);
 el('assignment-close').onclick=()=>{el('assignment-dialog').close();assigning=null;};
@@ -70,7 +84,7 @@ el('assignment-form').onsubmit=e=>{e.preventDefault();action(async()=>{
   if(ids.length!==assigning.reserved_tables)throw Error(`Cần chọn đúng ${assigning.reserved_tables} bàn.`);
   await api(`/api/staff/bookings/${assigning.id}/assign`,{tableIds:ids});el('assignment-dialog').close();assigning=null;await refresh();say('Đã phân bàn.');
 });};
-el('transfer-form').onsubmit=e=>{e.preventDefault();action(async()=>{if(!confirm('Đã kiểm tra giao dịch này trong sao kê ngân hàng thực tế?'))return;await api(`/api/staff/bookings/${Number(el('transfer-booking').value)}/${el('transfer-kind').value}`,{reference:el('transfer-reference').value,amount:Number(el('transfer-amount').value)});await refresh();say('Đã ghi nhận đối soát và lưu audit.');el('transfer-reference').value='';});};
+el('transfer-form').onsubmit=e=>{e.preventDefault();action(async()=>{if(!confirm(demoMode?'Ghi nhận giao dịch GIẢ LẬP trong sandbox? Không chuyển tiền thật.':'Đã kiểm tra giao dịch này trong sao kê ngân hàng thực tế?'))return;await api(`/api/staff/bookings/${Number(el('transfer-booking').value)}/${el('transfer-kind').value}`,{reference:el('transfer-reference').value,amount:Number(el('transfer-amount').value)});await refresh();say('Đã ghi nhận đối soát và lưu audit.');el('transfer-reference').value='';});};
 el('role-form').onsubmit=e=>{e.preventDefault();action(async()=>{await api('/api/admin/roles',{uid:el('role-uid').value,role:el('role-code').value,grant:el('role-grant').value==='true'});say('Đã cập nhật quyền; áp dụng từ request kế tiếp.');});};
 el('table-form').onsubmit=e=>{e.preventDefault();action(async()=>{await api('/api/admin/tables',{areaId:Number(el('area').value),code:el('table-code').value,capacity:Number(el('table-capacity').value)});await refresh();say('Đã khai báo bàn. Cần đối chiếu sức chứa khung giờ trước khi nhận đơn thực tế.');});};
 el('audit').onclick=()=>action(async()=>{el('audit-content').textContent=JSON.stringify(await api('/api/admin/audit'),null,2);});

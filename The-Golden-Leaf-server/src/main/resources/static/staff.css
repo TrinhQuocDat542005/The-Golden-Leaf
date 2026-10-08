@@ -2,3 +2,4 @@
 :focus-visible{outline:3px solid #b79b55;outline-offset:3px}dialog{border:1px solid var(--line);border-radius:12px;padding:24px;max-width:min(900px,95vw);max-height:85vh;overflow:auto}dialog::backdrop{background:#163c30aa}#assignment-form{display:block}#assignment-options{margin-bottom:24px}#assignment-options input{width:20px;height:20px}nav{flex-wrap:wrap;align-items:end}
 textarea{font:inherit;border:1px solid #afbfb4;border-radius:6px;padding:10px;min-height:100px;resize:vertical}
 td{white-space:pre-line}
+.demo-notice{background:#f1e3bd;border:1px solid #d4b974;padding:16px;border-radius:8px;font-size:14px}
