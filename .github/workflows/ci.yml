@@ -88,7 +88,7 @@ jobs:
           node-version: '24'
       - run: node --check The-Golden-Leaf-server/src/main/resources/static/staff.js
       - run: node --check The-Golden-Leaf-server/src/main/resources/static/demo.js
-      - run: node --test scripts/check-android-quality.test.mjs scripts/check-security-report.test.mjs
+      - run: node --test scripts/check-android-quality.test.mjs scripts/check-security-report.test.mjs scripts/check-android-instrumentation.test.mjs
       - run: docker run --rm --network none -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9
       - run: docker run --rm --network none -v "$PWD:/repo:ro" -w /repo --entrypoint shellcheck rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -x ops/scripts/*.sh
       - run: bash -n ops/scripts/backup.sh ops/scripts/restore.sh ops/scripts/smoke.sh
@@ -162,6 +162,9 @@ jobs:
           cache: gradle
       - name: Enable KVM for disposable emulator
         run: sudo chmod a+rw /dev/kvm
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
       - name: Package isolated demo
         working-directory: The-Golden-Leaf-server
         run: bash mvnw -B -DskipTests package
@@ -179,6 +182,7 @@ jobs:
             build/week8/*.log
             build/week8/android-logcat.txt
             build/week8/android-*.png
+            build/week8/instrumentation-results.*
           retention-days: 14
   security:
     needs: backend

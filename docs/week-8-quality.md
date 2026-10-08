@@ -77,6 +77,8 @@ Instrumentation gồm hai kịch bản màn hình `NgayGioScreen` thật (slot �
 
 CI fixture đặt cùng `ANDROID_USER_HOME`/`ANDROID_EMULATOR_HOME`/`ANDROID_AVD_HOME` dưới build directory, tạo AVD bằng path explicit và kiểm tra registry trước boot; không đổi HOME. Điều này xử lý lỗi `Unknown AVD name` từ runner ở lần chạy c5a3c51. Hai test Compose chụp màn hình bằng Android UiAutomation (hỗ trợ cả API 25); script xuất PNG bằng `adb exec-out run-as` vào artifact riêng từng API. Chỉ gọi đây là screenshot đã nghiệm thu sau khi test runtime và kiểm tra ảnh thật đạt, không từ việc build APK.
 
+Lần chạy 1e51d9a đã boot emulator nhưng AGP UTP dừng ở console/test-runner handshake trước khi trả test events. Script dùng native `adb shell am instrument -w -r` với cùng APK/runner/tests để không phụ thuộc UTP console; không bỏ qua test. Gate yêu cầu đúng 4 test events thành công/unique, `OK (4 tests)` và instrumentation completion code -1; crash/failure/skip/partial output phải fail. Lưu raw output và JUnit XML tạo từ các events đã xác minh, cùng logcat cả khi lỗi. Có hai unit tests riêng cho parser native. Đây là thay đổi cách thực thi, chưa phải bằng chứng runtime đã đạt.
+
 ## Lint và quyền riêng tư log
 
 `scripts/android-lint-budget.json` khóa số lượng theo từng issue ID: issue mới hoặc số lượng vượt budget làm CI fail; Error/Fatal luôn fail. Budget phản ánh baseline tuần 8, không phải số 93 warnings/7 hints ở tuần 6. Dependency checks thay đổi theo dữ liệu repository nên có thể cần đánh giá diff sau update, không tự tăng budget để bỏ qua lỗi.

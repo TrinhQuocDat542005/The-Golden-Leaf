@@ -19,6 +19,7 @@ java -jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --spring.profi
 demo_pid=$!
 emulator_pid=''
 cleanup() {
+  if [[ -n "$emulator_pid" ]]; then timeout 5 "$adb_bin" -s emulator-5580 logcat -d -t 2000 > build/week8/android-logcat.txt 2>&1 || true; fi
   [[ -z "$emulator_pid" ]] || kill "$emulator_pid" 2>/dev/null || true
   kill "$demo_pid" 2>/dev/null || true
   [[ -z "$emulator_pid" ]] || wait "$emulator_pid" 2>/dev/null || true
@@ -47,7 +48,12 @@ done
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global window_animation_scale 0
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global transition_animation_scale 0
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global animator_duration_scale 0
-bash gradlew --no-daemon connectedDebugAndroidTest -Pweek8IsolatedTests=true -Pandroid.testInstrumentationRunnerArguments.demoBaseUrl=http://10.0.2.2:18082
+bash gradlew --no-daemon assembleDebug assembleDebugAndroidTest -Pweek8IsolatedTests=true
+"$adb_bin" -s "$ANDROID_SERIAL" install -r app/build/outputs/apk/debug/app-debug.apk
+"$adb_bin" -s "$ANDROID_SERIAL" install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+# Native JUnit avoids AGP UTP's incompatible emulator-console handshake; tests are unchanged.
+"$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e demoBaseUrl http://10.0.2.2:18082 com.example.giaodien.test/com.example.giaodien.Week8TestRunner | tee build/week8/instrumentation-results.txt
+node scripts/check-android-instrumentation.mjs
 for shot in slot-selection network-error; do
   "$adb_bin" -s "$ANDROID_SERIAL" exec-out run-as com.example.giaodien cat "files/week8-$shot.png" > "build/week8/android-$shot.png"
 done
