@@ -81,6 +81,8 @@ Instrumentation gồm hai kịch bản màn hình `NgayGioScreen` thật (slot �
 
 Gate chưa phân biệt vị trí/fingerprint cùng loại, nên việc sửa một warning và thêm một warning khác cùng ID có thể vẫn lọt qua; review diff vẫn bắt buộc. Chưa xử lý sạch tài nguyên/icon/dependency warnings legacy. Gate log cho phép Log tag/message tĩnh, từ chối interpolation/biến/raw exception và println/printStackTrace trong Kotlin production source. Đây là static guard, không chứng nhận runtime log không bao giờ chứa dữ liệu cá nhân.
 
+Hiệu chỉnh baseline từ [CI Linux đầu tiên của ea7f28f](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37789025753): backend/infrastructure/security đạt; Android unit/build/lint đạt nhưng gate phát hiện metadata fresh khác local. Report có **98 warnings / 8 hints**, thêm `OldTargetApi=1` (target 36 vốn giữ nguyên) và `AndroidGradlePluginVersion=2` thay vì 1 (Gradle 8.13 và AGP 8.13.0 vốn giữ nguyên). Budget được hiệu chỉnh chỉ hai mục theo report cùng source revision, không suppress cả issue family, không tự nâng target/major AGP chưa nghiệm thu. Local vẫn 96 warnings/8 hints. Mọi issue type khác hoặc số lượng vượt baseline tiếp tục fail; test tăng OldTargetApi lên 2 phải bị chặn. Đây là calibration khác môi trường có evidence, **không phải đã sửa sạch các warnings**.
+
 ## Security gate và ngoại lệ có hạn
 
 Nâng Spring Boot lên 3.5.16, Firebase Admin 9.11.0; overrides Jackson 2.21.7, Netty 4.1.139.Final, Tomcat 10.1.60, HttpCore5 5.4.3. Giữ Java 17 và Spring Boot 3; không nâng major framework chỉ để làm sạch report. H2/MySQL/browser/container regression phải đạt sau update.

@@ -9,6 +9,10 @@ test('lint gate rejects errors, new types, increased counts and broken reports',
   assert.throws(()=>checkBudget({New:1},{Known:1}));
   assert.throws(()=>lintCounts(xml.replace('Warning','Error')));
   assert.throws(()=>lintCounts('<issues>'));
+  // Fresh Linux SDK metadata discovers existing tooling/target advisories absent locally.
+  // The calibrated baseline is bounded, not an exemption for this issue family.
+  assert.doesNotThrow(()=>checkBudget({OldTargetApi:1,AndroidGradlePluginVersion:2},{OldTargetApi:1,AndroidGradlePluginVersion:2}));
+  assert.throws(()=>checkBudget({OldTargetApi:2},{OldTargetApi:1}));
 });
 test('privacy gate permits static logs and rejects interpolated data/raw exceptions',()=>{
   checkLogs('Log.e("Auth", "Authentication failed")','fixture');

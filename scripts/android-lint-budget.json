@@ -1,5 +1,5 @@
 {
-  "AndroidGradlePluginVersion": 1,
+  "AndroidGradlePluginVersion": 2,
   "AutoboxingStateCreation": 2,
   "GradleDependency": 21,
   "IconDuplicates": 1,
@@ -7,6 +7,7 @@
   "IconLocation": 22,
   "InsecureBaseConfiguration": 1,
   "NewerVersionAvailable": 12,
+  "OldTargetApi": 1,
   "RedundantLabel": 1,
   "SimilarGradleDependency": 6,
   "UnusedResources": 14,
