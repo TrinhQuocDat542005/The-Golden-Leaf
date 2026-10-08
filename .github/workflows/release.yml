@@ -1,0 +1,34 @@
+name: Release delivery bundle
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-bundle-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+  bundle:
+    if: github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Create versioned backend delivery bundle
+        run: |
+          mkdir release-bundle
+          docker build --label org.opencontainers.image.revision="$GITHUB_SHA" -t "golden-leaf:$GITHUB_SHA" The-Golden-Leaf-server
+          docker save "golden-leaf:$GITHUB_SHA" | gzip > release-bundle/backend-image.tar.gz
+          cp -R ops release-bundle/
+          cp docs/week-6-production-readiness.md release-bundle/
+          printf '%s\n' "$GITHUB_SHA" > release-bundle/REVISION
+          (cd release-bundle && sha256sum backend-image.tar.gz > SHA256SUMS)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: golden-leaf-delivery-${{ github.sha }}
+          path: release-bundle
+          retention-days: 14

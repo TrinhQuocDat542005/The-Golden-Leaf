@@ -20,3 +20,9 @@ local.properties
 # Firebase/Google Cloud Secret Keys
 serviceAccountKey.json
 firebase-service-account.json
+/backups/
+/ops/secrets/
+/ops/tls/
+/ops/.env.production
+/release-bundle/
+/tmp-week6/

@@ -24,7 +24,7 @@ The Golden Leaf hướng tới số hóa toàn bộ hành trình dùng bữa: kh
 Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Android, Spring Boot REST API và hạ tầng MySQL chạy bằng Docker Compose. Schema dữ liệu được quản lý bằng Flyway, contract API được chuẩn hóa bằng DTO và có OpenAPI/Swagger để kiểm thử tích hợp.
 
 > [!NOTE]
-> Đã triển khai milestone tuần 1–5: đặt bàn nguyên tử, xác thực/phân quyền, chuyển khoản do nhân viên đối soát, thông báo và dashboard vận hành. Chưa triển khai production hoặc nghiệm thu Firebase/ngân hàng thật; xem checklist cấu hình và giới hạn trong [runbook tuần 4–5](docs/weeks-4-5-security-operations.md).
+> Đã triển khai milestone tuần 1–6: đặt bàn nguyên tử, xác thực/phân quyền, chuyển khoản thủ công, thông báo/dashboard, CI và bộ cấu hình triển khai an toàn. Chưa public production hoặc nghiệm thu Firebase/ngân hàng thật; xem [runbook tuần 6](docs/week-6-production-readiness.md) và checklist cấu hình tuần 4–5.
 
 ## Trạng thái phát triển
 
@@ -36,7 +36,8 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 | Xác thực & phân quyền | ✅ Đã triển khai | Firebase ID token, kiểm tra thu hồi, email xác minh, ownership UID, CUSTOMER/STAFF/ADMIN |
 | Chuyển khoản & hoàn tiền | ✅ Đã triển khai | Hóa đơn từ server, tài khoản nhận tiền snapshot, đối soát thủ công, audit và chống ghi nhận trùng |
 | Thông báo & vận hành | ✅ Đã triển khai | Inbox, FCM outbox/lease/retry, phân bàn, nhận khách, hoàn tất và dashboard nhân viên |
-| Production readiness | 📋 Kế hoạch | CI/CD, backup, monitoring, hardening và runbook triển khai |
+| Release engineering | ✅ Đã triển khai | CI H2/MySQL/Android, manual delivery bundle, HTTPS template, hardening, metrics và backup mã hóa |
+| Go-live thực tế | 📋 Chờ cấu hình/UAT | Hosting/domain/secrets, signed Android, monitoring/backup off-host và nghiệm thu live |
 
 ## Tính năng cốt lõi
 
@@ -221,6 +222,8 @@ Backend sử dụng profile `dev` mặc định. Có thể đặt `SPRING_PROFIL
 | `PAYMENT_BANK_NAME` | Rỗng | Tên ngân hàng thực tế của nhà hàng |
 | `PAYMENT_ACCOUNT_NUMBER` | Rỗng | Số tài khoản nhận tiền |
 | `PAYMENT_ACCOUNT_NAME` | Rỗng | Chủ tài khoản nhận tiền |
+| `MONITORING_TOKEN` | Rỗng | Bearer riêng ≥32 ký tự cho private Prometheus, không cấp quyền business |
+| `PUSH_DELIVERY_ENABLED` | `true` | Tắt trên rehearsal DB restore để không gửi push thật |
 
 Các API payment/inbox/lịch sử/nhân viên/admin **luôn yêu cầu xác thực**, kể cả khi `REQUIRE_AUTH=false`. Chế độ này chỉ giữ tương thích development cho một số API cũ; không dùng công khai. Để trống cấu hình ngân hàng sẽ chặn tạo yêu cầu thanh toán mới, không trả tài khoản/QR mẫu.
 
@@ -326,7 +329,9 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [x] Dashboard vận hành, audit và kiểm tra sức chứa bàn thực tế.
 - [x] Test tích hợp H2/MySQL, concurrency, bảo mật và Android contract; build/lint debug.
 - [ ] Nghiệm thu end-to-end trên thiết bị, Firebase và tài khoản ngân hàng thật.
-- [ ] Thiết lập CI/CD, logging có cấu trúc, metrics, backup và runbook production.
+- [x] CI và manual release delivery bundle; log có cấu trúc, metrics, HTTPS/hardening template.
+- [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
+- [ ] Go-live: hosting/domain/secrets, image/dependency scan, alerts/backup off-host và nghiệm thu operator.
 
 ## Tài liệu kỹ thuật
 
@@ -334,6 +339,7 @@ Trước khi mở pull request, nên chạy cả test backend lẫn build Androi
 - [Database schema](docs/database-schema.md) — bảng, quan hệ, kiểu dữ liệu và chiến lược migration.
 - [Tuần 3 — Booking integrity](docs/week-3-booking-integrity.md) — lifecycle, cấu hình, kiểm thử concurrency và giới hạn triển khai.
 - [Tuần 4–5 — Security & operations](docs/weeks-4-5-security-operations.md) — phạm vi hoàn thành, phân quyền, thanh toán thủ công, thông báo và checklist đưa vào vận hành.
+- [Tuần 6 — Production readiness](docs/week-6-production-readiness.md) — CI/release, TLS/private metrics, backup mã hóa, restore/rollback và các gate go-live.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.
 - [OpenAPI configuration](The-Golden-Leaf-server/src/main/java/com/example/datban/config/OpenApiConfig.java) — metadata tài liệu API.
 

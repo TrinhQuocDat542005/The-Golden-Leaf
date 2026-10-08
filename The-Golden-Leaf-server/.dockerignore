@@ -4,3 +4,6 @@ target
 .env
 uploads
 src/main/resources/firebase/serviceAccountKey.json
+secrets
+*.age
+*.sql

@@ -1,0 +1,90 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-test-only-password
+          MYSQL_DATABASE: golden_leaf_week3_test
+        ports: ['13308:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pci-test-only-password"
+          --health-interval=10s --health-timeout=5s --health-retries=15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: The-Golden-Leaf-server/pom.xml
+      - name: Verify H2 and disposable MySQL suites
+        working-directory: The-Golden-Leaf-server
+        env:
+          MYSQL_TEST_URL: jdbc:mysql://127.0.0.1:13308/golden_leaf_week3_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          MYSQL_TEST_PASSWORD: ci-test-only-password
+        run: bash mvnw -B verify
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: backend-test-reports
+          path: The-Golden-Leaf-server/target/surefire-reports
+          retention-days: 14
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Install Android SDK components
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Debug unit tests, assembly and lint
+        run: bash gradlew --no-daemon testDebugUnitTest assembleDebug lintDebug
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: android-debug-and-reports
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/reports/tests/testDebugUnitTest
+            app/build/reports/lint-results-debug.*
+          retention-days: 14
+  infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: node --check The-Golden-Leaf-server/src/main/resources/static/staff.js
+      - run: docker run --rm --network none -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9
+      - run: docker run --rm --network none -v "$PWD:/repo:ro" -w /repo --entrypoint shellcheck rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -x ops/scripts/*.sh
+      - run: bash -n ops/scripts/backup.sh ops/scripts/restore.sh ops/scripts/smoke.sh
+      - run: bash ops/scripts/test-backup-restore.sh
+      - run: docker build --tag golden-leaf:ci The-Golden-Leaf-server
+      - run: bash ops/scripts/test-container.sh

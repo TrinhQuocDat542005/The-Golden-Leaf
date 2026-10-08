@@ -7,7 +7,7 @@ The API keeps the existing Vietnamese JSON property names so the Android applica
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-Documentation is available in local development; production requires authentication. Protected endpoints accept `Authorization: Bearer <Firebase ID token>`. Tokens are verified including revocation, verified email and active account; roles are read from the database on each request.
+Documentation is available in local development; production disables Swagger/OpenAPI. Protected business endpoints accept `Authorization: Bearer <Firebase ID token>`. Tokens are verified including revocation, verified email and active account; roles are read from the database on each request. Production management runs on private port 8081; Prometheus uses a separate monitoring credential, not Firebase/business roles.
 
 ## Core endpoints
 
@@ -114,3 +114,9 @@ Booking operations: `CONFIRMED → ASSIGNED → SEATED → COMPLETED`. Check-in 
 Menu create/update JSON: `{tenMon,gia,moTa,anh,nhom,active}`, with groups KHAI_VI/MON_CHINH/TRANG_MIENG, nonnegative DECIMAL-compatible price and safe HTTPS or generated `/uploads/` image path. Uploaded images are re-encoded with UUID filenames; original filenames are never filesystem targets.
 
 Security errors use the same envelope: `401 UNAUTHENTICATED`, `403 ACCESS_DENIED`, `503 AUTH_UNAVAILABLE`. Operations errors include `PAYMENT_NOT_CONFIGURED`, `PAYMENT_CONFLICT`, `AMOUNT_MISMATCH`, `INVALID_TRANSFER_REFERENCE`, `INVALID_PAYMENT_STATE`, `PAYMENT_REQUIRED`, `TABLE_CONFLICT`, `INSUFFICIENT_SEATS`, `INVENTORY_NOT_CONFIGURED`, `CAPACITY_CONFLICT`, `INVALID_CHECKIN_DATE`, `LAST_ADMIN` and `INVALID_DELIVERY_STATE`. Inaccessible customer data is denied; another user's notification read returns not found.
+
+## Week 6 operational contract
+
+Responses carry a server-generated UUID `X-Request-ID`; client-supplied IDs are not trusted. Production API rate limiting runs before Firebase verification; backend rejection returns `429 RATE_LIMITED` in the error envelope and a `Retry-After` header. The TLS proxy may return its own 429 response. Limits are instance-local and configurable, not a distributed per-account quota.
+
+Production management listens privately on port 8081. `GET /actuator/health/liveness` and `/readiness` expose status only; readiness includes DB availability. `GET /actuator/prometheus` requires the separate `MONITORING_TOKEN` bearer credential (at least 32 characters), not a Firebase user token. The public proxy blocks management routes; Swagger/OpenAPI are disabled in production. See [week 6 runbook](week-6-production-readiness.md) for setup and rollout gates.

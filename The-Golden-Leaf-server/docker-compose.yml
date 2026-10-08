@@ -48,7 +48,7 @@ services:
       - uploads_data:/app/uploads
       - ${FIREBASE_CREDENTIALS_HOST_PATH:-./secrets/firebase-service-account.example.json}:/run/secrets/firebase-service-account.json:ro
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "if [ \"$${SPRING_PROFILES_ACTIVE}\" = prod ]; then curl --fail --silent http://localhost:8081/actuator/health/readiness; else curl --fail --silent http://localhost:8080/actuator/health; fi"]
       interval: 15s
       timeout: 5s
       retries: 10

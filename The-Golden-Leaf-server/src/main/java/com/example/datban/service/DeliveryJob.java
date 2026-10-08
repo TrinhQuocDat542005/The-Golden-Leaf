@@ -1,10 +1,10 @@
 package com.example.datban.service;
 import org.springframework.stereotype.Component;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
 @Component
-@ConditionalOnProperty(name="app.firebase.enabled",havingValue="true")
+@ConditionalOnExpression("${app.firebase.enabled:false} && ${app.notification.delivery-enabled:true}")
 public class DeliveryJob {
     private final DeliveryWorker worker;
     public DeliveryJob(DeliveryWorker worker) { this.worker=worker; }

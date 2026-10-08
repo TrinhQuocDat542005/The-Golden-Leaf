@@ -22,6 +22,11 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    ResponseEntity<ApiError> handleMissingResource(Exception exception, HttpServletRequest request) {
+        return response(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "Không tìm thấy tài nguyên", request, Map.of());
+    }
+
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     ResponseEntity<ApiError> handleForbidden(Exception exception, HttpServletRequest request) {
         return response(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "Không có quyền truy cập đơn đặt bàn", request, Map.of());
@@ -90,7 +95,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> handleUnexpected(Exception exception, HttpServletRequest request) {
-        log.error("Unexpected API error for {}", request.getRequestURI(), exception);
+        // Exception messages/SQL/stack causes may contain customer data or credentials.
+        log.error("unexpected_api_error exception_type={}", exception.getClass().getSimpleName());
         return response(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
                 "Hệ thống đang gặp sự cố, vui lòng thử lại sau", request, Map.of());
     }

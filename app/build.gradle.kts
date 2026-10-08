@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -39,10 +41,12 @@ android {
 
     buildTypes {
         debug {
+            manifestPlaceholders["allowCleartext"] = "true"
             buildConfigField("String", "API_BASE_URL", "\"${debugApiBaseUrl.get()}\"")
             buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey.get()}\"")
         }
         release {
+            manifestPlaceholders["allowCleartext"] = "false"
             isMinifyEnabled = false
             buildConfigField("String", "API_BASE_URL", "\"${releaseApiBaseUrl.get()}\"")
             buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey.get()}\"")
@@ -167,3 +171,15 @@ dependencies {
 kapt {
     correctErrorTypes = true
 }
+
+val validateReleaseEndpoint by tasks.registering {
+    doLast {
+        val uri = URI(releaseApiBaseUrl.get())
+        require(uri.scheme == "https" && !uri.host.isNullOrBlank() &&
+            !uri.host.endsWith(".invalid") && uri.userInfo == null &&
+            uri.query == null && uri.fragment == null && uri.path.endsWith("/")) {
+            "Release requires a real HTTPS PRODUCTION_API_BASE_URL ending in / (no credentials/query/fragment)."
+        }
+    }
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(validateReleaseEndpoint) }
