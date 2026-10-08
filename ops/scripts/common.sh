@@ -24,8 +24,9 @@ mysql_client() {
   local executable=$1
   shift
   docker run --rm -i --network "$DOCKER_NETWORK" --read-only --cap-drop ALL \
+    --user "$(id -u):$(id -g)" \
     --security-opt no-new-privileges:true \
-    --tmpfs /run/client:rw,noexec,nosuid,size=1m \
+    --tmpfs "/run/client:rw,noexec,nosuid,size=1m,mode=0700,uid=$(id -u),gid=$(id -g)" \
     --mount "type=bind,source=$MYSQL_CNF_MOUNT,target=/run/secrets/mysql.cnf,readonly" \
     --entrypoint /bin/bash "$MYSQL_IMAGE" -c \
     'cp /run/secrets/mysql.cnf /run/client/mysql.cnf; chmod 600 /run/client/mysql.cnf; exec "$1" --defaults-extra-file=/run/client/mysql.cnf "${@:2}"' \

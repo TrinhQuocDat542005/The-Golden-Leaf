@@ -33,10 +33,10 @@ for _ in $(seq 1 90); do
 done
 [[ $ready == true ]] || fail 'Fixture MySQL not ready'
 mysql_client mysql -e "CREATE DATABASE golden_leaf_source; CREATE DATABASE golden_leaf_restore_drill; CREATE TABLE golden_leaf_source.receipts(id INT PRIMARY KEY,amount DECIMAL(12,2)); INSERT INTO golden_leaf_source.receipts VALUES(1,200000.50);"
-docker run --rm --network none --entrypoint age-keygen --mount "type=bind,source=$fixture_mount,target=/fixture" \
+docker run --rm --network none --user "$(id -u):$(id -g)" --entrypoint age-keygen --mount "type=bind,source=$fixture_mount,target=/fixture" \
   golden-leaf-backup-crypto:local -o /fixture/identity 2>/dev/null
 export BACKUP_RECIPIENT
-BACKUP_RECIPIENT=$(docker run --rm --network none --entrypoint age-keygen --mount "type=bind,source=$fixture_mount,target=/fixture,readonly" golden-leaf-backup-crypto:local -y /fixture/identity)
+BACKUP_RECIPIENT=$(docker run --rm --network none --user "$(id -u):$(id -g)" --entrypoint age-keygen --mount "type=bind,source=$fixture_mount,target=/fixture,readonly" golden-leaf-backup-crypto:local -y /fixture/identity)
 export BACKUP_DIR="$fixture"
 docker volume create --label golden-leaf.purpose=restore-drill "$volume" >/dev/null
 docker run --rm --network none --entrypoint sh --mount "type=volume,source=$volume,target=/uploads" golden-leaf-backup-crypto:local \
@@ -53,7 +53,7 @@ printf 'tampered' >> "$fixture/tampered.sql.gz.age"
 BACKUP_FILE="$fixture/tampered.sql.gz.age"
 if bash "$root/ops/scripts/restore.sh" >/dev/null 2>&1; then fail 'Damaged encrypted backup incorrectly accepted'; fi
 BACKUP_FILE=$original_backup
-docker run --rm --network none --entrypoint age-keygen --mount "type=bind,source=$fixture_mount,target=/fixture" \
+docker run --rm --network none --user "$(id -u):$(id -g)" --entrypoint age-keygen --mount "type=bind,source=$fixture_mount,target=/fixture" \
   golden-leaf-backup-crypto:local -o /fixture/wrong-identity 2>/dev/null
 AGE_IDENTITY="$fixture/wrong-identity"
 if bash "$root/ops/scripts/restore.sh" >/dev/null 2>&1; then fail 'Wrong private identity incorrectly accepted'; fi

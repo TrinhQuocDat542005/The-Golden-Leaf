@@ -76,6 +76,8 @@ Mục tiêu ban đầu RPO ≤24h (backup hàng ngày), RTO ≤2h sau khi có ho
 
 Build helper từ Alpine/age package repository chính thức. Private age identity giữ offline/secret manager khác host backup; backup chỉ cần public recipient. Client CNF owner-only, backup user chỉ có quyền dump cần thiết; restore credential chỉ ghi target schema. **Không nhận SQL/backup từ nguồn không tin cậy**: checksum không xác thực người tạo và age public recipient không phải chữ ký người gửi.
 
+MySQL client và giải mã restore chạy với UID/GID của operator gọi script để đọc secret `0600` mà không cần capability DAC override; tmpfs client cũng thuộc UID/GID đó. Operator phải có quyền đọc CNF/identity và quyền dùng Docker, không nới secret thành world-readable để chữa lỗi quyền.
+
 ```bash
 docker build -t golden-leaf-backup-crypto:local ops/backup
 # CNF: [client] host=db, user=<backup-user>, password=<secret>

@@ -20,6 +20,7 @@ actual=$(sha256sum "$BACKUP_FILE" | awk '{print $1}')
 identity_mount=$(docker_path "$AGE_IDENTITY")
 decrypt() {
   docker run --rm -i --network none --read-only --cap-drop ALL \
+    --user "$(id -u):$(id -g)" \
     --mount "type=bind,source=$identity_mount,target=/run/secrets/identity,readonly" \
     "$CRYPTO_IMAGE" -d -i /run/secrets/identity < "$BACKUP_FILE"
 }
