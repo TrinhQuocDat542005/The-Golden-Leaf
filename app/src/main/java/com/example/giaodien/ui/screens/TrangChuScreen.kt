@@ -501,8 +501,9 @@ private fun EventItemCard(imageRes: Int, title: String, description: String, sea
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = imageRes),
+            // Event photos include large bundled assets; decode to the 100dp thumbnail bounds.
+            AsyncImage(
+                model = imageRes,
                 contentDescription = "$title Image",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

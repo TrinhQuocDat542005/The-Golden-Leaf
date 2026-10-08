@@ -2,7 +2,7 @@
 
 ## Phạm vi và trạng thái
 
-Mục tiêu là hoàn thiện portfolio sau rà soát toàn bộ tuần 1–7, không triển khai dịch vụ nhà hàng thật. Phần source/test/CI đã bổ sung; **chưa nghiệm thu được instrumentation Android API 25/35**. Local Windows không có tăng tốc hypervisor hoạt động, emulator software API 25/36 không boot được tới thiết bị online. Không tự bật Hyper-V/BIOS, không dùng máy thật/tài khoản thật để lách giới hạn này. CI emulator mới chưa chạy trên remote revision; không gọi tuần 8 đã hoàn tất mọi acceptance gate.
+Mục tiêu là hoàn thiện portfolio sau rà soát toàn bộ tuần 1–7, không triển khai dịch vụ nhà hàng thật. Đã commit/push và chạy CI; kết quả mỗi revision phải đọc ở [workflow CI](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml), không suy ra từ build APK. Local Windows không có tăng tốc hypervisor hoạt động, emulator software API 25/36 không boot được tới thiết bị online. Không tự bật Hyper-V/BIOS, không dùng máy thật/tài khoản thật để lách giới hạn này. Nghiệm thu runtime và ảnh Android được thực hiện trên CI Linux/KVM, tách khỏi các số liệu local bên dưới.
 
 Android vẫn dùng Firebase trong application thật. Instrumentation bắt buộc `-Pweek8IsolatedTests=true`: target debug manifest tắt FirebaseInitProvider, test Application kiểm tra chưa có FirebaseApp và không gọi device binding/FCM. Application tối giản trong `androidTest` chỉ dành cho test màn hình Compose và demo API, **không phải chế độ offline demo của app**. Build debug thường/release không tắt provider; không cài bản test-isolated để sử dụng app thật. Ảnh web mobile-width tuần 7 vẫn là ảnh web, không đổi nhãn thành ảnh Android.
 
@@ -18,8 +18,8 @@ Android vẫn dùng Firebase trong application thật. Instrumentation bắt bu�
 | Sơ đồ minh họa dễ bị hiểu là chọn bàn thực | Nhãn sức chứa minh họa; phân bàn thật vẫn thuộc STAFF | Không gửi số bàn minh họa thành mã bàn nghiệp vụ |
 | Branding/địa chỉ mẫu không nhất quán | The Golden Leaf; thông tin synthetic TP.HCM; weather tùy chọn không chặn đặt bàn | Weather không key không gọi provider; network failure an toàn |
 | Google login gọi sync riêng và log dữ liệu nhạy cảm | Đi qua LoginViewModel chung, verified email, busy guard; bỏ log email/UID/token/raw exception | Static log gate và build; **chưa test Firebase live** |
-| Android chỉ có contract tests | Thêm 22 tests ViewModel/time/journey, test Compose và Android→demo API | 32 unit tests đạt; instrumentation APK build, runtime pending |
-| CI chưa chặn tăng lint debt/chưa scan inventory | Per-issue budget, static log gate, digest-pinned JAR + image scan, exception có expiry | Gate unit tests, local lint/JAR scan; remote jobs pending |
+| Android chỉ có contract tests | Thêm 22 tests ViewModel/time/journey, test Compose và Android→demo API | 32 unit tests đạt; native runtime reports và PNG riêng từng API trong CI |
+| CI chưa chặn tăng lint debt/chưa scan inventory | Per-issue budget, static log gate, digest-pinned JAR + image scan, exception có expiry | 6 gate unit tests; report inventory đầy đủ cả local và CI |
 
 Không sửa Flyway V1–V4 đã áp dụng. Luồng giữ chỗ 15 phút, idempotency, server price snapshots, đối soát/hoàn tiền thủ công và ownership tuần trước được giữ nguyên.
 
@@ -32,13 +32,13 @@ Không sửa Flyway V1–V4 đã áp dụng. Luồng giữ chỗ 15 phút, idemp
 | Android debug APK + instrumentation APK | Build thành công; debug không phải signed release |
 | Android lint + budget + static log privacy | **0 errors, 96 warnings, 8 hints**; budget đạt |
 | Chromium browser E2E trên JAR mới | **3/3 đạt**: customer/staff/admin, check-in/complete, mobile-width |
-| Node quality/security gate tests | **4/4 đạt**: lint error/new type/increase, log, inventory, exception scope/expiry |
+| Node quality/security/native runner gate tests | **6/6 đạt**: lint error/new type/increase, log, inventory, exception scope/expiry, native complete/partial/crash/skip |
 | Backup/restore drill | Đạt: DB + uploads mã hóa, DECIMAL, từ chối tampering/wrong-key/nonempty/live-schema |
 | Container regression trên image mới | Đạt sau vá OS: non-root/read-only, uploads writable, private metrics, TLS, auth; load 100 requests / concurrency 5 / 0 failures; p95 108 ms (fixture local, không phải benchmark production) |
 | Trivy packaged JAR | 209 Java packages; 5 findings giữ nguyên trong JSON; 0 blocking fixable HIGH/CRITICAL sau ngoại lệ bên dưới |
 | Trivy Docker image sau vá OS | 143 OS + 209 Java packages; **35 findings (30 OS + 5 Java)** giữ trong JSON; **0 blocking fixable HIGH/CRITICAL** sau ngoại lệ Spring |
 | Compose + Android→API instrumentation | **Chưa chạy được**: emulator local offline; không tính vào các test đã đạt |
-| GitHub CI cho revision tuần 8 | **Chưa chạy**; cần commit/push được chủ repo yêu cầu và xem đúng revision |
+| GitHub CI cho revision tuần 8 | Đã push theo yêu cầu; đọc đúng SHA và trạng thái các jobs trong workflow, không gộp kết quả từ revisions khác nhau |
 
 Reports local nằm trong các thư mục ignored: `The-Golden-Leaf-server/target/surefire-reports`, `app/build/reports/tests/testDebugUnitTest`, `app/build/reports/lint-results-debug.*`, `tools/demo-browser/playwright-report`, `build/week8/security/*.json`. Không commit dependency cache, image tar, credential hoặc log chứa dữ liệu thật. Các tài liệu tuần 3–7 giữ số liệu lịch sử, không đại diện kết quả hiện tại.
 
@@ -78,6 +78,8 @@ Instrumentation gồm hai kịch bản màn hình `NgayGioScreen` thật (slot �
 CI fixture đặt cùng `ANDROID_USER_HOME`/`ANDROID_EMULATOR_HOME`/`ANDROID_AVD_HOME` dưới build directory, tạo AVD bằng path explicit và kiểm tra registry trước boot; không đổi HOME. Điều này xử lý lỗi `Unknown AVD name` từ runner ở lần chạy c5a3c51. Hai test Compose chụp màn hình bằng Android UiAutomation (hỗ trợ cả API 25); script xuất PNG bằng `adb exec-out run-as` vào artifact riêng từng API. Chỉ gọi đây là screenshot đã nghiệm thu sau khi test runtime và kiểm tra ảnh thật đạt, không từ việc build APK.
 
 Lần chạy 1e51d9a đã boot emulator nhưng AGP UTP dừng ở console/test-runner handshake trước khi trả test events. Script dùng native `adb shell am instrument -w -r` với cùng APK/runner/tests để không phụ thuộc UTP console; không bỏ qua test. Gate yêu cầu đúng 4 test events thành công/unique, `OK (4 tests)` và instrumentation completion code -1; crash/failure/skip/partial output phải fail. Lưu raw output và JUnit XML tạo từ các events đã xác minh, cùng logcat cả khi lỗi. Có hai unit tests riêng cho parser native. Đây là thay đổi cách thực thi, chưa phải bằng chứng runtime đã đạt.
+
+[CI e716e5f](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37797447282) đã đạt backend/Android/infrastructure/security và bốn native tests API 35. Kiểm tra PNG thật phát hiện hộp thoại ANR của Pixel Launcher che màn hình; **không dùng các ảnh đó làm bằng chứng layout đạt**, dù test logic xanh. Fixture chỉ force-stop/disable hai package launcher đã biết trong AVD disposable; không áp dụng lên thiết bị người dùng. Screenshot helper kiểm tra foreground package là app/test app, từ chối system dialog. Thumbnail ảnh sự kiện trang chủ cũng chuyển sang Coil đo kích thước; smoke test render các event cards thật. Phải đọc kết quả revision mới sau các sửa đổi này để nghiệm thu.
 
 ## Lint và quyền riêng tư log
 

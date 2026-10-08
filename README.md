@@ -30,7 +30,7 @@ Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Andr
 > [!NOTE]
 > Tuần 1–7 đã có source, kiểm thử, CI và bản demo portfolio. Demo dùng dữ liệu tổng hợp, không nhận tiền hoặc gửi push thật. Không cần mua hosting/domain để chạy thử. Bộ cấu hình production là tài liệu kỹ thuật tham khảo, **không phải chứng nhận đã go-live**. Bắt đầu với [hướng dẫn demo & kịch bản trình diễn](docs/week-7-portfolio.md).
 
-Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗi/retry Android, lịch theo múi giờ nhà hàng, test ViewModel và quality/security gates. [Báo cáo tuần 8](docs/week-8-quality.md) phân biệt kết quả đã chạy local với emulator/CI còn chờ nghiệm thu; không coi build APK là UI E2E đã đạt.
+Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗi/retry Android, lịch theo múi giờ nhà hàng, test ViewModel và quality/security gates. [Báo cáo tuần 8](docs/week-8-quality.md) phân biệt kết quả local, native emulator và screenshot đã kiểm tra; không coi build APK là UI E2E đã đạt. Xem đúng revision ở [CI](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml).
 
 ## Giao diện demo
 
@@ -377,7 +377,7 @@ node scripts/check-android-quality.mjs
 
 Trước khi mở pull request, nên chạy cả test backend lẫn build Android để phát hiện sớm lỗi contract giữa hai phía.
 
-Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 Chromium E2E**. Lint hiện còn **96 warnings / 8 hints, 0 errors**; gate theo số lượng từng loại không cho tăng nợ mới, chưa phải lint sạch. Có instrumentation tests cho màn hình Compose thật và Android gọi demo API thật; CI mới có matrix API 25/35, **chưa có kết quả emulator/CI remote cho revision tuần 8**. Test dùng application fixture không Firebase, không thay thế nghiệm thu toàn bộ app hoặc Google/Firebase login thật. Chi tiết/reproduce trong [báo cáo tuần 8](docs/week-8-quality.md).
+Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 Chromium E2E và 6 quality-gate tests**. Lint local hiện còn **96 warnings / 8 hints, 0 errors**; CI Linux fresh metadata có 98 warnings / 8 hints, được hiệu chỉnh theo từng loại với evidence, chưa phải lint sạch. CI có native instrumentation matrix API 25/35, raw test events/JUnit và screenshot Android thật; đọc trạng thái đúng commit trong workflow. Test dùng application fixture không Firebase, không thay thế nghiệm thu toàn bộ app hoặc Google/Firebase login thật. Chi tiết/reproduce trong [báo cáo tuần 8](docs/week-8-quality.md).
 
 ## Roadmap
 

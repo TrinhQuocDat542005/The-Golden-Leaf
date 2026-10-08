@@ -29,6 +29,10 @@ class Week8InstrumentedTest {
     private fun screenshot(name: String) {
         compose.waitForIdle()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val foreground = instrumentation.uiAutomation.rootInActiveWindow?.packageName?.toString()
+        check(foreground == "com.example.giaodien" || foreground == "com.example.giaodien.test") {
+            "Native screenshot is obscured by another window: $foreground"
+        }
         val bitmap = checkNotNull(instrumentation.uiAutomation.takeScreenshot())
         try {
             java.io.File(instrumentation.targetContext.filesDir,"week8-$name.png").outputStream().use {

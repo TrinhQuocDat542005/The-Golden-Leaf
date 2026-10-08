@@ -48,6 +48,14 @@ done
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global window_animation_scale 0
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global transition_animation_scale 0
 "$adb_bin" -s "$ANDROID_SERIAL" shell settings put global animator_duration_scale 0
+# Headless Google API images can leave an ANR dialog from their unused home launcher.
+# Disable only known launcher packages in this disposable AVD, never on a user's device.
+for launcher in com.google.android.apps.nexuslauncher com.android.launcher3; do
+  if "$adb_bin" -s "$ANDROID_SERIAL" shell pm path "$launcher" | grep -q '^package:'; then
+    "$adb_bin" -s "$ANDROID_SERIAL" shell am force-stop "$launcher"
+    "$adb_bin" -s "$ANDROID_SERIAL" shell pm disable-user --user 0 "$launcher"
+  fi
+done
 bash gradlew --no-daemon assembleDebug assembleDebugAndroidTest -Pweek8IsolatedTests=true
 "$adb_bin" -s "$ANDROID_SERIAL" install -r app/build/outputs/apk/debug/app-debug.apk
 "$adb_bin" -s "$ANDROID_SERIAL" install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
