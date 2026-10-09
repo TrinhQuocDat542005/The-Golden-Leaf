@@ -109,7 +109,9 @@ else
   video_file=build/week9/android-demo.webm
   video_mode=host
   timeout 10 "$adb_bin" -s "$ANDROID_SERIAL" emu screenrecord start --time-limit 180 "$PWD/$video_file" > build/week9/screenrecord.log 2>&1
-  grep -q '^OK' build/week9/screenrecord.log && ! grep -q '^KO' build/week9/screenrecord.log || { echo 'Host recorder did not start'; exit 1; }
+  if ! grep -q '^OK' build/week9/screenrecord.log || grep -q '^KO' build/week9/screenrecord.log; then
+    echo 'Host recorder did not start'; exit 1
+  fi
 fi
 timeout 300 "$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e class com.example.giaodien.DemoAppTest com.example.giaodien.demo.test/androidx.test.runner.AndroidJUnitRunner | tee build/week9/instrumentation-results.txt
 node scripts/check-android-instrumentation.mjs build/week9/instrumentation-results.txt build/week9/instrumentation-results.xml 3
