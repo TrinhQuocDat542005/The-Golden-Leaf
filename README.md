@@ -14,7 +14,7 @@
   [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
   [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 
-  [Chạy demo](#2-demo-portfolio-không-cần-secret) · [Ảnh thật](#giao-diện-demo) · [Case study](docs/week-7-portfolio.md#case-study-ngắn-cho-người-review) · [API](#api-hiện-có) · [Tài liệu](#tài-liệu-kỹ-thuật)
+  [Tải demo v0.10.0](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0) · [Chạy demo](#2-demo-portfolio-không-cần-secret) · [Ảnh thật](#giao-diện-demo) · [Case study](docs/week-7-portfolio.md#case-study-ngắn-cho-người-review) · [API](#api-hiện-có) · [Tài liệu](#tài-liệu-kỹ-thuật)
 </div>
 
 ---
@@ -34,11 +34,11 @@ Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗ
 
 ## Giao diện demo
 
-Tuần 10 đã đạt CI và kiểm bundle **APK + backend demo** có checksum/launcher. [Báo cáo tuần 10](docs/week-10-portfolio-release.md) ghi rõ bằng chứng và giới hạn. GitHub prerelease đang chờ chủ repository chạy lại job xuất bản; tag không đồng nghĩa release đã public.
+**[Portfolio prerelease v0.10.0 đã xuất bản](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0)**: tải gói **APK + backend demo**, checksum và launcher để chạy local không cần build source. CI và kiểm bundle tuần 10 đã đạt; đây không phải bản production hoặc phát hành trên Play Store. [Báo cáo tuần 10](docs/week-10-portfolio-release.md) ghi bằng chứng và giới hạn; các ghi chú “pending” trong báo cáo/guide là trạng thái trước khi xuất bản, chưa được cập nhật.
 
 ### Android native — tuần 10
 
-APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản khách, đặt bàn/giỏ hàng/thanh toán giả lập và lịch sử thật qua API**. [CI nghiệm thu source 893b3e4](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705) đạt 191 backend tests, 48 Android unit tests, 4 regression + 3 customer journeys + 1 image-retry component trên **mỗi API 25/35**, 3 browser E2E và 14 gate tests. Security đạt với hai CVE exception có hạn, không phải đã vá mọi vulnerability. Job xuất bản hiện thành công dạng no-op vì tag chưa có lúc chạy CI; cần chạy lại sau tag.
+APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản khách, đặt bàn/giỏ hàng/thanh toán giả lập và lịch sử thật qua API**. [CI nghiệm thu source 893b3e4](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705) đạt 191 backend tests, 48 Android unit tests, 4 regression + 3 customer journeys + 1 image-retry component trên **mỗi API 25/35**, 3 browser E2E và 14 gate tests. Job xuất bản đã chạy thành công và Release có đủ bốn assets. Security đạt với hai CVE exception có hạn, không phải đã vá mọi vulnerability.
 
 [Chạy app trong Android Studio](docs/android-demo.md) · [Bundle APK + JAR](docs/demo-bundle-guide.md) · [Báo cáo & giới hạn nghiệm thu](docs/week-10-portfolio-release.md)
 
@@ -60,7 +60,7 @@ APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản
   </p>
 </details>
 
-Video MP4 API 35 / WebM API 25 và APK dùng thử có trong artifacts của run trên (giữ 14 ngày); 12 PNG gốc của hai API lưu lâu dài trong Git. Native chỉ nghiệm thu customer UI; staff/admin có browser E2E riêng. Không dùng ngân hàng/FCM thật.
+APK và backend dùng thử có trên [GitHub Release](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0), không phụ thuộc thời hạn artifact CI. Video MP4 API 35 / WebM API 25 có trong artifacts của run trên (giữ 14 ngày); 12 PNG gốc của hai API lưu trong Git. Native chỉ nghiệm thu customer UI; staff/admin có browser E2E riêng. Không dùng ngân hàng/FCM thật.
 
 ### Web sandbox
 
@@ -87,7 +87,7 @@ Video MP4 API 35 / WebM API 25 và APK dùng thử có trong artifacts của run
 | Chuyển khoản & hoàn tiền | ✅ Đã triển khai | Hóa đơn từ server, tài khoản nhận tiền snapshot, đối soát thủ công, audit và chống ghi nhận trùng |
 | Thông báo & vận hành | ✅ Đã triển khai | Inbox, FCM outbox/lease/retry, phân bàn, nhận khách, hoàn tất và dashboard nhân viên |
 | Release engineering | ✅ Đã triển khai | CI H2/MySQL/Android, manual delivery bundle, HTTPS template, hardening, metrics và backup mã hóa |
-| Portfolio demo | ✅ Đã triển khai | H2 memory, 4 persona, walkthrough API thật, screenshots, browser E2E/video và JAR bundle |
+| Portfolio demo | ✅ Đã xuất bản prerelease | H2 memory, 4 persona, native/browser E2E, ảnh/video và combined APK + JAR có checksum/launcher |
 | Go-live thực tế | Ngoài phạm vi portfolio | Chưa public hosting, chưa signed Android/live Firebase/FCM/ngân hàng; không cần để review demo |
 
 ## Tính năng cốt lõi
@@ -211,7 +211,21 @@ Mở **[http://127.0.0.1:8080/demo.html](http://127.0.0.1:8080/demo.html)**. Ch�
 
 DB tạm có 12 món và 7 hình minh họa SVG local, 4 bàn 8 ghế, 28 slots, 4 tài khoản `.invalid`, một đơn hôm nay và lịch sử hoàn tất/hủy để thử. Restart backend để reset. Không chuyển tiền, không gửi FCM, không ghi/serve uploads local. Demo chỉ bind loopback và từ chối trộn profile/DB thật.
 
-Muốn chạy không cần Maven? Tải **portfolio-demo-bundle** từ [CI tuần 10 đã đạt](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705): có JAR, đúng APK đã test API 35, checksum và launcher. Artifact giữ 14 ngày, có thể cần GitHub login. Prerelease dài hạn còn chờ job xuất bản, chưa có asset public để tải. Xem [bundle guide](docs/demo-bundle-guide.md).
+**Chạy bản đóng gói, không cần Maven/Gradle:** tải [golden-leaf-portfolio-demo.zip](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/golden-leaf-portfolio-demo.zip) và [RELEASE-SHA256SUMS](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/RELEASE-SHA256SUMS). So SHA-256 của ZIP với dòng tương ứng trong checksum, giải nén vào thư mục mới rồi chạy:
+
+```powershell
+# Windows — trong thư mục đã giải nén; cần JDK 17.
+Get-Content REVISION
+./Verify-Demo.ps1
+./Start-Demo.ps1
+```
+
+Linux/macOS: `bash Start-Demo.sh` (Linux runtime đã kiểm; macOS chưa nghiệm thu runtime). Không bypass execution policy nếu Windows chặn script; đọc [bundle guide](docs/demo-bundle-guide.md) và tuân thủ policy máy.
+
+Mở `http://127.0.0.1:8080/demo.html`. Để thử Android, cài `golden-leaf-demo.apk` trong ZIP vào emulator API 25+ và giữ backend trên **8080**. APK dùng `http://10.0.2.2:8080/`, cần backend đang chạy, không phải app offline. Gói chứa đúng APK đã test API 35, JAR, revision, manifest, checksum và launchers. Có thể tải riêng [APK](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/golden-leaf-demo.apk) hoặc [JAR](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/golden-leaf-demo.jar), nhưng bản riêng không có launcher guards. Checksum kiểm tính toàn vẹn, không chứng minh nguồn phát hành đáng tin.
+
+> [!WARNING]
+> Hai CVE Spring WebMVC chưa vá chỉ được chấp nhận cho demo local đến **08/11/2026 00:00 UTC**. Launcher chặn sau hạn; APK và lệnh Java trực tiếp không tự enforce. Release vẫn tải được không có nghĩa còn an toàn để sử dụng. Không triển khai public hoặc nhập dữ liệu/thanh toán thật.
 
 **Phạm vi:** bundle gồm web/API và Android native demo; ảnh web mobile-width không thay nghiệm thu Android. Có thể build **Variant `demo`** theo [Android demo guide](docs/android-demo.md). Bản Android `debug`/`release` thường vẫn cần Firebase.
 
@@ -432,7 +446,8 @@ Tuần 10 nghiệm thu **191 backend tests (H2 + MySQL), 48 Android unit tests, 
 - [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
 - Ngoài scope hiện tại: hosting/domain, giao dịch/Firebase/FCM thật, signed Android/store release, HA và operator UAT.
 - [x] Tuần 10: polish tiền/nhãn/ảnh, transport recovery, restart backend thật, combined bundle và launcher Windows/Linux; [CI source cuối](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705).
-- [ ] Xuất bản prerelease `portfolio-v0.10.0` và kiểm download public — cần chủ repository chạy lại job `portfolio-release` do connector thiếu quyền Actions write.
+- [x] Xuất bản [prerelease `portfolio-v0.10.0`](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0): APK, JAR, combined ZIP và RELEASE-SHA256SUMS; publish job kiểm checksum bundle trước phát hành.
+- [ ] Tải ZIP public và kiểm checksum độc lập sau phát hành để khép nghiệm thu bàn giao; không nhầm bước này với checksum gate trong CI.
 - Tác giả tùy chọn: video có thuyết minh và license; không bắt buộc để demo local.
 
 ## Tài liệu kỹ thuật
