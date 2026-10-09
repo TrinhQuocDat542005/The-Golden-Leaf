@@ -18,7 +18,7 @@ class Week10NetworkTest {
     @Volatile private var current: Session? = null
     private val pending = mutableListOf<() -> Unit>()
     @Before fun setup() {
-        server = MockWebServer(); server.start()
+        server = MockWebServer(); server.start(java.net.InetAddress.getByName("127.0.0.1"), 0)
         current = Session("synthetic-a")
         client = OkHttpClient.Builder().retryOnConnectionFailure(false)
             .connectTimeout(1, TimeUnit.SECONDS).readTimeout(1, TimeUnit.SECONDS)
@@ -27,7 +27,8 @@ class Week10NetworkTest {
             }).build()
     }
     @After fun cleanup() { server.shutdown(); client.connectionPool.evictAll(); client.dispatcher.executorService.shutdown() }
-    private fun request() = client.newCall(Request.Builder().url(server.url("/private"))
+    // Pin the fixture host too: localhost IPv4/IPv6 route fallback differs across OSes.
+    private fun request() = client.newCall(Request.Builder().url(server.url("/private").newBuilder().host("127.0.0.1").build())
         .header("Authorization", "must-be-replaced").build()).execute()
     private fun dispatchLogout() { pending.toList().forEach { it() }; pending.clear() }
 

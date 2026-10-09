@@ -22,6 +22,8 @@ Thêm một native component test trên MainActivity với surface ảnh 120dp: 
 
 ## Checklist nghiệm thu
 
+Run đầu trên `10afcaf`, [37953912589](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37953912589), đạt backend 191/no skip, infrastructure và security; Android có 1/48 unit failure ở retry fixture. Stack trace chỉ rõ `localhost/[::1]` connection refused sau disconnect, trong khi MockWebServer bind IPv4. Sửa fixture bind **và URL** thành `127.0.0.1`, giữ nguyên simulated socket disconnect, assertions và số tests; không sửa production DNS/network policy hoặc skip failure. Native image fixture cũng pin cùng loopback IPv4. Phải nghiệm thu lại source mới, không dùng run lỗi này làm bằng chứng hoàn thành.
+
 - [ ] Android unit/build/lint cuối và static privacy/budget đạt.
 - [ ] Backend H2/MySQL CI và browser E2E đạt trên source tuần 10.
 - [ ] Native API 25/35, raw results/JUnit, ảnh và video tuần 10 được kiểm.

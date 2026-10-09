@@ -199,7 +199,7 @@ class DemoAppTest {
 
     @Test fun dImageFailureCanRetryOnNarrowNativeSurface() {
         val imageServer = okhttp3.mockwebserver.MockWebServer()
-        imageServer.start()
+        imageServer.start(java.net.InetAddress.getByName("127.0.0.1"), 0)
         try {
             imageServer.enqueue(okhttp3.mockwebserver.MockResponse().setResponseCode(503))
             imageServer.enqueue(okhttp3.mockwebserver.MockResponse()
@@ -211,7 +211,7 @@ class DemoAppTest {
                         Column {
                             Text("DEMO · kiểm component ảnh trên bề mặt hẹp")
                             com.example.giaodien.ui.components.MenuImage(
-                                imageServer.url("/synthetic.svg").toString(), "Ảnh giả lập", Modifier.size(120.dp))
+                                imageServer.url("/synthetic.svg").newBuilder().host("127.0.0.1").build().toString(), "Ảnh giả lập", Modifier.size(120.dp))
                         }
                     }
                 }
