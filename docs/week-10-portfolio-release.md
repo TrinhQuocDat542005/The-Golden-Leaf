@@ -2,6 +2,24 @@
 
 Ngày 09/10/2026. Phạm vi: demo local cho GitHub, không go-live, không ngân hàng/Firebase/FCM thật. **Đang triển khai/nghiệm thu; chưa tuyên bố release đã xuất bản hoặc CI tuần 10 đạt.**
 
+Source nghiệm thu: `5df5655848f8f828c174bc40f6b9b0e7b39454ce`, [CI run 37955018052](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37955018052). Không dùng CI tuần 9 hoặc run trước bị lỗi làm bằng chứng source này.
+
+Run này sau đó đạt unit/build/lint, nhưng budget gate chặn `NewerVersionAvailable: 13 > 12`: MockWebServer 4.12.0 được khai báo lặp ở unit và instrumentation. Đưa OkHttp core/logging/MockWebServer về một version catalog chung **vẫn 4.12.0**, một khai báo MockWebServer dùng cho cả hai suite. Cảnh báo version mới vẫn giữ trong lint; không suppression, không nâng budget, không đổi dependency major. Revision nghiệm thu cuối sẽ ghi lại sau run mới.
+
+## Kết quả đã xác nhận
+
+| Kiểm chứng | Kết quả |
+|---|---|
+| Backend CI | 191 tests passed, 0 failures/errors/skipped; H2 + MySQL disposable |
+| Backend restart CI/local | JAR process restart thật: token cũ 401, fresh session 200; không phải Android outage E2E |
+| Android local | 48 unit tests passed, 0 failures/errors/skipped; demo APK và instrumentation build được |
+| Node gates local | 14 passed: 8 quality/security/instrumentation + 6 packaging |
+| PowerShell guard local | Bundle prototype đúng được nhận; file bị sửa và exception hết hạn bị từ chối |
+| PowerShell startup local | Script chạy trong PowerShell 7 hiện tại, JAR lên đúng profile demo/port 18082; còn cần HTTP smoke với bundle CI cuối |
+| CI/native/release | Chờ raw results, ảnh/video mới, combined bundle và publish/download verification |
+
+Windows PowerShell 5 mặc định trên máy chặn chạy script theo execution policy; không thay policy hệ thống hoặc bypass guard. Kiểm PowerShell 7 trong phiên đang cho phép script, không suy ra đã nghiệm thu mọi policy/phiên bản Windows. Prototype local dùng để kiểm launcher, không được xuất bản làm binary đã nghiệm thu. Linux launcher runtime kiểm trong CI; macOS chỉ có syntax/compatibility review nếu chưa có runner thật.
+
 ## Thay đổi
 
 - Định dạng tiền Việt Nam độc lập locale thiết bị trên home/menu/detail/choose/favorites, không còn `70000.0 VND`. Tổng tiền authoritative vẫn do backend tính, không thay đổi tiền hay nghiệp vụ.
