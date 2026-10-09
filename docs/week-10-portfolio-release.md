@@ -2,9 +2,9 @@
 
 Ngày 09/10/2026. Phạm vi: demo local cho GitHub, không go-live, không ngân hàng/Firebase/FCM thật. **Đang triển khai/nghiệm thu; chưa tuyên bố release đã xuất bản hoặc CI tuần 10 đạt.**
 
-Source nghiệm thu: `5df5655848f8f828c174bc40f6b9b0e7b39454ce`, [CI run 37955018052](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37955018052). Không dùng CI tuần 9 hoặc run trước bị lỗi làm bằng chứng source này.
+Source nghiệm thu cuối đang chạy: `8ca446a48f8af7cac4f0f97c7cf0224f86a4dc61`, [CI run 37956310101](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37956310101). Không dùng CI tuần 9 hoặc run trước bị lỗi làm bằng chứng source này.
 
-Run này sau đó đạt unit/build/lint, nhưng budget gate chặn `NewerVersionAvailable: 13 > 12`: MockWebServer 4.12.0 được khai báo lặp ở unit và instrumentation. Đưa OkHttp core/logging/MockWebServer về một version catalog chung **vẫn 4.12.0**, một khai báo MockWebServer dùng cho cả hai suite. Cảnh báo version mới vẫn giữ trong lint; không suppression, không nâng budget, không đổi dependency major. Revision nghiệm thu cuối sẽ ghi lại sau run mới.
+Run trước `5df5655`, [37955018052](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37955018052), đạt unit/build/lint, nhưng budget gate chặn `NewerVersionAvailable: 13 > 12`: MockWebServer 4.12.0 được khai báo lặp ở unit và instrumentation. Đưa OkHttp core/logging/MockWebServer về một version catalog chung **vẫn 4.12.0**, một khai báo MockWebServer dùng cho cả hai suite. Cảnh báo version mới vẫn giữ trong lint; không suppression, không nâng budget, không đổi dependency major. Source cuối CI đã đạt `NewerVersionAvailable: 12`, `UseTomlInstead: 17` và mọi per-ID budget giữ nguyên.
 
 ## Kết quả đã xác nhận
 
@@ -13,6 +13,8 @@ Run này sau đó đạt unit/build/lint, nhưng budget gate chặn `NewerVersio
 | Backend CI | 191 tests passed, 0 failures/errors/skipped; H2 + MySQL disposable |
 | Backend restart CI/local | JAR process restart thật: token cũ 401, fresh session 200; không phải Android outage E2E |
 | Android local | 48 unit tests passed, 0 failures/errors/skipped; demo APK và instrumentation build được |
+| Android CI | 48 unit tests passed, 0 failures/ignored; build/debug/demo/instrumentation thành công; lint 94 warnings / 8 hints, không Error/Fatal; budget/static privacy đạt |
+| Infrastructure/security CI | 14 gate tests + actionlint/ShellCheck/container/backup-restore đạt; scan giữ 6 dependency findings và 36 image findings, 0 blocking sau hai exception đúng scope có hạn |
 | Node gates local | 14 passed: 8 quality/security/instrumentation + 6 packaging |
 | PowerShell guard local | Bundle prototype đúng được nhận; file bị sửa và exception hết hạn bị từ chối |
 | PowerShell startup local | Script chạy trong PowerShell 7 hiện tại, JAR lên đúng profile demo/port 18082; còn cần HTTP smoke với bundle CI cuối |
@@ -41,6 +43,8 @@ Thêm một native component test trên MainActivity với surface ảnh 120dp: 
 ## Checklist nghiệm thu
 
 Run đầu trên `10afcaf`, [37953912589](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37953912589), đạt backend 191/no skip, infrastructure và security; Android có 1/48 unit failure ở retry fixture. Stack trace chỉ rõ `localhost/[::1]` connection refused sau disconnect, trong khi MockWebServer bind IPv4. Sửa fixture bind **và URL** thành `127.0.0.1`, giữ nguyên simulated socket disconnect, assertions và số tests; không sửa production DNS/network policy hoặc skip failure. Native image fixture cũng pin cùng loopback IPv4. Phải nghiệm thu lại source mới, không dùng run lỗi này làm bằng chứng hoàn thành.
+
+Run `8ca446a`, [37956310101](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37956310101), đạt backend/unit/build/lint/infrastructure/security; mỗi API native đạt 4 regressions và 3 customer journeys, nhưng component retry fixture gọi `MockWebServer.url()` trong composition, gây reverse DNS/NetworkOnMainThreadException. Dựng URL IPv4 literal từ port trước khi vào UI thread; không tắt StrictMode hoặc bỏ test. Assertion backend restart cũng chỉ in boolean/message nếu fail, không dump ephemeral token values. Cần run mới có đủ 4 successful demo events trước release.
 
 - [ ] Android unit/build/lint cuối và static privacy/budget đạt.
 - [ ] Backend H2/MySQL CI và browser E2E đạt trên source tuần 10.

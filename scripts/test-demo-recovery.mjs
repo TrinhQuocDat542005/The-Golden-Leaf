@@ -52,7 +52,7 @@ try {
   assert.equal((await request('/api/notifications',{headers:{Authorization:`Bearer ${oldToken}`}})).status,200);
   await stop();await start(2);
   assert.equal((await request('/api/notifications',{headers:{Authorization:`Bearer ${oldToken}`}})).status,401);
-  const freshToken=await session();assert.notEqual(freshToken,oldToken);
+  const freshToken=await session();assert.ok(freshToken!==oldToken,'Restart must issue fresh credentials');
   assert.equal((await request('/api/notifications',{headers:{Authorization:`Bearer ${freshToken}`}})).status,200);
   fs.writeFileSync(path.join(directory,'result.json'),JSON.stringify({passed:true,fixturePort:port,
     realProcessRestarts:1,oldTokenStatus:401,newSessionStatus:200,androidRuntime:false},null,2)+'\n');

@@ -205,13 +205,15 @@ class DemoAppTest {
             imageServer.enqueue(okhttp3.mockwebserver.MockResponse()
                 .setHeader("Content-Type", "image/svg+xml")
                 .setBody("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\"><rect width=\"40\" height=\"40\" fill=\"green\"/></svg>"))
+            // MockWebServer.url() performs reverse DNS; never call it in a composition.
+            val imageUrl = "http://127.0.0.1:${imageServer.port}/synthetic.svg"
             compose.runOnUiThread {
                 compose.activity.setContent {
                     MaterialTheme {
                         Column {
                             Text("DEMO · kiểm component ảnh trên bề mặt hẹp")
                             com.example.giaodien.ui.components.MenuImage(
-                                imageServer.url("/synthetic.svg").newBuilder().host("127.0.0.1").build().toString(), "Ảnh giả lập", Modifier.size(120.dp))
+                                imageUrl, "Ảnh giả lập", Modifier.size(120.dp))
                         }
                     }
                 }
