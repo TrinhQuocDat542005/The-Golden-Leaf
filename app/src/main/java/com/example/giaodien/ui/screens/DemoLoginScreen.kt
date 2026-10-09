@@ -26,7 +26,10 @@ fun DemoLoginScreen(onLoginSuccess: () -> Unit) {
             Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = {
                 busy = true; error = null
                 scope.launch {
-                    try { DemoSession.signIn(persona); onLoginSuccess() }
+                    try {
+                        DemoSession.signIn(persona)
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) { onLoginSuccess() }
+                    }
                     catch (e: CancellationException) { throw e }
                     catch (e: Exception) { DemoSession.recordFailure(e); error = "Chưa mở được phiên demo. Kiểm tra backend profile demo và thử lại." }
                     finally { busy = false }

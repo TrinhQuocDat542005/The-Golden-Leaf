@@ -2,6 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+export function checkExceptionSource(source, exceptions) {
+  if (exceptions.some(item => item.id === 'CVE-2026-47884') && /XsltView/.test(source))
+    throw new Error('XsltView introduced: remove/reassess security exception');
+  if (exceptions.some(item => item.id === 'CVE-2026-47890') &&
+      /SseEmitter|ServerSentEvent|FragmentsRendering|ResponseBodyEmitter|TEXT_EVENT_STREAM|text\/event-stream|\bEventSource\b/.test(source))
+    throw new Error('SSE/view fragments introduced: remove/reassess security exception');
+}
+
 export function checkReport(report, requireOs=false, exceptions=[], now=new Date()) {
   const results=report.Results ?? [];
   if (!results.some(result => result.Type === 'jar' && result.Packages?.length > 0))
@@ -18,14 +26,13 @@ export function checkReport(report, requireOs=false, exceptions=[], now=new Date
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (!process.argv[2]) throw new Error('Security report path is required');
   const exceptions=JSON.parse(fs.readFileSync('scripts/security-exceptions.json','utf8'));
-  for (const item of exceptions) {
-    if (item.id==='CVE-2026-47884') {
-      const visit=dir=>fs.readdirSync(dir,{withFileTypes:true}).some(entry=>{
-        const file=path.join(dir,entry.name);
-        return entry.isDirectory() ? visit(file) : file.endsWith('.java') && /XsltView/.test(fs.readFileSync(file,'utf8'));
-      });
-      if (visit('The-Golden-Leaf-server/src/main/java')) throw new Error('XsltView introduced: remove/reassess security exception');
+  const visit=dir=>{
+    for (const entry of fs.readdirSync(dir,{withFileTypes:true})) {
+      const file=path.join(dir,entry.name);
+      if (entry.isDirectory()) visit(file);
+      else if (/\.(java|html|js|properties|ya?ml)$/.test(file)) checkExceptionSource(fs.readFileSync(file,'utf8'),exceptions);
     }
-  }
+  };
+  visit('The-Golden-Leaf-server/src/main');
   checkReport(JSON.parse(fs.readFileSync(process.argv[2],'utf8')),process.argv.includes('--image'),exceptions);
 }

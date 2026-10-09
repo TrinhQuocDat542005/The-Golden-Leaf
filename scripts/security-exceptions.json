@@ -6,5 +6,13 @@
     "expires": "2026-11-08T00:00:00Z",
     "advisory": "https://spring.io/security/cve-2026-47884/",
     "reason": "Not reachable in current portfolio: no XsltView/XsltViewResolver or implicit wildcard MVC view. Legacy MVC returns explicit Thymeleaf view names. Exact-version exception; source gate rejects XsltView introduction. Spring 6.2.20 fix is enterprise-only; reassess before expiry/any public deployment. Finding remains in full scan report."
+  },
+  {
+    "id": "CVE-2026-47890",
+    "package": "org.springframework:spring-webmvc",
+    "version": "6.2.19",
+    "expires": "2026-11-08T00:00:00Z",
+    "advisory": "https://spring.io/security/cve-2026-47890/",
+    "reason": "Accepted by project owner for local portfolio only. Current source has no SSE/view fragments; source gate rejects SSE/emitter/event-stream/fragments APIs and EventSource introduction. Spring advisory severity LOW differs from scanner CRITICAL; findings are retained, not patched or severity-rewritten. Spring 6.2.20 fix is enterprise-only; reassess before expiry, dependency changes, or any public deployment."
   }
 ]

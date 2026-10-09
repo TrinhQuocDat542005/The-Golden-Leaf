@@ -10,7 +10,9 @@ Source revision `2da58538d7b0c5d47ef132393c310c800779473c`, [CI run 37899286958]
 
 Video lỗi API 35 đã giải mã được bằng FFmpeg 7.1: màn chọn persona báo lỗi mở phiên sau request session trả 200. Chưa có bộ sáu ảnh thành công để đưa vào README. Bản sửa tiếp theo chuyển `review-draft` về TextField thật và bổ sung chẩn đoán demo chỉ gồm tên lớp/hàm/line, không exception message/token/body; native test fail-fast nếu màn login báo lỗi. Những sửa này chưa được tính là sửa xong lỗi đăng nhập trước khi đọc runtime mới.
 
-Trivy ghi severity CRITICAL (`ghsa`) cho `spring-webmvc:6.2.19`, fixed version 7.0.9. [Advisory chính thức Spring](https://spring.io/security/cve-2026-47890/) ghi LOW, yêu cầu SSE với view fragments và dữ liệu attacker kiểm soát; bản sửa 6.2.20 là enterprise-only. Rà source hiện tại không thấy SSE/view fragments. Chưa thêm ngoại lệ mới, chưa nâng major; cần quyết định risk acceptance/migration, không gọi phát hiện này là đã vá. Ngoại lệ CVE-2026-47884 cũ vẫn giữ hạn riêng.
+Trivy ghi severity CRITICAL (`ghsa`) cho `spring-webmvc:6.2.19`, fixed version 7.0.9. [Advisory chính thức Spring](https://spring.io/security/cve-2026-47890/) ghi LOW, yêu cầu SSE với view fragments và dữ liệu attacker kiểm soát; bản sửa 6.2.20 là enterprise-only. Rà source hiện tại không thấy SSE/view fragments. Chủ project đã đồng ý ngoại lệ đúng CVE/package/version đến **08/11/2026 00:00 UTC**, chỉ cho portfolio local. Guard quét Java/HTML/JS/config trong backend main source, từ chối SSE/emitter/event-stream/fragments API và EventSource. Không xóa finding hoặc đổi severity; regex chỉ là guard phụ, không thay reachability audit. Cả hai CVE-2026-47884/47890 vẫn chưa được vá, cần reassess trước hết hạn, đổi dependency hoặc public deployment.
+
+Run chẩn đoán `da92f50`, [37901459802](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37901459802) xác định `LifecycleRegistry.enforceMainThreadIfNeeded` khi Navigation pop login. Bản sửa gọi navigation trên `Dispatchers.Main.immediate` sau sign-in. Cần runtime run mới để xác nhận, không suy ra thành công từ chẩn đoán/build.
 
 ## Những gì đã thay đổi
 
@@ -29,7 +31,7 @@ Trivy ghi severity CRITICAL (`ghsa`) cho `spring-webmvc:6.2.19`, fixed version 7
 | Backend local `mvnw verify` | 191 ca khai báo; **122 chạy, 0 failure/error, 69 MySQL skip** do Docker local không chạy |
 | Android unit/build | **38 passed, 0 skipped** local; demo APK/instrumentation APK và debug build thành công. Có 6 ca mới cho history/inbox/invoice retry và account isolation |
 | Android quality | Lint không error; budget/static log gate đạt, không tăng budget. Coil compose/SVG đồng bộ 2.7.0 qua version catalog. Không tuyên bố lint sạch |
-| Node gates | **7 passed**, có kiểm đúng ba native events; fail/crash/skip/partial vẫn bị từ chối |
+| Node gates | **8 passed**, gồm guard SSE/XSLT và kiểm đúng ba native events; fail/crash/skip/partial vẫn bị từ chối |
 | Browser E2E | **3 passed** local, gồm customer/staff/admin/refund, check-in và màn hình mobile; fixture 12 món |
 | Native API 25/35 | CI dùng MyApp/MainActivity thật, ba customer UI tests riêng sau bốn regression tests tuần 8; chưa tính đạt trước khi có run thành công |
 | Screenshot/video | Sáu PNG gốc/mỗi API: home, payment, history, invoice, menu, review; MP4 native tối đa 180 giây, không audio; chờ kiểm tra trực quan |
