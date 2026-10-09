@@ -32,7 +32,7 @@ fun YeuThichScreen(
     val favoriteList by yeuThichViewModel.favoriteList.collectAsState(initial = emptyList())
     val loading by yeuThichViewModel.loading.collectAsState()
     val error by yeuThichViewModel.error.collectAsState()
-    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    val userId = com.example.giaodien.data.network.CurrentAccount.user()?.uid ?: ""
 
     // Load danh sách yêu thích khi vào màn hình
     LaunchedEffect(userId) {

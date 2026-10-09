@@ -48,7 +48,7 @@ public class SecurityConfig {
                  .requestMatchers(HttpMethod.POST, "/nhahang/**").hasRole("ADMIN")
                  .requestMatchers("/api/staff/**", "/nhahang/**").hasAnyRole("STAFF", "ADMIN")
                  .requestMatchers("/api/payments/**", "/api/notifications/**", "/api/devices/**", "/api/taikhoan/**", "/api/dondat/**", "/api/yeu-thich/**", "/api/binhluan/**").authenticated()
-                 .requestMatchers(HttpMethod.GET, "/api/thucdon/**", "/api/ban-slot", "/actuator/health", "/uploads/**", "/staff.html", "/staff.js", "/staff.css", "/demo.html", "/demo.js", "/demo.css", "/api/demo/config", "/api/auth/web-config").permitAll()
+                 .requestMatchers(HttpMethod.GET, "/api/thucdon/**", "/api/ban-slot", "/actuator/health", "/uploads/**", "/demo-assets/*.svg", "/staff.html", "/staff.js", "/staff.css", "/demo.html", "/demo.js", "/demo.css", "/api/demo/config", "/api/auth/web-config").permitAll()
                  .requestMatchers(HttpMethod.POST, "/api/demo/session").permitAll()
                  .requestMatchers(HttpMethod.POST, "/api/auth/sync").permitAll();
                 if (requireAuth) a.anyRequest().authenticated(); else a.anyRequest().permitAll();

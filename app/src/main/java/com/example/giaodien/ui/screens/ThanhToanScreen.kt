@@ -8,6 +8,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.giaodien.viewmodel.HoaDonViewModel
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun ThanhToanScreen(navController: NavController, method: String, viewModel: HoaDonViewModel) {
@@ -19,7 +21,7 @@ fun ThanhToanScreen(navController: NavController, method: String, viewModel: Hoa
         while (payment?.status == "PENDING") { delay(15000); viewModel.refreshPayment() }
     }
     Scaffold { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("Thanh toán chuyển khoản", style = MaterialTheme.typography.headlineSmall)
             Text("Đơn #${viewModel.idDat}")
             payment?.let { p ->
@@ -32,7 +34,7 @@ fun ThanhToanScreen(navController: NavController, method: String, viewModel: Hoa
                     if (p.accountNumber.isBlank()) Text("Chưa có thông tin tài khoản nhận tiền. Liên hệ nhà hàng trước khi chuyển.", color = MaterialTheme.colorScheme.error)
                 } }
                 Text(when (p.status) {
-                    "PENDING" -> "Chờ nhân viên đối soát. Chuyển đúng số tiền và nội dung trên; không chuyển lần nữa nếu đã gửi tiền."
+                    "PENDING" -> if (com.example.giaodien.BuildConfig.DEMO_MODE) "Giao dịch giả lập. KHÔNG chuyển tiền. Mở staff.html trên máy tính để xác nhận mẫu." else "Chờ nhân viên đối soát. Chuyển đúng số tiền và nội dung trên; không chuyển lần nữa nếu đã gửi tiền."
                     "PAID" -> "Nhà hàng đã xác nhận nhận tiền."
                     "REFUND_REQUIRED" -> "Đơn đã hủy, đang chờ nhà hàng hoàn tiền."
                     "REFUNDED" -> "Nhà hàng đã ghi nhận hoàn tiền."

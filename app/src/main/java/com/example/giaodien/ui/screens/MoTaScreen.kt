@@ -28,6 +28,7 @@ import com.example.giaodien.data.model.BinhLuan
 import com.example.giaodien.data.model.ThucDon
 import com.example.giaodien.viewmodel.BinhLuanViewModel
 import com.example.giaodien.viewmodel.ThucDonViewModel
+import androidx.compose.ui.platform.testTag
 
 @Composable
 fun MoTaScreen(
@@ -129,7 +130,7 @@ fun MoTaScreen(
                         text = mon.tenMon,
                         style = MaterialTheme.typography.headlineLarge, // Dùng headlineLarge cho nổi bật
                         fontSize = 32.sp,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).testTag("review-draft")
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -262,6 +263,7 @@ fun MoTaScreen(
                             }
                         },
                         enabled = newComment.isNotBlank() && !sendingReview && !loadingBinhLuan,
+                        modifier = Modifier.testTag("review-submit"),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                     ) {

@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 // Chú ý: Cần đổi package của TaiKhoanViewModel nếu chưa đúng
-class TaiKhoanViewModel(private val repository: TaiKhoanRepository) : ViewModel() {
+class TaiKhoanViewModel(
+    private val repository: TaiKhoanRepository,
+    private val session: com.example.giaodien.data.network.AccountSession = com.example.giaodien.data.network.FirebaseAccountSession()
+) : ViewModel() {
 
     // Đã sửa DatBanFullDTO thành LichSuDonDayDuDTO
     private val _choXacNhan = MutableStateFlow<List<LichSuDonDayDuDTO>>(emptyList())
@@ -18,43 +21,48 @@ class TaiKhoanViewModel(private val repository: TaiKhoanRepository) : ViewModel(
     val errorMessage = MutableStateFlow<String?>(null)
     private val _lichSuDonDat = MutableStateFlow<List<LichSuDonDayDuDTO>>(emptyList())
     val lichSuDonDat: StateFlow<List<LichSuDonDayDuDTO>> = _lichSuDonDat
-    private val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
-    private val listener = com.google.firebase.auth.FirebaseAuth.AuthStateListener {
+    private var generation = 0
+    private var loadJob: kotlinx.coroutines.Job? = null
+    private val stop = session.observe {
+        generation++; loadJob?.cancel(); isLoading.value = false
         _choXacNhan.value = emptyList(); _lichSuDonDat.value = emptyList(); errorMessage.value = null
-        if (it.currentUser != null) loadData()
+        if (session.uid() != null) loadData()
     }
-    init { auth.addAuthStateListener(listener) }
-    override fun onCleared() { auth.removeAuthStateListener(listener); super.onCleared() }
+    override fun onCleared() { stop(); super.onCleared() }
 
     fun loadData() {
-        val uid = auth.currentUser?.uid ?: return
-        viewModelScope.launch {
+        val uid = session.uid() ?: return
+        val request = ++generation
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             isLoading.value = true
             errorMessage.value = null
             try {
                 val pending = repository.getChoXacNhan()
                 val history = repository.getLichSuDonDat()
-                if (auth.currentUser?.uid == uid) { _choXacNhan.value = pending; _lichSuDonDat.value = history }
+                if (session.uid() == uid && request == generation) { _choXacNhan.value = pending; _lichSuDonDat.value = history }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                errorMessage.value = "Chưa tải được lịch sử. Kiểm tra kết nối và thử lại."
+                if (session.uid() == uid && request == generation) errorMessage.value = "Chưa tải được lịch sử. Kiểm tra kết nối và thử lại."
             } finally {
-                isLoading.value = false
+                if (session.uid() == uid && request == generation) isLoading.value = false
             }
         }
     }
     fun huyDonDat(idDat: Long) {
+        val owner = session.uid() ?: return
+        val request = generation
         viewModelScope.launch {
             try {
 
                 repository.huyDonDat(idDat)
 
                 // Hủy thành công, tải lại dữ liệu để cập nhật UI
-                loadData()
+                if (session.uid() == owner && request == generation) loadData()
 
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                errorMessage.value = "Không thể hủy đơn ở trạng thái hiện tại. Vui lòng kiểm tra lại."
+                if (session.uid() == owner && request == generation) errorMessage.value = "Không thể hủy đơn ở trạng thái hiện tại. Vui lòng kiểm tra lại."
             }
         }
     }

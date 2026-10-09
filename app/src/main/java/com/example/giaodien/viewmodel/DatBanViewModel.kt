@@ -123,6 +123,6 @@ class DatBanViewModel @JvmOverloads constructor(
         }
     }
     fun getUserEmail(): String {
-        return FirebaseAuth.getInstance().currentUser?.email ?: ""
+        return com.example.giaodien.data.network.CurrentAccount.user()?.email ?: ""
     }
 }

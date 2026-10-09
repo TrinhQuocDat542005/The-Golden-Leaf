@@ -14,3 +14,9 @@ test('native runner rejects crash, failure, partial output and skipped tests',()
     fixture.replace('INSTRUMENTATION_STATUS_CODE: 0','INSTRUMENTATION_STATUS_CODE: -3')])
     assert.throws(()=>verifiedTests(output));
 });
+test('demo suite requires exactly three successful unique events',()=>{
+  const demo=fixture.replace(/INSTRUMENTATION_STATUS: class=Fixture\nINSTRUMENTATION_STATUS: test=test3\nINSTRUMENTATION_STATUS_CODE: 0\n/,'').replace('OK (4 tests)','OK (3 tests)');
+  assert.equal(verifiedTests(demo,3).length,3);
+  assert.throws(()=>verifiedTests(demo,4));
+  for (const count of [0,NaN,1.5,101]) assert.throws(()=>verifiedTests(demo,count));
+});

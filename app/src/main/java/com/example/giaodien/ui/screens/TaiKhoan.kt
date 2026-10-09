@@ -27,6 +27,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.giaodien.R
 import com.example.giaodien.data.model.LichSuDonDayDuDTO
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.platform.testTag
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -73,7 +74,7 @@ fun TaiKhoanScreen(
         }
     })
 ) {
-    val user = FirebaseAuth.getInstance().currentUser
+    val user = com.example.giaodien.data.network.CurrentAccount.user()
     val name = user?.displayName ?: "User"
     val email = user?.email ?: "Unknown email"
     val photoUrl = user?.photoUrl
@@ -145,10 +146,8 @@ fun TaiKhoanScreen(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 // Avatar
-                val avatarPainter = if (photoUrl != null) rememberAsyncImagePainter(photoUrl) else painterResource(id = R.drawable.bgcm)
-
-                androidx.compose.foundation.Image(
-                    painter = avatarPainter,
+                coil.compose.AsyncImage(
+                    model = photoUrl ?: R.drawable.ic_person,
                     contentDescription = "User Avatar",
                     modifier = Modifier
                         .size(70.dp)
@@ -194,6 +193,10 @@ fun TaiKhoanScreen(
         // ===== NÚT LOGOUT (Giữ nguyên) =====
         Button(
             onClick = {
+                if (com.example.giaodien.BuildConfig.DEMO_MODE) {
+                    com.example.giaodien.data.network.DemoSession.signOut()
+                    return@Button
+                }
                 val context = navController.context
                 FirebaseAuth.getInstance().signOut()
                 val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -247,7 +250,7 @@ fun HorizontalScrollSection(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (items.isEmpty()) {
+        if (items.isEmpty() && !isLoading) {
             Text(
                 text = "Không có đơn nào chờ xác nhận.",
                 fontSize = 14.sp,
@@ -321,7 +324,7 @@ fun HorizontalScrollSection(
                         DonDatCard(
                             item = item,
                             navController = navController,
-                            isCancellable = true, // Luôn là True cho mục này
+                            isCancellable = true,
                             viewModel = viewModel,
                             modifier = Modifier
                                 .width(280.dp) // Kích thước cố định cho mỗi Card trong LazyRow
@@ -369,7 +372,7 @@ fun SectionList(title: String, items: List<LichSuDonDayDuDTO>, navController: Na
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (items.isEmpty()) {
+        if (items.isEmpty() && !isLoading) {
             Text(
                 text = "Không có đơn nào.",
                 fontSize = 14.sp,
@@ -420,6 +423,7 @@ fun DonDatCard(
 
     Card(
         modifier = modifier
+            .testTag("booking-history-${item.idDat}")
             .clip(RoundedCornerShape(16.dp)),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFB71C1C))
     ) {
@@ -482,10 +486,9 @@ fun DonDatCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Hàng chứa Tổng tiền và các nút
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = " ${formatCurrency(item.tongTien ?: 0.0)}",
@@ -501,6 +504,7 @@ fun DonDatCard(
                     }
                     // Nút Chi Tiết
                     OutlinedButton(
+                        modifier = Modifier.testTag("booking-details-${item.idDat}"),
                         onClick = {
                             navController.navigate(Screen.ChiTietHoaDon.createRoute(item.idDat))
                         },

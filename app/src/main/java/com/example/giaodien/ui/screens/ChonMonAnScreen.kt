@@ -36,6 +36,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.giaodien.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.launch
 
 val DeepRed = Color(0xFF8B0000)
@@ -56,7 +57,7 @@ fun ChonMonAnScreen(
     val holdExpiresAt by gioHangViewModel.holdExpiresAt.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    val userId = com.example.giaodien.data.network.CurrentAccount.user()?.uid ?: ""
 
     LaunchedEffect(Unit) { viewModel.loadThucDon() }
     LaunchedEffect(userId) { yeuThichViewModel.loadFavorites(userId) }
@@ -90,8 +91,8 @@ fun ChonMonAnScreen(
                         .height(150.dp)
                         .clip(headerShape)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.bgcm),
+                    coil.compose.AsyncImage(
+                        model = R.drawable.bgcm,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
@@ -210,7 +211,7 @@ fun MonAnRow(title: String, monList: List<ThucDon>, gioHangViewModel: GioHangVie
                     Column(modifier = Modifier.padding(8.dp)) {
                         // Chỉ giữ 1 Image
                         AsyncImage(
-                            model = mon.anh, // <-- chỉ cần mon.anh, không ghép baseUrl nữa
+                            model = mon.anh,
                             contentDescription = mon.tenMon,
                             modifier = Modifier
                                 .height(80.dp)
@@ -225,7 +226,7 @@ fun MonAnRow(title: String, monList: List<ThucDon>, gioHangViewModel: GioHangVie
                         Button(
                             onClick = { gioHangViewModel.addToCart(mon) },
                             colors = ButtonDefaults.buttonColors(containerColor = DeepRed, contentColor = Color.White),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().then(Modifier.testTag("choose-dish-${mon.idThucDon}"))
                         ) {
                             Text("Chọn Món")
                         }

@@ -23,6 +23,11 @@ val weatherApiKey = providers.gradleProperty("WEATHER_API_KEY")
     .orElse(providers.environmentVariable("WEATHER_API_KEY"))
     .orElse("")
 
+val demoApiBaseUrl = providers.gradleProperty("DEMO_API_BASE_URL").orElse("http://10.0.2.2:8080/")
+require(demoApiBaseUrl.get() in setOf("http://10.0.2.2:8080/", "http://10.0.2.2:18082/", "http://127.0.0.1:8080/", "http://127.0.0.1:18082/")) {
+    "Demo must use a loopback/emulator origin on port 8080 or the isolated fixture port 18082."
+}
+
 // Only the disposable component/API test build disables Firebase's auto-init provider.
 val week8IsolatedTests = providers.gradleProperty("week8IsolatedTests").map { it == "true" }.orElse(false)
 
@@ -39,11 +44,13 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "com.example.giaodien.Week8TestRunner"
+        testInstrumentationRunner = if (providers.gradleProperty("demoInstrumentation").orNull == "true")
+            "androidx.test.runner.AndroidJUnitRunner" else "com.example.giaodien.Week8TestRunner"
     }
 
     buildTypes {
         debug {
+            buildConfigField("boolean", "DEMO_MODE", "false")
             manifestPlaceholders["allowCleartext"] = "true"
             manifestPlaceholders["firebaseInitEnabled"] = (!week8IsolatedTests.get()).toString()
             buildConfigField("boolean", "WEEK8_ISOLATED_TESTS", week8IsolatedTests.get().toString())
@@ -51,6 +58,7 @@ android {
             buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey.get()}\"")
         }
         release {
+            buildConfigField("boolean", "DEMO_MODE", "false")
             manifestPlaceholders["allowCleartext"] = "false"
             manifestPlaceholders["firebaseInitEnabled"] = "true"
             buildConfigField("boolean", "WEEK8_ISOLATED_TESTS", "false")
@@ -62,6 +70,19 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+
+    if (providers.gradleProperty("demoInstrumentation").orNull == "true") testBuildType = "demo"
+    buildTypes.create("demo") {
+        initWith(buildTypes.getByName("debug"))
+        applicationIdSuffix = ".demo"
+        versionNameSuffix = "-demo"
+        matchingFallbacks += "debug"
+        manifestPlaceholders["firebaseInitEnabled"] = "false"
+        buildConfigField("boolean", "DEMO_MODE", "true")
+        buildConfigField("boolean", "WEEK8_ISOLATED_TESTS", "false")
+        buildConfigField("String", "API_BASE_URL", "\"${demoApiBaseUrl.get()}\"")
+        buildConfigField("String", "WEATHER_API_KEY", "\"\"")
     }
 
     compileOptions {
@@ -124,7 +145,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     implementation("androidx.navigation:navigation-compose:2.7.5")
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
 
     // ---------------------------------------------
     // FIREBASE
@@ -193,3 +215,5 @@ val validateReleaseEndpoint by tasks.registering {
     }
 }
 tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(validateReleaseEndpoint) }
+// The synthetic package has no Firebase project/client and never initializes Firebase.
+tasks.matching { it.name == "processDemoGoogleServices" }.configureEach { enabled = false }

@@ -18,6 +18,7 @@ import com.example.giaodien.data.model.LichSuDonDayDuDTO
 import com.example.giaodien.data.model.GioHangMonAn
 import com.example.giaodien.viewmodel.ChiTietHoaDonState
 import com.example.giaodien.viewmodel.ChiTietHoaDonViewModel
+import androidx.compose.ui.platform.testTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +56,10 @@ fun ChiTietHoaDonScreen(
                     .fillMaxSize()
                     .padding(padding),
                 contentAlignment = Alignment.Center
-            ) { Text("Lỗi: ${(state as ChiTietHoaDonState.Error).message}") }
+            ) { Column {
+                Text((state as ChiTietHoaDonState.Error).message)
+                TextButton(onClick = { viewModel.loadChiTietHoaDon(idDat) }) { Text("Thử lại") }
+            } }
 
             is ChiTietHoaDonState.Success -> {
                 val d = (state as ChiTietHoaDonState.Success).data
@@ -63,7 +67,7 @@ fun ChiTietHoaDonScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp).testTag("invoice-content"),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // --- Thông tin hóa đơn ---

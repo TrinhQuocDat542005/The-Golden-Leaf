@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.giaodien.R // Đảm bảo bạn có một drawable cho biểu tượng đĩa/dao/thìa và biểu tượng người
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.text.BasicTextField
 
@@ -81,6 +84,7 @@ fun NhapSoLuongScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
                     .background(Color(0xFFF0F0F0)), // Màu nền tổng thể nhạt
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -107,7 +111,7 @@ fun NhapSoLuongScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                "Còn trống: $banConLai",
+                                "Còn trống: $banConLai bàn",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -123,8 +127,8 @@ fun NhapSoLuongScreen(
                         Spacer(Modifier.height(16.dp))
 
                         // Biểu tượng đĩa và dao nĩa
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_sl), // Thay bằng drawable của bạn
+                        coil.compose.AsyncImage(
+                            model = R.drawable.logo_sl,
                             contentDescription = "Biểu tượng đĩa",
                             modifier = Modifier.size(200.dp)
                         )
@@ -142,7 +146,7 @@ fun NhapSoLuongScreen(
                                 onClick = { if (soLuong > 1) soLuong-- },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                                 shape = CircleShape,
-                                modifier = Modifier.size(56.dp)
+                                modifier = Modifier.size(56.dp).testTag("guests-minus")
                             ) {
                                 Text("-", fontSize = 28.sp, color = Color.White)
                             }
@@ -167,10 +171,10 @@ fun NhapSoLuongScreen(
 
                             // Nút tăng
                             Button(
-                                onClick = { if (soLuong < minOf(80, banConLai)) soLuong++ },
+                                onClick = { if (soLuong < minOf(80, banConLai * 8)) soLuong++ },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                                 shape = CircleShape,
-                                modifier = Modifier.size(56.dp)
+                                modifier = Modifier.size(56.dp).testTag("guests-plus")
                             ) {
                                 Text("+", fontSize = 28.sp, color = Color.White)
                             }
@@ -224,7 +228,7 @@ fun NhapSoLuongScreen(
                 // Nút "Tiếp tục"
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp)) }
                 Button(
-                    enabled = !submitting && soLuong in 1..minOf(80, banConLai),
+                    enabled = !submitting && soLuong in 1..minOf(80, banConLai * 8),
                     onClick = {
                         onDatBan(soLuong, ghiChu)
                     },
@@ -233,6 +237,7 @@ fun NhapSoLuongScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp)
+                        .testTag("booking-submit")
                         .padding(horizontal = 16.dp)
                 ) {
                     Text(

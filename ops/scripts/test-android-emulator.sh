@@ -18,11 +18,24 @@ mkdir -p build/week8
 java -jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --spring.profiles.active=demo --server.port=18082 > build/week8/android-demo.log 2>&1 &
 demo_pid=$!
 emulator_pid=''
+video_pid=''
+stop_video() {
+  if [[ -n "$video_pid" ]]; then
+    timeout 5 "$adb_bin" -s emulator-5580 shell pkill -2 screenrecord 2>/dev/null || true
+    wait "$video_pid" 2>/dev/null || true
+    video_pid=''
+    timeout 30 "$adb_bin" -s emulator-5580 pull /sdcard/week9-demo.mp4 build/week9/android-demo.mp4 >/dev/null 2>&1 || true
+  fi
+}
 cleanup() {
+  stop_video
   if [[ -n "$emulator_pid" ]]; then timeout 5 "$adb_bin" -s emulator-5580 logcat -d -t 2000 > build/week8/android-logcat.txt 2>&1 || true; fi
   if [[ -n "$emulator_pid" ]]; then
     for shot in slot-selection network-error; do
       timeout 5 "$adb_bin" -s emulator-5580 exec-out run-as com.example.giaodien cat "files/week8-$shot-window.txt" > "build/week8/android-$shot-window.txt" 2>/dev/null || true
+    done
+    for shot in home payment history invoice menu review; do
+      timeout 5 "$adb_bin" -s emulator-5580 exec-out run-as com.example.giaodien.demo cat "files/week9-$shot-window.txt" > "build/week9/android-$shot-window.txt" 2>/dev/null || true
     done
   fi
   [[ -z "$emulator_pid" ]] || kill "$emulator_pid" 2>/dev/null || true
@@ -74,3 +87,20 @@ for shot in slot-selection network-error; do
   "$adb_bin" -s "$ANDROID_SERIAL" exec-out run-as com.example.giaodien cat "files/week8-$shot.png" > "build/week8/android-$shot.png"
 done
 "$adb_bin" -s "$ANDROID_SERIAL" logcat -d -t 2000 > build/week8/android-logcat.txt
+
+# Real MyApp/MainActivity customer UI. Firebase stays disabled only in the separate demo APK.
+mkdir -p build/week9
+bash gradlew --no-daemon -PdemoInstrumentation=true -PDEMO_API_BASE_URL=http://10.0.2.2:18082/ assembleDemo assembleDemoAndroidTest
+timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/demo/app-demo.apk
+timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/androidTest/demo/app-demo-androidTest.apk
+timeout 190 "$adb_bin" -s "$ANDROID_SERIAL" shell screenrecord --size 720x1280 --bit-rate 1500000 --time-limit 180 /sdcard/week9-demo.mp4 > build/week9/screenrecord.log 2>&1 &
+video_pid=$!
+timeout 300 "$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e class com.example.giaodien.DemoAppTest com.example.giaodien.demo.test/androidx.test.runner.AndroidJUnitRunner | tee build/week9/instrumentation-results.txt
+node scripts/check-android-instrumentation.mjs build/week9/instrumentation-results.txt build/week9/instrumentation-results.xml 3
+stop_video
+[[ -s build/week9/android-demo.mp4 ]] || { echo 'Native demo recording is missing'; exit 1; }
+for shot in home payment history invoice menu review; do
+  "$adb_bin" -s "$ANDROID_SERIAL" exec-out run-as com.example.giaodien.demo cat "files/week9-$shot.png" > "build/week9/android-$shot.png"
+  [[ -s "build/week9/android-$shot.png" ]] || { echo "Missing native demo screenshot: $shot"; exit 1; }
+done
+"$adb_bin" -s "$ANDROID_SERIAL" logcat -d -t 2000 > build/week9/android-logcat.txt

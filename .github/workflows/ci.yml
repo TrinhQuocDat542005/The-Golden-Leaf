@@ -61,7 +61,7 @@ jobs:
       - name: Install Android SDK components
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ''platforms;android-36'' ''build-tools;36.0.0'''
       - name: Debug unit tests, assembly and lint
-        run: bash gradlew --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest lintDebug
+        run: bash gradlew --no-daemon testDebugUnitTest assembleDebug assembleDemo assembleDebugAndroidTest lintDebug
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
@@ -73,6 +73,7 @@ jobs:
           name: android-debug-and-reports
           path: |
             app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/demo/*.apk
             app/build/reports/tests/testDebugUnitTest
             app/build/reports/lint-results-debug.*
           retention-days: 14
@@ -168,7 +169,7 @@ jobs:
       - name: Package isolated demo
         working-directory: The-Golden-Leaf-server
         run: bash mvnw -B -DskipTests package
-      - name: Real Compose screens and Android-to-demo API journey
+      - name: Component regression and full native customer demo journeys
         env:
           ANDROID_TEST_API: ${{ matrix.api }}
         run: bash ops/scripts/test-android-emulator.sh
@@ -184,6 +185,12 @@ jobs:
             build/week8/android-*.png
             build/week8/android-*-window.txt
             build/week8/instrumentation-results.*
+            build/week9/android-*.png
+            build/week9/android-*-window.txt
+            build/week9/android-demo.mp4
+            build/week9/android-logcat.txt
+            build/week9/screenrecord.log
+            build/week9/instrumentation-results.*
           retention-days: 14
   security:
     needs: backend

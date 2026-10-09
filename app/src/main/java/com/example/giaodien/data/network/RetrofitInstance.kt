@@ -33,6 +33,18 @@ object RetrofitInstance {
     // Dùng token cache; authenticator bên dưới refresh một lần khi nhận 401.
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
+        if (BuildConfig.DEMO_MODE) {
+            val state = DemoSession.state
+            val request = if (state == null) originalRequest else originalRequest.newBuilder()
+                .header("Authorization", "Bearer ${state.token}").build()
+            val response = chain.proceed(request)
+            if (response.code == 401 && DemoSession.state === state && state != null) {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    if (DemoSession.state === state) DemoSession.signOut()
+                }
+            }
+            return@Interceptor response
+        }
         val user = FirebaseAuth.getInstance().currentUser
 
         // Retrofit chạy interceptor đồng bộ trên network thread.
@@ -52,7 +64,7 @@ object RetrofitInstance {
     private val okHttpClient = OkHttpClient.Builder()
         .authenticator { _, response ->
             // One refresh only. OkHttp executes this on its network thread, never the Compose thread.
-            if (response.priorResponse != null) null else {
+            if (BuildConfig.DEMO_MODE || response.priorResponse != null) null else {
                 val user = FirebaseAuth.getInstance().currentUser
                 val fresh = try { runBlocking { user?.getIdToken(true)?.await()?.token } } catch (_: Exception) { null }
                 if (fresh == null || FirebaseAuth.getInstance().currentUser?.uid != user?.uid) null

@@ -33,7 +33,7 @@ class DemoIntegrationTests {
     private String bearer(String role) { return "Bearer " + verifier.tokenFor(role); }
     @Test void seedIsSyntheticAndHasNoFirebaseOrPushWorker() throws Exception {
         assertEquals(4,db.queryForObject("SELECT COUNT(*) FROM users WHERE email LIKE '%@example.invalid'",Integer.class));
-        assertEquals(6,db.queryForObject("SELECT COUNT(*) FROM menu_items",Integer.class));
+        assertEquals(12,db.queryForObject("SELECT COUNT(*) FROM menu_items",Integer.class));
         assertEquals(4,db.queryForObject("SELECT COUNT(*) FROM restaurant_tables",Integer.class));
         assertEquals(28,db.queryForObject("SELECT COUNT(*) FROM time_slots",Integer.class));
         assertTrue(context.getBeansOfType(DeliveryJob.class).isEmpty());assertFalse(context.containsBean("firebaseConfig"));
@@ -49,6 +49,18 @@ class DemoIntegrationTests {
         mvc.perform(get("/api/admin/audit").header("Authorization",bearer("STAFF"))).andExpect(status().isForbidden());
         mvc.perform(get("/api/admin/audit").header("Authorization",bearer("ADMIN"))).andExpect(status().isOk());
         mvc.perform(get("/api/auth/me").header("Authorization","Bearer fixed-demo-admin")).andExpect(status().isUnauthorized());
+    }
+    @Test void richFixturesHaveLocalIllustrationsAndSeparateCustomerData() throws Exception {
+        assertEquals(12,db.queryForObject("SELECT COUNT(*) FROM menu_items WHERE image_url LIKE '/demo-assets/%.svg'",Integer.class));
+        for (String asset : java.util.List.of("salad","soup","main","dessert","cake","fruit","bread")) {
+            mvc.perform(get("/demo-assets/"+asset+".svg")).andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith("image/svg+xml"));
+        }
+        mvc.perform(get("/api/yeu-thich/list").header("Authorization",bearer("CUSTOMER"))).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
+        mvc.perform(get("/api/yeu-thich/list").header("Authorization",bearer("OTHER_CUSTOMER"))).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        assertEquals("COMPLETED",db.queryForObject("SELECT status FROM bookings WHERE idempotency_key='demo-seed-completed'",String.class));
+        assertEquals("CANCELLED",db.queryForObject("SELECT status FROM bookings WHERE idempotency_key='demo-seed-cancelled'",String.class));
+        assertEquals(2,db.queryForObject("SELECT COUNT(*) FROM reviews WHERE user_uid='demo-other'",Integer.class));
     }
     @Test void fullBookingPaymentAndRefundPreserveOwnershipAndIdempotency() throws Exception {
         String key=UUID.randomUUID().toString();

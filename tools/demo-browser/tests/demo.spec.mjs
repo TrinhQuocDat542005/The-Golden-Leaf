@@ -18,7 +18,7 @@ test('customer → staff receipt → assignment → cancellation → refund → 
   const errors=[];page.on('pageerror', error=>errors.push(error.message));
   await page.goto('/demo.html');
   await expect(page.locator('#mode')).toHaveText('● LOCAL DEMO');
-  await expect(page.locator('.menu-item')).toHaveCount(6);
+  await expect(page.locator('.menu-item')).toHaveCount(12);
   await capture(page,'demo-overview.png');
   await page.getByLabel('Số lượng Salad vườn xanh').fill('2');
   await page.getByRole('button',{name:'Tạo đơn & lưu giỏ hàng'}).click();

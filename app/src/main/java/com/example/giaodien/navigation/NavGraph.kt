@@ -105,6 +105,19 @@ fun AppNavGraph(navController: NavHostController) {
     val gioHangViewModel: GioHangViewModel = viewModel(
         factory = GioHangViewModelFactory(apiService)
     )
+    if (com.example.giaodien.BuildConfig.DEMO_MODE) {
+        androidx.compose.runtime.DisposableEffect(navController) {
+            val stop = com.example.giaodien.data.network.DemoSession.observe {
+                if (com.example.giaodien.data.network.DemoSession.state == null &&
+                    navController.currentDestination?.route != Screen.Splash.route &&
+                    navController.currentDestination?.route != Screen.Login.route &&
+                    navController.currentDestination != null) {
+                    navController.navigate(Screen.Login.route) { popUpTo(navController.graph.id) { inclusive = false }; launchSingleTop = true }
+                }
+            }
+            onDispose { stop() }
+        }
+    }
     NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route) {
             SplashScreen(navController)
@@ -112,7 +125,9 @@ fun AppNavGraph(navController: NavHostController) {
 
         // Login
         composable(Screen.Login.route) {
-            LoginScreen(
+            if (com.example.giaodien.BuildConfig.DEMO_MODE) DemoLoginScreen(onLoginSuccess = {
+                navController.navigate(Screen.TrangChu.route) { popUpTo(Screen.Login.route) { inclusive = true } }
+            }) else LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.TrangChu.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -290,7 +305,7 @@ fun AppNavGraph(navController: NavHostController) {
                 submitting = submitting,
                 error = bookingError,
                 onDatBan = { soLuong, ghiChu ->
-                    val currentUser = FirebaseAuth.getInstance().currentUser
+                    val currentUser = com.example.giaodien.data.network.CurrentAccount.user()
                     val datBan = DatBan(
                         idDat = null,
                         email = currentUser?.email ?: "",

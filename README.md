@@ -23,7 +23,7 @@
 
 The Golden Leaf là dự án portfolio mô hình hóa hành trình dùng bữa: khách xem thực đơn, đặt bàn, gọi món và theo dõi hóa đơn; nhân viên đối soát, phân bàn, nhận khách và hoàn tất. Trọng tâm không chỉ là CRUD mà là tính đúng của sức chứa, tiền và quyền truy cập khi request bị retry hoặc nhiều người thao tác đồng thời.
 
-**For reviewers:** a local web/API sandbox runs with JDK 17, without Firebase credentials, MySQL or a bank account. The Android client remains Firebase-authenticated. This repository demonstrates engineering workflows; it is not a live restaurant service or a published mobile app.
+**For reviewers:** a local web/API sandbox runs with JDK 17, without Firebase credentials, MySQL or a bank account. Android also has a separate native `demo` APK using this sandbox; ordinary `debug`/`release` clients remain Firebase-authenticated. This repository demonstrates engineering workflows; it is not a live restaurant service or a published mobile app.
 
 Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Android, Spring Boot REST API và hạ tầng MySQL chạy bằng Docker Compose. Schema dữ liệu được quản lý bằng Flyway, contract API được chuẩn hóa bằng DTO và có OpenAPI/Swagger để kiểm thử tích hợp.
 
@@ -183,7 +183,7 @@ DB tạm có 6 món, 4 bàn 8 ghế, 28 slots, 4 tài khoản `.invalid` và m�
 
 Muốn chạy không cần Maven? Tải **portfolio-demo-bundle** từ một [CI run main thành công](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml), kiểm checksum và chạy JAR với JDK 17. Artifact giữ 14 ngày, có thể cần GitHub login; không phải GitHub Release lâu dài. Xem [bundle guide](docs/demo-bundle-guide.md).
 
-**Phạm vi:** đây là demo web/API. Android vẫn cần Firebase để đăng nhập; ảnh web mobile-width không thay nghiệm thu thiết bị Android.
+**Phạm vi:** bundle trên là demo web/API; ảnh web mobile-width không thay nghiệm thu Android. Để thử app native không Firebase, chọn **Build Variant `demo`** theo [Android demo guide](docs/android-demo.md). Bản Android `debug`/`release` thường vẫn cần Firebase.
 
 ### 3. Development backend bằng Docker (tùy chọn)
 
@@ -230,6 +230,8 @@ $env:WEATHER_API_KEY='your-local-key'
 ```
 
 Mở project bằng Android Studio và chạy configuration `app` để sử dụng emulator hoặc thiết bị thật.
+
+**Thử Android không cần Firebase:** bật backend profile `demo`, chọn Build Variant **`demo`** rồi chạy trên emulator. APK riêng có hai tài khoản khách và dữ liệu tổng hợp, không nhận tiền. Xem [Android demo guide](docs/android-demo.md); `assembleDemo` xuất `app-demo.apk` (không dùng `app-debug.apk` để đăng nhập mẫu).
 
 ## Chạy backend không dùng Docker
 
@@ -409,6 +411,7 @@ Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 
 - [Tuần 6 — Production readiness](docs/week-6-production-readiness.md) — CI/release, TLS/private metrics, backup mã hóa, restore/rollback và các gate go-live.
 - [Tuần 7 — Portfolio demo](docs/week-7-portfolio.md) — chạy không cần secret, case study, kịch bản 5–7 phút và giới hạn đã kiểm chứng.
 - [Tuần 8 — Quality & regression](docs/week-8-quality.md) — nghiệm thu CI, screenshot Android thật, lint budget và CVE exception có hạn.
+- [Tuần 9 — Native Android demo](docs/week-9-native-demo.md) — APK riêng, dữ liệu minh họa, customer UI journeys, screenshot/video và trạng thái nghiệm thu.
 - [Demo bundle guide](docs/demo-bundle-guide.md) — chạy JAR độc lập bằng JDK 17.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) — workflow đóng góp và báo lỗi không lộ dữ liệu.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.

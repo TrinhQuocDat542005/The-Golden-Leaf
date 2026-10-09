@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <application android:label="Golden Leaf DEMO" tools:replace="android:label">
+        <service android:name="com.example.giaodien.notifications.RestaurantMessagingService"
+            android:enabled="false" />
+    </application>
+</manifest>

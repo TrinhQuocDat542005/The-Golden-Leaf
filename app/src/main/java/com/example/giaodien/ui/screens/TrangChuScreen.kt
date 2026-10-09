@@ -14,6 +14,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.padding
@@ -70,7 +71,7 @@ object AppColors {
     val DiscountPriceColor = Color(0xFF6C6C6C)
 }
 
-private val categoryTabs = listOf("Nổi bật", "Món mới", "Giảm giá")
+private val categoryTabs = listOf("Nổi bật", "Món mới", "Gợi ý")
 private const val MAX_ITEMS_TO_SHOW = 6
 
 fun Double.toVND(): String {
@@ -83,7 +84,8 @@ fun Double.toVND(): String {
 fun TrangChuScreen(
     navController: NavHostController,
     thucDonViewModel: ThucDonViewModel = viewModel(),
-    notificationViewModel: NotificationViewModel
+    notificationViewModel: NotificationViewModel,
+    favoritesViewModel: com.example.giaodien.viewmodel.YeuThichViewModel = viewModel()
 
 ) {
     // Lấy api đã cấu hình sẵn
@@ -91,10 +93,16 @@ fun TrangChuScreen(
 
     val allThucDon by thucDonViewModel.thucDonList.collectAsState()
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
+    val favorites by favoritesViewModel.favoriteList.collectAsState()
+    val favoriteBusy by favoritesViewModel.loading.collectAsState()
+    val favoriteError by favoritesViewModel.error.collectAsState()
+    val menuError by thucDonViewModel.error.collectAsState()
+    val menuLoading by thucDonViewModel.loading.collectAsState()
 
     var selectedTab by remember { mutableStateOf(categoryTabs.first()) }
 
-    val currentUser = FirebaseAuth.getInstance().currentUser
+    val currentUser = com.example.giaodien.data.network.CurrentAccount.user()
+    LaunchedEffect(currentUser?.uid) { favoritesViewModel.loadFavorites(currentUser?.uid ?: "") }
     // Load thực đơn 1 lần khi screen khởi tạo
     LaunchedEffect(Unit) {
         thucDonViewModel.loadThucDon()
@@ -115,7 +123,7 @@ fun TrangChuScreen(
         when (selectedTab) {
             "Nổi bật" -> featuredList
             "Món mới" -> allThucDon.sortedByDescending { it.idThucDon }.take(MAX_ITEMS_TO_SHOW)
-            "Giảm giá" -> discountList
+            "Gợi ý" -> discountList
             else -> emptyList()
         }
     }
@@ -133,6 +141,9 @@ fun TrangChuScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 LoveBanner()
+                if (menuLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
+                menuError?.let { Text(it, color = Color.White, modifier = Modifier.padding(16.dp)); TextButton(onClick = thucDonViewModel::loadThucDon) { Text("Thử tải thực đơn") } }
+                favoriteError?.let { Text(it, color = Color.White, modifier = Modifier.padding(16.dp)); TextButton(onClick = { favoritesViewModel.loadFavorites(currentUser?.uid ?: "") }) { Text("Thử tải yêu thích") } }
                 Spacer(modifier = Modifier.height(20.dp))
                 CategoryTabs(
                     tabs = categoryTabs,
@@ -143,7 +154,9 @@ fun TrangChuScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 FoodListSection(
                     items = filteredThucDon,
-                    isDiscountTab = selectedTab == "Giảm giá"
+                    favoriteIds = favorites.map { it.idThucDon },
+                    enabled = !favoriteBusy,
+                    onToggle = { favoritesViewModel.toggleFavorite(currentUser?.uid ?: "", it) }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 UpcomingEventsSection()
@@ -267,8 +280,8 @@ fun LoveBanner() {
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(12.dp))
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.nhahang),
+        AsyncImage(
+            model = R.drawable.nhahang,
             contentDescription = "Valentine's Day Banner",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
@@ -337,6 +350,7 @@ fun CategoryTabs(
         // --- Nút Thực Đơn ---
         Button(
             onClick = { navController.navigate(Screen.ThucDon.route) },
+            modifier = Modifier.testTag("open-menu"),
             colors = ButtonDefaults.buttonColors(containerColor = AppColors.CoralRed, contentColor = Color.White),
             shape = RoundedCornerShape(20.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
@@ -349,20 +363,18 @@ fun CategoryTabs(
 
 // ----------------- Food List Section -----------------
 @Composable
-fun FoodListSection(items: List<ThucDon>, isDiscountTab: Boolean) {
+fun FoodListSection(items: List<ThucDon>, favoriteIds: List<Long>, enabled: Boolean, onToggle: (ThucDon) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(items) { item -> FoodCard(item, isDiscountTab) }
+        items(items, key = { it.idThucDon }) { item -> FoodCard(item, item.idThucDon in favoriteIds, enabled) { onToggle(item) } }
     }
 }
 
 @Composable
-fun FoodCard(item: ThucDon, isDiscountTab: Boolean) {
-    var isFavorite by remember { mutableStateOf(false) }
+fun FoodCard(item: ThucDon, isFavorite: Boolean, enabled: Boolean, onToggle: () -> Unit) {
     val actualPrice = item.gia
-    val discountedPrice = if (isDiscountTab) actualPrice / 0.9 else 0.0
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -385,7 +397,8 @@ fun FoodCard(item: ThucDon, isDiscountTab: Boolean) {
 
 
                 IconButton(
-                    onClick = { isFavorite = !isFavorite },
+                    onClick = onToggle,
+                    enabled = enabled,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
@@ -408,16 +421,6 @@ fun FoodCard(item: ThucDon, isDiscountTab: Boolean) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                if (isDiscountTab) {
-                    Text(
-                        text = discountedPrice.toVND(),
-                        color = AppColors.DiscountPriceColor,
-                        fontSize = 10.sp,
-                        textDecoration = TextDecoration.LineThrough,
-                        maxLines = 1
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -427,19 +430,19 @@ fun FoodCard(item: ThucDon, isDiscountTab: Boolean) {
                         text = actualPrice.toVND(),
                         color = AppColors.SemiDarkText,
                         fontSize = 12.sp,
-                        fontWeight = if (isDiscountTab) FontWeight.Bold else FontWeight.Normal,
+                        fontWeight = FontWeight.Normal,
                         maxLines = 1
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Star,
-                            contentDescription = "Rating",
+                            contentDescription = "Món trong thực đơn",
                             tint = Color(0xFFFFD700),
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(2.dp))
                         Text(
-                            text = "4.5",
+                            text = "Món",
                             color = AppColors.SemiDarkText,
                             fontSize = 12.sp
                         )
@@ -573,7 +576,7 @@ fun BottomNavBar(navController: NavHostController) {
                 .offset(y = (-30).dp)
                 .size(56.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(28.dp))
+            Icon(Icons.Default.Add, contentDescription = "Đặt bàn", modifier = Modifier.size(28.dp))
         }
     }
 }

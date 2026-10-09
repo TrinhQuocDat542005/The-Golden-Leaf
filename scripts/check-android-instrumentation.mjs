@@ -3,6 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export function verifiedTests(output, expected=4) {
+  if (!Number.isInteger(expected) || expected < 1 || expected > 100) throw new Error('Invalid expected test count');
   const text=output.replaceAll('\r','');
   const summary=text.match(/^OK \((\d+) tests?\)$/m);
   if (!summary || Number(summary[1])!==expected || !/^INSTRUMENTATION_CODE: -1$/m.test(text) ||
@@ -23,9 +24,9 @@ export function verifiedTests(output, expected=4) {
 }
 const escape=value=>value.replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[char]));
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
-  const tests=verifiedTests(fs.readFileSync(process.argv[2] ?? 'build/week8/instrumentation-results.txt','utf8'));
+  const tests=verifiedTests(fs.readFileSync(process.argv[2] ?? 'build/week8/instrumentation-results.txt','utf8'), Number(process.argv[4] ?? 4));
   const report=process.argv[3] ?? 'build/week8/instrumentation-results.xml';
   fs.mkdirSync(path.dirname(report),{recursive:true});
-  fs.writeFileSync(report,`<?xml version="1.0" encoding="UTF-8"?><testsuite name="Week8NativeAndroid" tests="${tests.length}" failures="0" errors="0" skipped="0">${tests.map(t=>`<testcase classname="${escape(t.className)}" name="${escape(t.name)}"/>`).join('')}</testsuite>\n`);
+  fs.writeFileSync(report,`<?xml version="1.0" encoding="UTF-8"?><testsuite name="VerifiedNativeAndroid" tests="${tests.length}" failures="0" errors="0" skipped="0">${tests.map(t=>`<testcase classname="${escape(t.className)}" name="${escape(t.name)}"/>`).join('')}</testsuite>\n`);
   console.log(`Verified ${tests.length} native Android tests; JUnit report: ${report}`);
 }

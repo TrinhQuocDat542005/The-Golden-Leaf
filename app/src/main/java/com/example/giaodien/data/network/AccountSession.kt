@@ -8,9 +8,10 @@ interface AccountSession {
     fun observe(onChange: () -> Unit): () -> Unit
 }
 class FirebaseAccountSession : AccountSession {
-    private val auth = FirebaseAuth.getInstance()
-    override fun uid() = auth.currentUser?.uid
+    private val auth by lazy { FirebaseAuth.getInstance() }
+    override fun uid() = CurrentAccount.user()?.uid
     override fun observe(onChange: () -> Unit): () -> Unit {
+        if (com.example.giaodien.BuildConfig.DEMO_MODE) return DemoSession.observe(onChange)
         val listener = FirebaseAuth.AuthStateListener { onChange() }
         auth.addAuthStateListener(listener)
         return { auth.removeAuthStateListener(listener) }

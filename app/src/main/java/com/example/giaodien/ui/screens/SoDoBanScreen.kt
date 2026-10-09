@@ -58,8 +58,8 @@ fun SoDoBanScreen(
                     .weight(1f)
             ) {
 
-                Image(
-                    painter = painterResource(id = R.drawable.bgcm),
+                coil.compose.AsyncImage(
+                    model = R.drawable.bgcm,
                     contentDescription = "Background",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

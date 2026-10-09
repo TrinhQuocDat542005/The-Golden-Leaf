@@ -239,8 +239,8 @@ fun ViTriBanScreen(
                                             .background(Color(0xFFE8544D).copy(alpha = 0.4f))
                                     )
                                 }
-                                Image(
-                                    painter = painterResource(id = drawableId),
+                                coil.compose.AsyncImage(
+                                    model = drawableId,
                                     contentDescription = danhSachViTri[index],
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()

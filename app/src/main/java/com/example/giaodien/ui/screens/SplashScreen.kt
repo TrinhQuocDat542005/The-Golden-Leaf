@@ -36,8 +36,8 @@ fun SplashScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Ảnh logo
-            Image(
-                painter = painterResource(id = R.drawable.logo),
+            coil.compose.AsyncImage(
+                model = R.drawable.logo,
                 contentDescription = "App Logo",
                 modifier = Modifier.size(200.dp)
             )

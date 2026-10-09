@@ -34,6 +34,7 @@
     import com.example.giaodien.viewmodel.ThucDonViewModel
     import com.example.giaodien.viewmodel.YeuThichViewModel
     import com.google.firebase.auth.FirebaseAuth
+    import androidx.compose.ui.platform.testTag
     import java.util.*
 
     fun String.removeVietnameseAccents(): String {
@@ -63,7 +64,7 @@
         val menuError by thucDonViewModel.error.collectAsState()
         val menuLoading by thucDonViewModel.loading.collectAsState()
         val favoriteError by yeuThichViewModel.error.collectAsState()
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        val userId = com.example.giaodien.data.network.CurrentAccount.user()?.uid ?: ""
         val DeepRed = Color(0xFF8B0000)
 
         // 1. Thêm state cho thanh tìm kiếm
@@ -122,8 +123,8 @@
                             .height(150.dp)
                             .clip(headerShape)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.bgcm),
+                        coil.compose.AsyncImage(
+                            model = R.drawable.bgcm,
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
@@ -277,6 +278,7 @@
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .width(140.dp)
+                                .testTag("menu-dish-${mon.idThucDon}")
                                 .padding(vertical = 4.dp)
                                 .clickable {
                                     // Chuyển sang MoTaScreen, truyền id món
@@ -302,7 +304,7 @@
                                 Button(
                                     onClick = { yeuThichViewModel.toggleFavorite(userId, mon) },
                                     colors = ButtonDefaults.buttonColors(containerColor = DeepRed),
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().testTag("favorite-dish-${mon.idThucDon}")
                                 ) {
                                     Icon(
                                         Icons.Filled.Favorite,
