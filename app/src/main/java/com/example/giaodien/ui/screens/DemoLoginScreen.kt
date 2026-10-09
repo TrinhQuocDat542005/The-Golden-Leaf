@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.testTag
 
 @Composable
 fun DemoLoginScreen(onLoginSuccess: () -> Unit) {
@@ -27,13 +28,13 @@ fun DemoLoginScreen(onLoginSuccess: () -> Unit) {
                 scope.launch {
                     try { DemoSession.signIn(persona); onLoginSuccess() }
                     catch (e: CancellationException) { throw e }
-                    catch (_: Exception) { error = "Chưa kết nối được demo. Kiểm tra backend profile demo, cổng 8080 rồi thử lại." }
+                    catch (e: Exception) { DemoSession.recordFailure(e); error = "Chưa mở được phiên demo. Kiểm tra backend profile demo và thử lại." }
                     finally { busy = false }
                 }
             }) { Text(label) }
         }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("demo-login-error")) }
         Spacer(Modifier.height(16.dp))
         Text("Đối soát/phân bàn: mở http://127.0.0.1:8080/staff.html trên máy tính. Restart backend để reset dữ liệu; đăng nhập lại sau khi reset.")
     }

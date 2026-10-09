@@ -23,6 +23,13 @@ object DemoSession {
     @Volatile var state: State? = null
         private set
     private val observers = CopyOnWriteArrayList<() -> Unit>()
+    // Diagnostic metadata only: never exception messages, credentials or response bodies.
+    var failureTrace: String? = null
+        private set
+    fun recordFailure(error: Exception) {
+        if (BuildConfig.DEBUG && BuildConfig.DEMO_MODE) failureTrace = error.javaClass.name + " at " +
+            error.stackTrace.take(8).joinToString(" -> ") { "${it.className}.${it.methodName}:${it.lineNumber}" }
+    }
     private val client = OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
         .connectTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS).build()
     fun observe(change: () -> Unit): () -> Unit {
@@ -31,6 +38,7 @@ object DemoSession {
     }
     fun signOut() { state = null; observers.forEach { it() } }
     suspend fun signIn(persona: String) = withContext(Dispatchers.IO) {
+        failureTrace = null
         check(BuildConfig.DEBUG && BuildConfig.DEMO_MODE)
         require(persona in listOf("CUSTOMER", "OTHER_CUSTOMER", "STAFF", "ADMIN"))
         check(BuildConfig.API_BASE_URL in setOf("http://10.0.2.2:8080/", "http://10.0.2.2:18082/", "http://127.0.0.1:8080/", "http://127.0.0.1:18082/"))

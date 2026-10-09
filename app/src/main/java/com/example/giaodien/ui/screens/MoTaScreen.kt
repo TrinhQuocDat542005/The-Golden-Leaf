@@ -130,7 +130,7 @@ fun MoTaScreen(
                         text = mon.tenMon,
                         style = MaterialTheme.typography.headlineLarge, // Dùng headlineLarge cho nổi bật
                         fontSize = 32.sp,
-                        modifier = Modifier.weight(1f).testTag("review-draft")
+                        modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -253,7 +253,7 @@ fun MoTaScreen(
                             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).testTag("review-draft")
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Button(

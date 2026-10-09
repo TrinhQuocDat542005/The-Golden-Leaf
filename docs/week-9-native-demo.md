@@ -6,6 +6,12 @@ Ngày 09/10/2026. Tuần 9 hoàn thiện phần Android demo bổ sung sau tuầ
 
 **Source đã triển khai; nghiệm thu native/ảnh/video và CI trên revision được push còn chờ.** Các ô runtime bên dưới chỉ đánh dấu sau khi đọc raw results, kiểm ảnh gốc và video thực tế. Không dùng CI tuần 8 để chứng minh bản demo mới.
 
+Source revision `2da58538d7b0c5d47ef132393c310c800779473c`, [CI run 37899286958](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37899286958): backend **191 passed, 0 skipped**; Android build/unit/lint budget và infrastructure đạt. Native API 25/35 đều có **3 failures tại bước mở phiên demo**; browser job bị skip bởi dependencies. Security gate đang chặn **CVE-2026-47890**, không được xem toàn bộ CI là xanh.
+
+Video lỗi API 35 đã giải mã được bằng FFmpeg 7.1: màn chọn persona báo lỗi mở phiên sau request session trả 200. Chưa có bộ sáu ảnh thành công để đưa vào README. Bản sửa tiếp theo chuyển `review-draft` về TextField thật và bổ sung chẩn đoán demo chỉ gồm tên lớp/hàm/line, không exception message/token/body; native test fail-fast nếu màn login báo lỗi. Những sửa này chưa được tính là sửa xong lỗi đăng nhập trước khi đọc runtime mới.
+
+Trivy ghi severity CRITICAL (`ghsa`) cho `spring-webmvc:6.2.19`, fixed version 7.0.9. [Advisory chính thức Spring](https://spring.io/security/cve-2026-47890/) ghi LOW, yêu cầu SSE với view fragments và dữ liệu attacker kiểm soát; bản sửa 6.2.20 là enterprise-only. Rà source hiện tại không thấy SSE/view fragments. Chưa thêm ngoại lệ mới, chưa nâng major; cần quyết định risk acceptance/migration, không gọi phát hiện này là đã vá. Ngoại lệ CVE-2026-47884 cũ vẫn giữ hạn riêng.
+
 ## Những gì đã thay đổi
 
 - APK `demo` có package `.demo`, tên riêng, banner DEMO trên mọi màn hình; bản `debug`/`release` giữ Firebase. Provider auto-init, device binding, quyền push và messaging service tắt trong demo.

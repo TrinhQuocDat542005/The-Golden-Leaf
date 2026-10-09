@@ -52,7 +52,11 @@ class DemoAppTest {
         val text = if (other) "Khách khác · kiểm tra tài khoản riêng" else "Khách demo · có đơn mẫu"
         compose.waitUntil(15000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText(text).performClick()
-        waitTag("open-menu")
+        compose.waitUntil(25000) { compose.onAllNodesWithTag("open-menu").fetchSemanticsNodes().isNotEmpty() ||
+            compose.onAllNodesWithTag("demo-login-error").fetchSemanticsNodes().isNotEmpty() }
+        check(compose.onAllNodesWithTag("demo-login-error").fetchSemanticsNodes().isEmpty()) {
+            "Demo login failed (sanitized metadata): ${DemoSession.failureTrace}"
+        }
         assertEquals(if (other) "demo-other" else "demo-customer", DemoSession.state?.identity?.uid)
         assertTrue("Demo must not initialize Firebase", FirebaseApp.getApps(compose.activity).isEmpty())
     }
@@ -158,7 +162,8 @@ class DemoAppTest {
         InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand("input keyevent 4").close()
         compose.onNodeWithTag("review-submit").performScrollTo().assertIsEnabled().performClick()
         compose.waitUntil(15000) { api("api/binhluan/$id").contains(draft) }
-        compose.onNodeWithTag("review-draft").assertTextEquals("")
+        compose.onNodeWithTag("review-draft").assert(SemanticsMatcher.expectValue(
+            SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
         screenshot("review")
         val feedback = api("api/binhluan/$id")
         assertFalse(feedback.contains("userEmail")); assertFalse(feedback.contains("userUid"))
