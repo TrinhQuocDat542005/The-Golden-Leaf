@@ -48,4 +48,4 @@ Trạng thái mới nhất nằm trong [báo cáo tuần 9](week-9-native-demo.m
 ./gradlew.bat -PdemoInstrumentation=true connectedDemoAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.example.giaodien.DemoAppTest'
 ```
 
-Cần emulator online và backend demo tại 8080. CI dùng origin 18082, chạy native `am instrument`, kiểm đủ ba successful events, xuất screenshot PNG gốc và video `screenrecord` tối đa 180 giây. APK demo dùng thử tải từ artifact **android-debug-and-reports**; artifact emulator là bằng chứng, không phải APK cho backend 8080. Không suy ra runtime từ việc build thành công.
+Cần emulator online và backend demo tại 8080. CI dùng origin 18082, chạy native `am instrument`, kiểm đủ ba successful events, xuất screenshot PNG gốc và video tối đa 180 giây: MP4 từ guest `screenrecord`, hoặc host WebM khi system image thiếu binary đó. Cả hai đều ghi display thật, phải có video và qua gate FFmpeg giải mã. APK demo dùng thử tải từ artifact **android-debug-and-reports**; artifact emulator là bằng chứng, không phải APK cho backend 8080. Không suy ra runtime từ việc build thành công.

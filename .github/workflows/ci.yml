@@ -163,6 +163,8 @@ jobs:
           cache: gradle
       - name: Enable KVM for disposable emulator
         run: sudo chmod a+rw /dev/kvm
+      - name: Install native recording validation tools
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
@@ -188,8 +190,12 @@ jobs:
             build/week9/android-*.png
             build/week9/android-*-window.txt
             build/week9/android-demo.mp4
+            build/week9/android-demo.webm
+            build/week9/video-validation.log
+            build/week9/video-metadata.json
             build/week9/android-logcat.txt
             build/week9/screenrecord.log
+            build/week9/screenrecord-stop.log
             build/week9/instrumentation-results.*
           retention-days: 14
   security:

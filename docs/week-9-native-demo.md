@@ -14,6 +14,8 @@ Trivy ghi severity CRITICAL (`ghsa`) cho `spring-webmvc:6.2.19`, fixed version 7
 
 Run chẩn đoán `da92f50`, [37901459802](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37901459802) xác định `LifecycleRegistry.enforceMainThreadIfNeeded` khi Navigation pop login. Bản sửa gọi navigation trên `Dispatchers.Main.immediate` sau sign-in. Cần runtime run mới để xác nhận, không suy ra thành công từ chẩn đoán/build.
 
+Run `4f440cd`, [37914153839](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37914153839): cả API 25/35 **3 native customer tests passed**, lỗi mở phiên đã được xác nhận sửa qua runtime. API 35 job thành công; API 25 thiếu binary `/system/bin/screenrecord` nên gate bằng chứng fail (không phải test nghiệp vụ fail). Video MP4 API 35 giải mã toàn bộ thành công. Kiểm sáu ảnh API 35 thấy minh họa món trống: resolver cũ ghép `/demo-assets` thành `/uploads/demo-assets`. Bản sửa tiếp theo giữ đúng static path này, bổ sung unit assertion, dùng host WebM khi guest recorder không tồn tại theo [Android documentation](https://developer.android.com/studio/run/emulator-record-screen), và gate FFmpeg giải mã video. Cần run cuối có ảnh/video hợp lệ trước bàn giao.
+
 ## Những gì đã thay đổi
 
 - APK `demo` có package `.demo`, tên riêng, banner DEMO trên mọi màn hình; bản `debug`/`release` giữ Firebase. Provider auto-init, device binding, quyền push và messaging service tắt trong demo.

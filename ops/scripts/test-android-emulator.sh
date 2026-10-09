@@ -19,7 +19,13 @@ java -jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --spring.profi
 demo_pid=$!
 emulator_pid=''
 video_pid=''
+video_mode=''
+video_file=''
 stop_video() {
+  if [[ "$video_mode" == host ]]; then
+    timeout 10 "$adb_bin" -s emulator-5580 emu screenrecord stop > build/week9/screenrecord-stop.log 2>&1 || true
+    video_mode=''
+  fi
   if [[ -n "$video_pid" ]]; then
     timeout 5 "$adb_bin" -s emulator-5580 shell pkill -2 screenrecord 2>/dev/null || true
     wait "$video_pid" 2>/dev/null || true
@@ -93,12 +99,27 @@ mkdir -p build/week9
 bash gradlew --no-daemon -PdemoInstrumentation=true -PDEMO_API_BASE_URL=http://10.0.2.2:18082/ assembleDemo assembleDemoAndroidTest
 timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/demo/app-demo.apk
 timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/androidTest/demo/app-demo-androidTest.apk
-timeout 190 "$adb_bin" -s "$ANDROID_SERIAL" shell screenrecord --size 720x1280 --bit-rate 1500000 --time-limit 180 /sdcard/week9-demo.mp4 > build/week9/screenrecord.log 2>&1 &
-video_pid=$!
+if "$adb_bin" -s "$ANDROID_SERIAL" shell test -x /system/bin/screenrecord; then
+  video_file=build/week9/android-demo.mp4
+  timeout 190 "$adb_bin" -s "$ANDROID_SERIAL" shell screenrecord --size 720x1280 --bit-rate 1500000 --time-limit 180 /sdcard/week9-demo.mp4 > build/week9/screenrecord.log 2>&1 &
+  video_pid=$!
+else
+  # API 25 Google API image has no guest screenrecord binary. Record the same
+  # live display using the documented host console, not a stitched screenshot video.
+  video_file=build/week9/android-demo.webm
+  video_mode=host
+  timeout 10 "$adb_bin" -s "$ANDROID_SERIAL" emu screenrecord start --time-limit 180 "$PWD/$video_file" > build/week9/screenrecord.log 2>&1
+  grep -q '^OK' build/week9/screenrecord.log && ! grep -q '^KO' build/week9/screenrecord.log || { echo 'Host recorder did not start'; exit 1; }
+fi
 timeout 300 "$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e class com.example.giaodien.DemoAppTest com.example.giaodien.demo.test/androidx.test.runner.AndroidJUnitRunner | tee build/week9/instrumentation-results.txt
 node scripts/check-android-instrumentation.mjs build/week9/instrumentation-results.txt build/week9/instrumentation-results.xml 3
 stop_video
-[[ -s build/week9/android-demo.mp4 ]] || { echo 'Native demo recording is missing'; exit 1; }
+[[ -s "$video_file" ]] || { echo 'Native demo recording is missing'; exit 1; }
+# Decode every input frame. Normalize only null-output timestamps to avoid
+# screenrecord's variable-rate timestamps being rounded to duplicate muxer DTS.
+# The original recording is never transcoded or modified.
+ffmpeg -hide_banner -v error -xerror -i "$video_file" -map 0:v:0 -vf 'setpts=N/(30*TB)' -fps_mode passthrough -enc_time_base 1:30 -f null - > build/week9/video-validation.log 2>&1
+ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,duration:format=duration -of json "$video_file" > build/week9/video-metadata.json
 for shot in home payment history invoice menu review; do
   "$adb_bin" -s "$ANDROID_SERIAL" exec-out run-as com.example.giaodien.demo cat "files/week9-$shot.png" > "build/week9/android-$shot.png"
   [[ -s "build/week9/android-$shot.png" ]] || { echo "Missing native demo screenshot: $shot"; exit 1; }

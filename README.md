@@ -179,7 +179,7 @@ Linux/macOS: `bash mvnw spring-boot:run -Dspring-boot.run.profiles=demo` trong t
 
 Mở **[http://127.0.0.1:8080/demo.html](http://127.0.0.1:8080/demo.html)**. Chọn ngày mai, 4 khách và 2 salad → tạo đơn → xác nhận → tạo payment demo. Tổng mẫu **340.000 VND** do server tính. Mở `/staff.html` ở tab khác, chọn persona nhân viên để đối soát/phân bàn; admin xem audit. Không cần mật khẩu hay Firebase.
 
-DB tạm có 6 món, 4 bàn 8 ghế, 28 slots, 4 tài khoản `.invalid` và một đơn hôm nay để thử nhận khách/hoàn tất. Restart backend để reset. Không chuyển tiền, không gửi FCM, không ghi/serve uploads local. Demo chỉ bind loopback và từ chối trộn profile/DB thật.
+DB tạm có 12 món và 7 hình minh họa SVG local, 4 bàn 8 ghế, 28 slots, 4 tài khoản `.invalid`, một đơn hôm nay và lịch sử hoàn tất/hủy để thử. Restart backend để reset. Không chuyển tiền, không gửi FCM, không ghi/serve uploads local. Demo chỉ bind loopback và từ chối trộn profile/DB thật.
 
 Muốn chạy không cần Maven? Tải **portfolio-demo-bundle** từ một [CI run main thành công](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml), kiểm checksum và chạy JAR với JDK 17. Artifact giữ 14 ngày, có thể cần GitHub login; không phải GitHub Release lâu dài. Xem [bundle guide](docs/demo-bundle-guide.md).
 

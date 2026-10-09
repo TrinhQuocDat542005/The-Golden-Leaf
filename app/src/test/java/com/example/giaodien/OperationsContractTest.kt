@@ -45,6 +45,7 @@ class OperationsContractTest {
         assertEquals("https://restaurant.example/uploads/new.png", menuImageUrl("/uploads/new.png", base))
         assertEquals("https://restaurant.example/uploads/old.jpg", menuImageUrl("old.jpg", base))
         assertEquals("https://cdn.example/photo.png", menuImageUrl("https://cdn.example/photo.png", base))
+        assertEquals("http://10.0.2.2:18082/demo-assets/salad.svg", menuImageUrl("/demo-assets/salad.svg", "http://10.0.2.2:18082/"))
         assertEquals("", menuImageUrl("", base))
     }
 }
