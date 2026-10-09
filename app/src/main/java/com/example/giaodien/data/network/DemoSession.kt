@@ -37,6 +37,11 @@ object DemoSession {
         return { observers.remove(change) }
     }
     fun signOut() { state = null; observers.forEach { it() } }
+    fun invalidate(expected: State) {
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            if (state === expected) signOut()
+        }
+    }
     suspend fun signIn(persona: String) = withContext(Dispatchers.IO) {
         failureTrace = null
         check(BuildConfig.DEBUG && BuildConfig.DEMO_MODE)

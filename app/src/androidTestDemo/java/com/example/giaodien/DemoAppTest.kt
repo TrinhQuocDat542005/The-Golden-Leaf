@@ -2,6 +2,13 @@ package com.example.giaodien
 
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -65,6 +72,13 @@ class DemoAppTest {
         compose.onNodeWithText(DemoSession.state!!.identity.email!!).assertIsDisplayed()
     }
     private fun screenshot(name: String) {
+        if (name in setOf("home", "menu", "review")) {
+            compose.waitUntil(25000) {
+                compose.onAllNodesWithTag("food-image-loaded", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() &&
+                    compose.onAllNodesWithTag("food-image-loading", useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
+            }
+            compose.onAllNodesWithTag("food-image-error", useUnmergedTree = true).assertCountEquals(0)
+        }
         compose.waitForIdle()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val windows = ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand("dumpsys window"))
@@ -132,6 +146,7 @@ class DemoAppTest {
         compose.waitUntil(20000) { compose.onAllNodesWithText("Nhà hàng đã xác nhận nhận tiền.").fetchSemanticsNodes().isNotEmpty() }
         clickText("Về trang chủ"); account()
         waitTag("booking-history-$id")
+        compose.onNodeWithText("Đơn đang xử lý / sắp tới").assertExists()
         val history = compose.onNodeWithTag("booking-history-$id")
         try { history.assertIsDisplayed() } catch (_: AssertionError) { history.performScrollTo() }
         history.assertIsDisplayed()
@@ -151,6 +166,7 @@ class DemoAppTest {
         val menu = JSONArray(api("api/thucdon"))
         val id = (0 until menu.length()).map { menu.getJSONObject(it) }.first { it.getString("tenMon") == "Salad vườn xanh" }.getLong("idThucDon")
         waitTag("favorite-dish-$id")
+        compose.onAllNodesWithText("70.000 VND").onFirst().assertExists()
         compose.onNodeWithTag("favorite-dish-$id").performScrollTo().performClick()
         compose.waitUntil(15000) { JSONArray(api("api/yeu-thich/list")).length() == 1 }
         screenshot("menu")
@@ -164,6 +180,7 @@ class DemoAppTest {
         compose.waitUntil(15000) { api("api/binhluan/$id").contains(draft) }
         compose.onNodeWithTag("review-draft").assert(SemanticsMatcher.expectValue(
             SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
+        compose.waitUntil(15000) { compose.onAllNodesWithText(draft).fetchSemanticsNodes().isNotEmpty() }
         screenshot("review")
         val feedback = api("api/binhluan/$id")
         assertFalse(feedback.contains("userEmail")); assertFalse(feedback.contains("userUid"))
@@ -178,5 +195,34 @@ class DemoAppTest {
         clickText("Đăng xuất"); login()
         assertTrue(JSONArray(api("api/taikhoan/lichSuDonDat")).length() >= 2)
         assertTrue(FirebaseApp.getApps(compose.activity).isEmpty())
+    }
+
+    @Test fun dImageFailureCanRetryOnNarrowNativeSurface() {
+        val imageServer = okhttp3.mockwebserver.MockWebServer()
+        imageServer.start()
+        try {
+            imageServer.enqueue(okhttp3.mockwebserver.MockResponse().setResponseCode(503))
+            imageServer.enqueue(okhttp3.mockwebserver.MockResponse()
+                .setHeader("Content-Type", "image/svg+xml")
+                .setBody("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\"><rect width=\"40\" height=\"40\" fill=\"green\"/></svg>"))
+            compose.runOnUiThread {
+                compose.activity.setContent {
+                    MaterialTheme {
+                        Column {
+                            Text("DEMO · kiểm component ảnh trên bề mặt hẹp")
+                            com.example.giaodien.ui.components.MenuImage(
+                                imageServer.url("/synthetic.svg").toString(), "Ảnh giả lập", Modifier.size(120.dp))
+                        }
+                    }
+                }
+            }
+            waitTag("food-image-error")
+            compose.onNodeWithText("Tải lại ảnh").assertIsDisplayed().performClick()
+            waitTag("food-image-loaded")
+            compose.onNodeWithTag("food-image-loaded").assertIsDisplayed()
+            compose.onAllNodesWithTag("food-image-error").assertCountEquals(0)
+            assertEquals(2, imageServer.requestCount)
+            assertTrue(FirebaseApp.getApps(compose.activity).isEmpty())
+        } finally { imageServer.shutdown() }
     }
 }

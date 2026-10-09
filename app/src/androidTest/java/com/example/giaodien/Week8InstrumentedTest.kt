@@ -101,7 +101,7 @@ class Week8InstrumentedTest {
     }
     @Test fun realDemoApiJourneyFromAndroidPreservesOwnershipAndPendingPayment() {
         val base=InstrumentationRegistry.getArguments().getString("demoBaseUrl") ?: "http://10.0.2.2:18082"
-        require(base == "http://10.0.2.2:18082" || base == "http://127.0.0.1:18082") { "Only isolated local demo is allowed" }
+        require(base in setOf("http://10.0.2.2:18082", "http://127.0.0.1:18082", "http://10.0.2.2:8080", "http://127.0.0.1:8080")) { "Only isolated local demo is allowed" }
         val client=OkHttpClient()
         fun call(path: String, method: String="GET", body: String?=null, token: String?=null, key: String?=null, expected: Int=200): String {
             val request=Request.Builder().url(base+path)

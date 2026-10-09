@@ -89,8 +89,8 @@ fun MoTaScreen(
                     .fillMaxWidth()
                     .height(300.dp) // Tăng chiều cao ảnh lên một chút
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(mon.anh),
+                com.example.giaodien.ui.components.MenuImage(
+                    model = mon.anh,
                     contentDescription = mon.tenMon,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -121,20 +121,18 @@ fun MoTaScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
             ) {
                 // Tên món và Giá món (Trình bày nổi bật)
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = mon.tenMon,
                         style = MaterialTheme.typography.headlineLarge, // Dùng headlineLarge cho nổi bật
                         fontSize = 32.sp,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "${mon.gia} VND",
+                        text = com.example.giaodien.data.model.formatVnd(mon.gia),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
@@ -287,8 +285,8 @@ fun MonCungNhomItem(item: ThucDon, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Màu nền sáng hơn
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
-            Image(
-                painter = rememberAsyncImagePainter(item.anh),
+            com.example.giaodien.ui.components.MenuImage(
+                model = item.anh,
                 contentDescription = item.tenMon,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

@@ -210,7 +210,7 @@ fun MonAnRow(title: String, monList: List<ThucDon>, gioHangViewModel: GioHangVie
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
                         // Chỉ giữ 1 Image
-                        AsyncImage(
+                        com.example.giaodien.ui.components.MenuImage(
                             model = mon.anh,
                             contentDescription = mon.tenMon,
                             modifier = Modifier
@@ -221,7 +221,7 @@ fun MonAnRow(title: String, monList: List<ThucDon>, gioHangViewModel: GioHangVie
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(mon.tenMon, style = MaterialTheme.typography.bodyMedium, color = Color.White)
-                        Text("${mon.gia} VND", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
+                        Text(com.example.giaodien.data.model.formatVnd(mon.gia), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
                         Spacer(modifier = Modifier.height(4.dp))
                         Button(
                             onClick = { gioHangViewModel.addToCart(mon) },

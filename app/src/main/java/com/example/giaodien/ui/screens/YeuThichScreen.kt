@@ -97,7 +97,7 @@ fun FavoriteItemCard(item: ThucDon, viewModel: YeuThichViewModel) {
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
+            com.example.giaodien.ui.components.MenuImage(
                 model = com.example.giaodien.data.model.menuImageUrl(item.anh, com.example.giaodien.BuildConfig.API_BASE_URL),
                 contentDescription = item.tenMon,
                 modifier = Modifier
@@ -112,7 +112,7 @@ fun FavoriteItemCard(item: ThucDon, viewModel: YeuThichViewModel) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(item.tenMon, color = Color.White, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("%,.0f VND".format(item.gia), color = Color.White.copy(alpha = 0.7f))
+                Text(com.example.giaodien.data.model.formatVnd(item.gia), color = Color.White.copy(alpha = 0.7f))
             }
             IconButton(onClick = { viewModel.removeFavorite(item) }) {
                 Icon(

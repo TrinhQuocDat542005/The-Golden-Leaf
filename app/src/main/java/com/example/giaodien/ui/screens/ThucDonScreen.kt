@@ -287,8 +287,8 @@
                             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
-                                Image(
-                                    painter = rememberAsyncImagePainter(mon.anh),
+                                com.example.giaodien.ui.components.MenuImage(
+                                    model = mon.anh,
                                     contentDescription = mon.tenMon,
                                     modifier = Modifier
                                         .height(80.dp)
@@ -298,7 +298,7 @@
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(mon.tenMon, style = MaterialTheme.typography.bodyMedium, color = Color.White, maxLines = 1)
-                                Text("${mon.gia} VND", style = MaterialTheme.typography.bodySmall, color = Color.Green.copy(alpha = 0.8f))
+                                Text(com.example.giaodien.data.model.formatVnd(mon.gia), style = MaterialTheme.typography.bodySmall, color = Color.Green.copy(alpha = 0.8f))
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 Button(

@@ -388,7 +388,7 @@ fun FoodCard(item: ThucDon, isFavorite: Boolean, enabled: Boolean, onToggle: () 
                     .fillMaxWidth()
                     .height(140.dp)
             ) {
-                AsyncImage(
+                com.example.giaodien.ui.components.MenuImage(
                     model = item.anh,
                     contentDescription = item.tenMon,
                     contentScale = ContentScale.Crop,
@@ -427,7 +427,7 @@ fun FoodCard(item: ThucDon, isFavorite: Boolean, enabled: Boolean, onToggle: () 
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = actualPrice.toVND(),
+                        text = com.example.giaodien.data.model.formatVnd(actualPrice),
                         color = AppColors.SemiDarkText,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,

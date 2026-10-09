@@ -31,19 +31,13 @@ object RetrofitInstance {
     }
 
     // Dùng token cache; authenticator bên dưới refresh một lần khi nhận 401.
+    private val demoAuthInterceptor = SessionAuthInterceptor(
+        current = { DemoSession.state }, token = { it.token }, unauthorized = DemoSession::invalidate
+    )
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
         if (BuildConfig.DEMO_MODE) {
-            val state = DemoSession.state
-            val request = if (state == null) originalRequest else originalRequest.newBuilder()
-                .header("Authorization", "Bearer ${state.token}").build()
-            val response = chain.proceed(request)
-            if (response.code == 401 && DemoSession.state === state && state != null) {
-                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    if (DemoSession.state === state) DemoSession.signOut()
-                }
-            }
-            return@Interceptor response
+            return@Interceptor demoAuthInterceptor.intercept(chain)
         }
         val user = FirebaseAuth.getInstance().currentUser
 

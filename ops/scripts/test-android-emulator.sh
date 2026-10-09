@@ -15,7 +15,7 @@ export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
 export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
 mkdir -p "$ANDROID_AVD_HOME"
 mkdir -p build/week8
-java -jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --spring.profiles.active=demo --server.port=18082 > build/week8/android-demo.log 2>&1 &
+java -jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --spring.profiles.active=demo --server.port=8080 > build/week8/android-demo.log 2>&1 &
 demo_pid=$!
 emulator_pid=''
 video_pid=''
@@ -51,11 +51,11 @@ cleanup() {
 }
 trap cleanup EXIT
 for _ in $(seq 1 90); do
-  if curl --fail --silent http://127.0.0.1:18082/actuator/health/readiness > /dev/null; then break; fi
+  if curl --fail --silent http://127.0.0.1:8080/actuator/health/readiness > /dev/null; then break; fi
   kill -0 "$demo_pid" || { echo 'Demo exited before readiness'; exit 1; }
   sleep 1
 done
-curl --fail --silent http://127.0.0.1:18082/api/demo/config | grep -q '"demo":true'
+curl --fail --silent http://127.0.0.1:8080/api/demo/config | grep -q '"demo":true'
 "$sdk/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "$image" emulator platform-tools
 "$sdk/cmdline-tools/latest/bin/avdmanager" create avd --force --name "$fixture" --path "$ANDROID_AVD_HOME/$fixture.avd" --package "$image" --device pixel <<< no
 [[ -f "$ANDROID_AVD_HOME/$fixture.ini" ]] || { echo 'AVD registry missing at the explicit fixture location'; "$sdk/cmdline-tools/latest/bin/avdmanager" list avd; exit 1; }
@@ -87,7 +87,7 @@ echo 'Installing instrumentation APK (bounded, non-streaming)'
 timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 # Native JUnit avoids AGP UTP's incompatible emulator-console handshake; tests are unchanged.
 echo 'Running four native instrumentation tests (bounded)'
-timeout 180 "$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e demoBaseUrl http://10.0.2.2:18082 com.example.giaodien.test/com.example.giaodien.Week8TestRunner | tee build/week8/instrumentation-results.txt
+timeout 180 "$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e demoBaseUrl http://10.0.2.2:8080 com.example.giaodien.test/com.example.giaodien.Week8TestRunner | tee build/week8/instrumentation-results.txt
 node scripts/check-android-instrumentation.mjs
 for shot in slot-selection network-error; do
   "$adb_bin" -s "$ANDROID_SERIAL" exec-out run-as com.example.giaodien cat "files/week8-$shot.png" > "build/week8/android-$shot.png"
@@ -96,7 +96,7 @@ done
 
 # Real MyApp/MainActivity customer UI. Firebase stays disabled only in the separate demo APK.
 mkdir -p build/week9
-bash gradlew --no-daemon -PdemoInstrumentation=true -PDEMO_API_BASE_URL=http://10.0.2.2:18082/ assembleDemo assembleDemoAndroidTest
+bash gradlew --no-daemon -PdemoInstrumentation=true assembleDemo assembleDemoAndroidTest
 timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/demo/app-demo.apk
 timeout 120 "$adb_bin" -s "$ANDROID_SERIAL" install --no-streaming -r app/build/outputs/apk/androidTest/demo/app-demo-androidTest.apk
 if "$adb_bin" -s "$ANDROID_SERIAL" shell test -x /system/bin/screenrecord; then
@@ -114,7 +114,7 @@ else
   fi
 fi
 timeout 300 "$adb_bin" -s "$ANDROID_SERIAL" shell am instrument -w -r -e class com.example.giaodien.DemoAppTest com.example.giaodien.demo.test/androidx.test.runner.AndroidJUnitRunner | tee build/week9/instrumentation-results.txt
-node scripts/check-android-instrumentation.mjs build/week9/instrumentation-results.txt build/week9/instrumentation-results.xml 3
+node scripts/check-android-instrumentation.mjs build/week9/instrumentation-results.txt build/week9/instrumentation-results.xml 4
 stop_video
 [[ -s "$video_file" ]] || { echo 'Native demo recording is missing'; exit 1; }
 # Decode every input frame. Normalize only null-output timestamps to avoid
@@ -127,3 +127,5 @@ for shot in home payment history invoice menu review; do
   [[ -s "build/week9/android-$shot.png" ]] || { echo "Missing native demo screenshot: $shot"; exit 1; }
 done
 "$adb_bin" -s "$ANDROID_SERIAL" logcat -d -t 2000 > build/week9/android-logcat.txt
+mkdir -p build/week10
+cp app/build/outputs/apk/demo/app-demo.apk build/week10/verified-demo.apk

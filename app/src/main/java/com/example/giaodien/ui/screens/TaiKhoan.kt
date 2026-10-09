@@ -170,7 +170,7 @@ fun TaiKhoanScreen(
             item {
                 // CHO XÁC NHẬN: DÙNG LazyRow có nút điều khiển
                 HorizontalScrollSection(
-                    title = "Chờ Xác Nhận",
+                    title = "Đơn đang xử lý / sắp tới",
                     items = choXacNhan,
                     navController = navController,
                     viewModel = viewModel,
@@ -252,7 +252,7 @@ fun HorizontalScrollSection(
 
         if (items.isEmpty() && !isLoading) {
             Text(
-                text = "Không có đơn nào chờ xác nhận.",
+                text = "Chưa có đơn đang xử lý hoặc sắp tới.",
                 fontSize = 14.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(start = 16.dp, top = 8.dp)
