@@ -3,7 +3,7 @@
 
   # The Golden Leaf
 
-  **Full-stack portfolio: đặt bàn nguyên tử, đối soát chuyển khoản và vận hành nhà hàng — Android, Spring Boot và web dashboard.**
+  **Ứng dụng đặt bàn và quản lý nhà hàng — Android, Spring Boot và web dashboard.**
 
   [![CI](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml/badge.svg)](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml)
 
@@ -21,28 +21,24 @@
 
 ## Tổng quan
 
-The Golden Leaf là dự án portfolio mô hình hóa hành trình dùng bữa: khách xem thực đơn, đặt bàn, gọi món và theo dõi hóa đơn; nhân viên đối soát, phân bàn, nhận khách và hoàn tất. Trọng tâm không chỉ là CRUD mà là tính đúng của sức chứa, tiền và quyền truy cập khi request bị retry hoặc nhiều người thao tác đồng thời.
+The Golden Leaf là dự án cá nhân về đặt bàn và quản lý nhà hàng. Khách dùng ứng dụng Android để xem thực đơn, đặt bàn, gọi món và theo dõi hóa đơn. Nhân viên dùng dashboard web để xác nhận chuyển khoản, phân bàn và cập nhật trạng thái phục vụ.
 
-**For reviewers:** a local web/API sandbox runs with JDK 17, without Firebase credentials, MySQL or a bank account. Android also has a separate native `demo` APK using this sandbox; ordinary `debug`/`release` clients remain Firebase-authenticated. This repository demonstrates engineering workflows; it is not a live restaurant service or a published mobile app.
-
-Repository được tổ chức theo mô hình monorepo, gồm ứng dụng Android, Spring Boot REST API và hạ tầng MySQL chạy bằng Docker Compose. Schema dữ liệu được quản lý bằng Flyway, contract API được chuẩn hóa bằng DTO và có OpenAPI/Swagger để kiểm thử tích hợp.
+Backend xử lý giữ chỗ, chống đặt trùng, tính tiền và phân quyền theo tài khoản. Android và dashboard dùng chung REST API; dữ liệu được quản lý bằng MySQL và Flyway.
 
 > [!NOTE]
-> Tuần 1–7 đã có source, kiểm thử, CI và bản demo portfolio. Demo dùng dữ liệu tổng hợp, không nhận tiền hoặc gửi push thật. Không cần mua hosting/domain để chạy thử. Bộ cấu hình production là tài liệu kỹ thuật tham khảo, **không phải chứng nhận đã go-live**. Bắt đầu với [hướng dẫn demo & kịch bản trình diễn](docs/week-7-portfolio.md).
-
-Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗi/retry Android, lịch theo múi giờ nhà hàng, test ViewModel và quality/security gates. [Báo cáo tuần 8](docs/week-8-quality.md) phân biệt kết quả local, native emulator và screenshot đã kiểm tra; không coi build APK là UI E2E đã đạt. Xem đúng revision ở [CI](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml).
+> Bản demo chạy local bằng JDK 17, có dữ liệu mẫu và không cần cấu hình Firebase hay MySQL. Không chuyển tiền hoặc gửi push thật. Đây là dự án portfolio, chưa triển khai cho nhà hàng thực tế.
 
 ## Giao diện demo
 
-**[Portfolio prerelease v0.10.0 đã xuất bản](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0)**: tải gói **APK + backend demo**, checksum và launcher để chạy local không cần build source. CI và kiểm bundle tuần 10 đã đạt; đây không phải bản production hoặc phát hành trên Play Store. [Báo cáo tuần 10](docs/week-10-portfolio-release.md) ghi bằng chứng và giới hạn; các ghi chú “pending” trong báo cáo/guide là trạng thái trước khi xuất bản, chưa được cập nhật.
+[Tải demo v0.10.0](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0), gồm APK Android, backend JAR và script khởi động. Bản demo chưa phát hành trên Play Store.
 
-### Android native — tuần 10
+### Android
 
-APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản khách, đặt bàn/giỏ hàng/thanh toán giả lập và lịch sử thật qua API**. [CI nghiệm thu source 893b3e4](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705) đạt 191 backend tests, 48 Android unit tests, 4 regression + 3 customer journeys + 1 image-retry component trên **mỗi API 25/35**, 3 browser E2E và 14 gate tests. Job xuất bản đã chạy thành công và Release có đủ bốn assets. Security đạt với hai CVE exception có hạn, không phải đã vá mọi vulnerability.
+Demo có 12 món minh họa và hai tài khoản khách để thử đặt bàn, yêu thích, đánh giá và lịch sử đơn. App gọi backend local; thông tin thanh toán là dữ liệu giả.
 
-[Chạy app trong Android Studio](docs/android-demo.md) · [Bundle APK + JAR](docs/demo-bundle-guide.md) · [Báo cáo & giới hạn nghiệm thu](docs/week-10-portfolio-release.md)
+[Chạy app trong Android Studio](docs/android-demo.md) · [Hướng dẫn bản đóng gói](docs/demo-bundle-guide.md)
 
-Ảnh gốc từ MainActivity trên emulator **API 35**, không phải web mobile hoặc mockup:
+Ảnh chụp ứng dụng trên Android Emulator API 35:
 
 <p align="center">
   <img src="docs/assets/week10-android-api35-home.png" alt="Android native: trang chủ và minh họa món demo" width="240" />
@@ -60,11 +56,9 @@ APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản
   </p>
 </details>
 
-APK và backend dùng thử có trên [GitHub Release](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0), không phụ thuộc thời hạn artifact CI. Video MP4 API 35 / WebM API 25 có trong artifacts của run trên (giữ 14 ngày); 12 PNG gốc của hai API lưu trong Git. Native chỉ nghiệm thu customer UI; staff/admin có browser E2E riêng. Không dùng ngân hàng/FCM thật.
+### Dashboard và web demo
 
-### Web sandbox
-
-Ảnh chụp từ ứng dụng đang chạy qua Chromium E2E, không phải mockup. Ngày/ID có thể khác khi chạy lại.
+Giao diện khách và dashboard nhân viên trên trình duyệt:
 
 ![Portfolio demo — trải nghiệm khách trên API thật](docs/assets/demo-overview.png)
 
@@ -76,20 +70,6 @@ APK và backend dùng thử có trên [GitHub Release](https://github.com/TrinhQ
   <p><img src="docs/assets/demo-mobile.png" alt="Web demo ở viewport 390 px, không phải screenshot Android" width="280" /></p>
 </details>
 
-## Trạng thái phát triển
-
-| Hạng mục | Trạng thái | Kết quả |
-| --- | :---: | --- |
-| Nền tảng phát triển | ✅ Hoàn thành | Build tái lập, Docker Compose, environment template, health check |
-| Dữ liệu & API contract | ✅ Hoàn thành | Flyway V1, 17 bảng nghiệp vụ, DTO, lỗi API chuẩn, Swagger |
-| Luồng đặt bàn an toàn | ✅ Đã triển khai | Transaction, giữ chỗ có hạn, chống đặt trùng, idempotency, test concurrency |
-| Xác thực & phân quyền | ✅ Đã triển khai | Firebase ID token, kiểm tra thu hồi, email xác minh, ownership UID, CUSTOMER/STAFF/ADMIN |
-| Chuyển khoản & hoàn tiền | ✅ Đã triển khai | Hóa đơn từ server, tài khoản nhận tiền snapshot, đối soát thủ công, audit và chống ghi nhận trùng |
-| Thông báo & vận hành | ✅ Đã triển khai | Inbox, FCM outbox/lease/retry, phân bàn, nhận khách, hoàn tất và dashboard nhân viên |
-| Release engineering | ✅ Đã triển khai | CI H2/MySQL/Android, manual delivery bundle, HTTPS template, hardening, metrics và backup mã hóa |
-| Portfolio demo | ✅ Đã xuất bản prerelease | H2 memory, 4 persona, native/browser E2E, ảnh/video và combined APK + JAR có checksum/launcher |
-| Go-live thực tế | Ngoài phạm vi portfolio | Chưa public hosting, chưa signed Android/live Firebase/FCM/ngân hàng; không cần để review demo |
-
 ## Tính năng cốt lõi
 
 ### Trải nghiệm khách hàng
@@ -100,8 +80,7 @@ APK và backend dùng thử có trên [GitHub Release](https://github.com/TrinhQ
 - Tạo yêu cầu đặt bàn và thêm món vào đơn.
 - Xem hóa đơn tính bởi server và tài khoản chuyển khoản thực tế; theo dõi chờ đối soát, đã thu, chờ hoàn/đã hoàn.
 - Lịch sử đơn theo tài khoản và hộp thư thông báo; push FCM khi đã cấu hình.
-- Giao diện Android hiện đại xây dựng bằng Jetpack Compose.
-- Tích hợp nền tảng Firebase cho xác thực và thông báo.
+- Giao diện Android dùng Jetpack Compose; xác thực bằng Firebase ở bản thường.
 
 ### Vận hành nhà hàng
 
@@ -109,8 +88,6 @@ APK và backend dùng thử có trên [GitHub Release](https://github.com/TrinhQ
 - Nhân viên ghi nhận chuyển khoản/hoàn tiền sau khi kiểm tra sao kê; không tự động chuyển tiền.
 - Admin quản lý món/ảnh, bàn thực tế, quyền truy cập, khóa tài khoản và xem audit.
 - Đồng bộ sức chứa với bàn thực tế, bảo toàn chỗ đang giữ; theo dõi và thử lại push lỗi.
-- Database migration có phiên bản, dễ tái tạo trên môi trường mới.
-- Health check và tài liệu API phục vụ triển khai, tích hợp.
 
 ## Kiến trúc hệ thống
 
@@ -220,14 +197,14 @@ Get-Content REVISION
 ./Start-Demo.ps1
 ```
 
-Linux/macOS: `bash Start-Demo.sh` (Linux runtime đã kiểm; macOS chưa nghiệm thu runtime). Không bypass execution policy nếu Windows chặn script; đọc [bundle guide](docs/demo-bundle-guide.md) và tuân thủ policy máy.
+Linux/macOS: `bash Start-Demo.sh`. Script đã được thử trên Linux, chưa thử trên macOS. Nếu Windows chặn script, xem [hướng dẫn](docs/demo-bundle-guide.md); không cần tắt execution policy của máy.
 
-Mở `http://127.0.0.1:8080/demo.html`. Để thử Android, cài `golden-leaf-demo.apk` trong ZIP vào emulator API 25+ và giữ backend trên **8080**. APK dùng `http://10.0.2.2:8080/`, cần backend đang chạy, không phải app offline. Gói chứa đúng APK đã test API 35, JAR, revision, manifest, checksum và launchers. Có thể tải riêng [APK](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/golden-leaf-demo.apk) hoặc [JAR](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/golden-leaf-demo.jar), nhưng bản riêng không có launcher guards. Checksum kiểm tính toàn vẹn, không chứng minh nguồn phát hành đáng tin.
+Mở `http://127.0.0.1:8080/demo.html`. Để thử Android, cài `golden-leaf-demo.apk` trong ZIP vào emulator API 25+ và giữ backend trên **8080**. APK kết nối qua `http://10.0.2.2:8080/`, nên backend phải đang chạy. Có thể tải riêng [APK](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/golden-leaf-demo.apk) hoặc [JAR](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/download/portfolio-v0.10.0/golden-leaf-demo.jar); bản riêng không kèm script kiểm tra checksum và hạn bảo mật.
 
 > [!WARNING]
-> Hai CVE Spring WebMVC chưa vá chỉ được chấp nhận cho demo local đến **08/11/2026 00:00 UTC**. Launcher chặn sau hạn; APK và lệnh Java trực tiếp không tự enforce. Release vẫn tải được không có nghĩa còn an toàn để sử dụng. Không triển khai public hoặc nhập dữ liệu/thanh toán thật.
+> Bản v0.10.0 còn hai CVE Spring WebMVC chưa vá, chỉ dùng cho demo local đến **08/11/2026 00:00 UTC**. Script khởi động chặn sau hạn; APK và lệnh Java trực tiếp không có kiểm tra này. Không triển khai public hoặc nhập dữ liệu/thanh toán thật. Chi tiết trong [SECURITY.md](SECURITY.md).
 
-**Phạm vi:** bundle gồm web/API và Android native demo; ảnh web mobile-width không thay nghiệm thu Android. Có thể build **Variant `demo`** theo [Android demo guide](docs/android-demo.md). Bản Android `debug`/`release` thường vẫn cần Firebase.
+Muốn build app từ source, chọn variant **`demo`** theo [Android demo guide](docs/android-demo.md). Bản `debug`/`release` thường vẫn cần Firebase.
 
 ### 3. Development backend bằng Docker (tùy chọn)
 
@@ -397,9 +374,9 @@ cd The-Golden-Leaf-server
 ./mvnw.cmd test
 ```
 
-Test mặc định dùng H2 in-memory và không yêu cầu Firebase. Các suite MySQL opt-in dùng **schema disposable riêng** theo CI; khi chưa cấu hình fixture chúng được skip, không gọi đây là đã test MySQL local.
+Test mặc định dùng H2 in-memory, không cần Firebase. Test MySQL dùng schema riêng trong CI; khi chưa cấu hình MySQL local, các test này được bỏ qua.
 
-### Browser E2E và bằng chứng demo
+### Browser E2E
 
 ```powershell
 cd The-Golden-Leaf-server
@@ -423,44 +400,18 @@ node scripts/check-android-quality.mjs
 
 Trước khi mở pull request, nên chạy cả test backend lẫn build Android để phát hiện sớm lỗi contract giữa hai phía.
 
-Tuần 10 nghiệm thu **191 backend tests (H2 + MySQL), 48 Android unit tests, 3 Chromium E2E và 14 gate tests**. Mỗi emulator API 25/35 chạy 4 regressions, 3 customer journeys qua MainActivity/MyApp thật và 1 image-retry component. Lint CI còn **94 warnings / 8 hints, 0 errors**, budget không tăng; security có hai ngoại lệ Spring WebMVC đến **08/11/2026 00:00 UTC**, chưa được vá. Native evidence không thay thế Google/Firebase login, FCM, điện thoại vật lý hoặc go-live. Chi tiết trong [báo cáo tuần 10](docs/week-10-portfolio-release.md); bằng chứng lịch sử giữ riêng trong báo cáo tuần 8/9.
-
-## Roadmap
-
-- [x] Chuẩn hóa Gradle/Maven wrapper và cấu hình JDK 17.
-- [x] Docker hóa backend, MySQL và health check.
-- [x] Tách secret khỏi source, bổ sung environment template.
-- [x] Thiết lập Flyway V1 và chuẩn hóa kiểu dữ liệu tiền tệ.
-- [x] Bổ sung DTO, global error response và OpenAPI/Swagger.
-- [x] Làm luồng đặt bàn nguyên tử, chống double-booking và hỗ trợ idempotency.
-- [x] Firebase authentication, ownership UID và phân quyền khách/nhân viên/admin.
-- [x] Payment state machine và đối soát chuyển khoản/hoàn tiền thủ công (không gateway/callback).
-- [x] Notification outbox, retry, lease recovery và FCM delivery tracking.
-- [x] Dashboard vận hành, audit và kiểm tra sức chứa bàn thực tế.
-- [x] Test tích hợp H2/MySQL, concurrency, bảo mật và Android contract; build/lint debug.
-- [x] Demo portfolio riêng: H2/roles fixture, walkthrough thật, screenshot, E2E browser/video và bundle JAR.
-- [x] API yêu thích/đánh giá, Android retry/error/account isolation, restaurant timezone, ViewModel tests và quality/security gate.
-- [x] Nghiệm thu instrumentation API 25/35: 4 tests mỗi API và bốn screenshot native đã kiểm tra; [toàn bộ CI xanh ở source revision 7876e77](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37804794761).
-- [x] CI và manual release delivery bundle; log có cấu trúc, metrics, HTTPS/hardening template.
-- [x] Tuần 9: demo APK không Firebase, 12 món/SVG, 3 full native customer journeys mỗi API 25/35, 12 PNG và MP4/WebM đã kiểm; [CI source cuối](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353).
-- [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
-- Ngoài scope hiện tại: hosting/domain, giao dịch/Firebase/FCM thật, signed Android/store release, HA và operator UAT.
-- [x] Tuần 10: polish tiền/nhãn/ảnh, transport recovery, restart backend thật, combined bundle và launcher Windows/Linux; [CI source cuối](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705).
-- [x] Xuất bản [prerelease `portfolio-v0.10.0`](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0): APK, JAR, combined ZIP và RELEASE-SHA256SUMS; publish job kiểm checksum bundle trước phát hành.
-- [ ] Tải ZIP public và kiểm checksum độc lập sau phát hành để khép nghiệm thu bàn giao; không nhầm bước này với checksum gate trong CI.
-- Tác giả tùy chọn: video có thuyết minh và license; không bắt buộc để demo local.
+Ở [CI của v0.10.0](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705): 191 backend tests, 48 Android unit tests, 3 browser E2E và 14 test cho các script kiểm tra. Android Emulator API 25/35 chạy 8 test mỗi API, gồm đặt bàn/thanh toán, yêu thích/đánh giá, đổi tài khoản và tải lại ảnh. Lint còn 94 warnings và 8 hints, không có errors. Chưa thử trên điện thoại thật hoặc với Firebase/FCM và giao dịch thật.
 
 ## Tài liệu kỹ thuật
 
 - [REST API contract](docs/api-contract.md) — endpoint, payload, validation và error envelope.
 - [Database schema](docs/database-schema.md) — bảng, quan hệ, kiểu dữ liệu và chiến lược migration.
-- [Tuần 3 — Booking integrity](docs/week-3-booking-integrity.md) — lifecycle, cấu hình, kiểm thử concurrency và giới hạn triển khai.
-- [Tuần 4–5 — Security & operations](docs/weeks-4-5-security-operations.md) — phạm vi hoàn thành, phân quyền, thanh toán thủ công, thông báo và checklist đưa vào vận hành.
-- [Tuần 6 — Production readiness](docs/week-6-production-readiness.md) — CI/release, TLS/private metrics, backup mã hóa, restore/rollback và các gate go-live.
-- [Tuần 7 — Portfolio demo](docs/week-7-portfolio.md) — chạy không cần secret, case study, kịch bản 5–7 phút và giới hạn đã kiểm chứng.
-- [Tuần 8 — Quality & regression](docs/week-8-quality.md) — nghiệm thu CI, screenshot Android thật, lint budget và CVE exception có hạn.
-- [Tuần 9 — Native Android demo](docs/week-9-native-demo.md) — APK riêng, dữ liệu minh họa, customer UI journeys, screenshot/video và trạng thái nghiệm thu.
-- [Tuần 10 — Portfolio release](docs/week-10-portfolio-release.md) — polish/recovery, combined APK + JAR, checksum/launcher và prerelease local-only.
+- [Đặt bàn và giữ chỗ](docs/week-3-booking-integrity.md) — trạng thái đơn, transaction và kiểm thử đồng thời.
+- [Phân quyền và vận hành](docs/weeks-4-5-security-operations.md) — xác thực, đối soát chuyển khoản và thông báo.
+- [Triển khai và backup](docs/week-6-production-readiness.md) — cấu hình HTTPS, metrics, backup và rollback.
+- [Kịch bản demo](docs/week-7-portfolio.md) — cách chạy và thử các luồng khách/nhân viên/admin.
+- [Android demo](docs/android-demo.md) — build variant, dữ liệu mẫu và kết nối backend local.
+- [Báo cáo kiểm thử](docs/week-10-portfolio-release.md) — kết quả CI và giới hạn của bản v0.10.0.
 - [Demo bundle guide](docs/demo-bundle-guide.md) — combined APK + JAR, checksum và launcher JDK 17.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) — workflow đóng góp và báo lỗi không lộ dữ liệu.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.
@@ -468,7 +419,7 @@ Tuần 10 nghiệm thu **191 backend tests (H2 + MySQL), 48 Android unit tests, 
 
 ## Quy ước đóng góp
 
-1. Tạo branch theo phạm vi thay đổi, ví dụ `feat/booking-integrity` hoặc `fix/invoice-total`; Codex-assisted dùng `codex/<scope>`.
+1. Tạo branch theo phạm vi thay đổi, ví dụ `feat/booking-integrity` hoặc `fix/invoice-total`.
 2. Giữ commit nhỏ, có chủ đích và sử dụng Conventional Commits.
 3. Không commit secret, file `.env`, service-account JSON hoặc keystore thật.
 4. Cập nhật contract/migration khi thay đổi API hoặc database.
