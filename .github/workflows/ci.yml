@@ -7,6 +7,7 @@ on:
   workflow_call:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -40,6 +41,11 @@ jobs:
           MYSQL_TEST_URL: jdbc:mysql://127.0.0.1:13308/golden_leaf_week3_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
           MYSQL_TEST_PASSWORD: ci-test-only-password
         run: bash mvnw -B verify
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Verify real disposable backend restart invalidates old demo tokens
+        run: node scripts/test-demo-recovery.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -61,7 +67,9 @@ jobs:
       - name: Install Android SDK components
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ''platforms;android-36'' ''build-tools;36.0.0'''
       - name: Debug unit tests, assembly and lint
-        run: bash gradlew --no-daemon testDebugUnitTest assembleDebug assembleDemo assembleDebugAndroidTest lintDebug
+        run: |
+          bash gradlew --no-daemon testDebugUnitTest assembleDebug assembleDemo assembleDebugAndroidTest
+          bash gradlew --no-daemon lintDebug
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
@@ -89,10 +97,11 @@ jobs:
           node-version: '24'
       - run: node --check The-Golden-Leaf-server/src/main/resources/static/staff.js
       - run: node --check The-Golden-Leaf-server/src/main/resources/static/demo.js
-      - run: node --test scripts/check-android-quality.test.mjs scripts/check-security-report.test.mjs scripts/check-android-instrumentation.test.mjs
+      - run: node --test scripts/check-android-quality.test.mjs scripts/check-security-report.test.mjs scripts/check-android-instrumentation.test.mjs scripts/build-demo-bundle.test.mjs
       - run: docker run --rm --network none -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9
       - run: docker run --rm --network none -v "$PWD:/repo:ro" -w /repo --entrypoint shellcheck rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -x ops/scripts/*.sh
-      - run: bash -n ops/scripts/backup.sh ops/scripts/restore.sh ops/scripts/smoke.sh
+      - run: bash -n ops/scripts/*.sh ops/demo/*.sh
+      - run: docker run --rm --network none -v "$PWD:/repo:ro" -w /repo --entrypoint shellcheck rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -x ops/demo/*.sh
       - run: bash ops/scripts/test-backup-restore.sh
       - run: docker build --tag golden-leaf:ci The-Golden-Leaf-server
       - run: bash ops/scripts/test-container.sh
@@ -125,12 +134,12 @@ jobs:
         working-directory: tools/demo-browser
         run: npm test
       - name: Prepare verified local demo bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir demo-bundle
-          cp The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar demo-bundle/golden-leaf-demo.jar
-          cp docs/demo-bundle-guide.md demo-bundle/README.md
-          printf '%s\n' "$GITHUB_SHA" > demo-bundle/REVISION
-          (cd demo-bundle && sha256sum golden-leaf-demo.jar > SHA256SUMS)
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name android-emulator-api-35 --dir build/week10/verified-native
+          node scripts/build-demo-bundle.mjs --jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --apk build/week10/verified-native/build/week10/verified-demo.apk --revision "$GITHUB_SHA" --output demo-bundle
+          node scripts/test-demo-launcher.mjs demo-bundle
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: portfolio-demo-bundle
@@ -144,6 +153,50 @@ jobs:
             tools/demo-browser/playwright-report
             tools/demo-browser/test-results
           retention-days: 14
+  portfolio-release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: demo-browser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DEMO_TAG: portfolio-v0.10.0
+    steps:
+      - name: Check explicit portfolio tag points to this verified commit
+        id: approval
+        run: |
+          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$DEMO_TAG" --jq 'select(.object.type == "commit") | .object.sha' 2>/dev/null || true)
+          if [[ "$tag_sha" == "$GITHUB_SHA" ]]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'No matching explicit portfolio tag; no release will be published.'
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.approval.outputs.publish == 'true'
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.approval.outputs.publish == 'true'
+        with:
+          node-version: '24'
+      - name: Download and recheck exact-run demo bundle
+        if: steps.approval.outputs.publish == 'true'
+        run: |
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name portfolio-demo-bundle --dir release-bundle
+          node scripts/build-demo-bundle.mjs --verify release-bundle "$GITHUB_SHA"
+          (cd release-bundle && sha256sum -c SHA256SUMS)
+          (cd release-bundle && zip golden-leaf-portfolio-demo.zip ./*)
+          (cd release-bundle && sha256sum golden-leaf-portfolio-demo.zip golden-leaf-demo.apk golden-leaf-demo.jar > RELEASE-SHA256SUMS)
+      - name: Publish local-only prerelease after all acceptance gates
+        if: steps.approval.outputs.publish == 'true'
+        run: |
+          gh release create "$DEMO_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease --latest=false --title 'The Golden Leaf — Portfolio demo v0.10.0' --notes-file docs/week-10-release-notes.md release-bundle/golden-leaf-portfolio-demo.zip release-bundle/golden-leaf-demo.apk release-bundle/golden-leaf-demo.jar release-bundle/RELEASE-SHA256SUMS
+          gh release view "$DEMO_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '[.assets[].name] | sort' > release-bundle/published-assets.json
+          node -e 'const fs=require("fs"),assert=require("assert");assert.deepStrictEqual(JSON.parse(fs.readFileSync("release-bundle/published-assets.json","utf8")),["RELEASE-SHA256SUMS","golden-leaf-demo.apk","golden-leaf-demo.jar","golden-leaf-portfolio-demo.zip"]);'
+          gh release edit "$DEMO_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
   android-emulator:
     needs: [backend, android]
     runs-on: ubuntu-24.04
@@ -197,6 +250,7 @@ jobs:
             build/week9/screenrecord.log
             build/week9/screenrecord-stop.log
             build/week9/instrumentation-results.*
+            build/week10/verified-demo.apk
           retention-days: 14
   security:
     needs: backend

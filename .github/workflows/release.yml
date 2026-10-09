@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: release-bundle-${{ github.ref }}
   cancel-in-progress: false

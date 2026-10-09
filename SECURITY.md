@@ -17,6 +17,10 @@ Include affected revision, safe reproduction steps using synthetic data, expecte
 
 Dependency update configuration is provided; updates are reviewed, not auto-merged. CI passing does not mean a dependency/image was independently audited.
 
+## Portfolio prerelease review window (weeks 9–10)
+
+Two unpatched findings, CVE-2026-47884 and CVE-2026-47890, are accepted only for local portfolio with exact `org.springframework:spring-webmvc:6.2.19` scope until **2026-11-08 00:00 UTC**. Source guards and expiry checks supplement the reachability review; they do not patch the library. Do not deploy publicly, extend the exception silently or treat persistent GitHub Release assets as indefinitely safe. Combined-bundle launchers check expiry and refuse startup afterwards; direct Java/APK execution does not enforce it. See [week 10 acceptance and remaining limits](docs/week-10-portfolio-release.md).
+
 ## Dependency and image gate (week 8)
 
 CI scans the packaged Java dependency inventory and the built image OS/Java packages with a digest-pinned Trivy image. It fails on incomplete inventories or fixable HIGH/CRITICAL findings, except exact CVE/package/version entries in `scripts/security-exceptions.json`. Lower-severity and unfixed findings remain in reports, not silently dropped. Exceptions require rationale, a primary advisory and an expiry; they are not approval for public deployment. See [the current evidence and residual risk](docs/week-8-quality.md#security-gate-và-ngoại-lệ-có-hạn).

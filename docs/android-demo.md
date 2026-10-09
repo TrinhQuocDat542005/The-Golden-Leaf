@@ -42,6 +42,8 @@ Token chỉ giữ trong RAM: đóng process app thì đăng nhập lại. Dừng
 
 ## Kiểm chứng
 
+Tuần 10 bổ sung polish/recovery và bản combined APK + JAR; trạng thái mới nhất xem [báo cáo tuần 10](week-10-portfolio-release.md). Native suite từ tuần 10 có ba customer journeys và một component image-retry test; không gọi component test là customer journey thứ tư. APK trong combined release lấy nguyên bản đã cài/test trên API 35.
+
 [Run nghiệm thu 09/10/2026 — source 4401d02](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353) có cả 7 jobs thành công, native API 25/35 đều đạt. Đăng nhập GitHub để tải artifact **android-debug-and-reports**, lấy `outputs/apk/demo/app-demo.apk`: APK này dùng backend local 8080. Artifact giữ 14 ngày; sau đó build lại theo hướng dẫn trên. Không cài instrumentation APK hoặc APK fixture 18082 để thử backend mặc định.
 
 Trạng thái mới nhất nằm trong [báo cáo tuần 9](week-9-native-demo.md). Bài instrumentation dùng MainActivity/MyApp thật, không dùng application fixture tuần 8. Ba test kiểm customer UI đặt bàn/giỏ hàng/thanh toán/lịch sử, yêu thích/đánh giá và đăng xuất/đổi tài khoản; nhân viên đối soát/phân bàn qua API demo thật, **không phải staff UI native**. Firebase initialization phải trống trong suốt bài test.
@@ -50,4 +52,4 @@ Trạng thái mới nhất nằm trong [báo cáo tuần 9](week-9-native-demo.m
 ./gradlew.bat -PdemoInstrumentation=true connectedDemoAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.example.giaodien.DemoAppTest'
 ```
 
-Cần emulator online và backend demo tại 8080. CI dùng origin 18082, chạy native `am instrument`, kiểm đủ ba successful events, xuất screenshot PNG gốc và video tối đa 180 giây: MP4 từ guest `screenrecord`, hoặc host WebM khi system image thiếu binary đó. Cả hai đều ghi display thật, phải có video và qua gate FFmpeg giải mã. APK demo dùng thử tải từ artifact **android-debug-and-reports**; artifact emulator là bằng chứng, không phải APK cho backend 8080. Không suy ra runtime từ việc build thành công.
+Cần emulator online và backend demo tại 8080. Từ tuần 10, CI native cũng dùng **8080** trong runner disposable, kiểm đủ bốn successful events của demo suite sau bốn regression tests. Xuất PNG gốc và video tối đa 180 giây: MP4 từ guest `screenrecord`, hoặc host WebM khi thiếu binary; video phải qua full decode gate. Artifact API 35 có `build/week10/verified-demo.apk`, đúng APK đã test và dùng origin emulator 8080. Bản combined release đóng gói APK này cùng backend, checksum và launcher; xem [bundle guide](demo-bundle-guide.md). Không suy ra runtime từ việc build thành công hoặc dùng artifacts cũ tuần 9 cho source tuần 10.

@@ -34,6 +34,8 @@ Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗ
 
 ## Giao diện demo
 
+Tuần 10 đang nghiệm thu polish Android, transport recovery và bản **combined APK + backend demo** có checksum/launcher. [Theo dõi báo cáo tuần 10](docs/week-10-portfolio-release.md); ảnh và số test tuần 9 bên dưới vẫn là bằng chứng revision lịch sử, không thay CI tuần 10.
+
 ### Android native — tuần 9
 
 APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản khách, đặt bàn/giỏ hàng/thanh toán giả lập và lịch sử thật qua API**. [CI nghiệm thu source 4401d02](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353) đạt cả 7 jobs: 191 backend tests, 38 Android unit tests, 4 regression + 3 customer native tests trên **mỗi API 25/35**, 3 browser E2E và 8 gate tests. Security đạt với hai CVE exception có hạn, không phải đã vá mọi vulnerability.
@@ -441,6 +443,7 @@ Tuần 9 nghiệm thu **191 backend tests (H2 + MySQL), 38 Android unit tests, 3
 - [Tuần 7 — Portfolio demo](docs/week-7-portfolio.md) — chạy không cần secret, case study, kịch bản 5–7 phút và giới hạn đã kiểm chứng.
 - [Tuần 8 — Quality & regression](docs/week-8-quality.md) — nghiệm thu CI, screenshot Android thật, lint budget và CVE exception có hạn.
 - [Tuần 9 — Native Android demo](docs/week-9-native-demo.md) — APK riêng, dữ liệu minh họa, customer UI journeys, screenshot/video và trạng thái nghiệm thu.
+- [Tuần 10 — Portfolio release](docs/week-10-portfolio-release.md) — polish/recovery, combined APK + JAR, checksum/launcher và prerelease local-only.
 - [Demo bundle guide](docs/demo-bundle-guide.md) — chạy JAR độc lập bằng JDK 17.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) — workflow đóng góp và báo lỗi không lộ dữ liệu.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.
