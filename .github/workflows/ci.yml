@@ -46,7 +46,7 @@ jobs:
           node-version: '24'
       - name: Verify real disposable backend restart invalidates old demo tokens
         run: node scripts/test-demo-recovery.mjs
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: backend-test-reports
@@ -75,7 +75,7 @@ jobs:
           node-version: '24'
       - name: Enforce lint budget and static log privacy
         run: node scripts/check-android-quality.mjs
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: android-debug-and-reports
@@ -140,12 +140,12 @@ jobs:
           gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name android-emulator-api-35 --dir build/week10/verified-native
           node scripts/build-demo-bundle.mjs --jar The-Golden-Leaf-server/target/datban-0.0.1-SNAPSHOT.jar --apk build/week10/verified-native/build/week10/verified-demo.apk --revision "$GITHUB_SHA" --output demo-bundle
           node scripts/test-demo-launcher.mjs demo-bundle
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: portfolio-demo-bundle
           path: demo-bundle
           retention-days: 14
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: demo-browser-report-and-video
@@ -228,7 +228,7 @@ jobs:
         env:
           ANDROID_TEST_API: ${{ matrix.api }}
         run: bash ops/scripts/test-android-emulator.sh
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: android-emulator-api-${{ matrix.api }}
@@ -285,7 +285,7 @@ jobs:
         run: |
           node scripts/check-security-report.mjs build/week8/security/backend-dependencies.json
           node scripts/check-security-report.mjs build/week8/security/backend-image.json --image
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: security-inventory-and-vulnerabilities
