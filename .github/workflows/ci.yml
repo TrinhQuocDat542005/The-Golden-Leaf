@@ -41,7 +41,7 @@ jobs:
           MYSQL_TEST_URL: jdbc:mysql://127.0.0.1:13308/golden_leaf_week3_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
           MYSQL_TEST_PASSWORD: ci-test-only-password
         run: bash mvnw -B verify
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
       - name: Verify real disposable backend restart invalidates old demo tokens
@@ -70,7 +70,7 @@ jobs:
         run: |
           bash gradlew --no-daemon testDebugUnitTest assembleDebug assembleDemo assembleDebugAndroidTest
           bash gradlew --no-daemon lintDebug
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
       - name: Enforce lint budget and static log privacy
@@ -92,7 +92,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
       - run: node --check The-Golden-Leaf-server/src/main/resources/static/staff.js
@@ -119,7 +119,7 @@ jobs:
           java-version: '17'
           cache: maven
           cache-dependency-path: The-Golden-Leaf-server/pom.xml
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           cache: npm
@@ -178,7 +178,7 @@ jobs:
         if: steps.approval.outputs.publish == 'true'
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         if: steps.approval.outputs.publish == 'true'
         with:
           node-version: '24'
@@ -218,7 +218,7 @@ jobs:
         run: sudo chmod a+rw /dev/kvm
       - name: Install native recording validation tools
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
       - name: Package isolated demo
@@ -266,7 +266,7 @@ jobs:
           java-version: '17'
           cache: maven
           cache-dependency-path: The-Golden-Leaf-server/pom.xml
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
       - name: Package dependencies and image for local scanning
