@@ -163,7 +163,7 @@ dependencies {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
 
-    implementation("com.google.android.gms:play-services-auth:20.7.0") {
+    implementation("com.google.android.gms:play-services-auth:22.0.0") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }
 
