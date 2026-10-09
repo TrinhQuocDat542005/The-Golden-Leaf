@@ -42,6 +42,8 @@ Token chỉ giữ trong RAM: đóng process app thì đăng nhập lại. Dừng
 
 ## Kiểm chứng
 
+[Run nghiệm thu 09/10/2026 — source 4401d02](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353) có cả 7 jobs thành công, native API 25/35 đều đạt. Đăng nhập GitHub để tải artifact **android-debug-and-reports**, lấy `outputs/apk/demo/app-demo.apk`: APK này dùng backend local 8080. Artifact giữ 14 ngày; sau đó build lại theo hướng dẫn trên. Không cài instrumentation APK hoặc APK fixture 18082 để thử backend mặc định.
+
 Trạng thái mới nhất nằm trong [báo cáo tuần 9](week-9-native-demo.md). Bài instrumentation dùng MainActivity/MyApp thật, không dùng application fixture tuần 8. Ba test kiểm customer UI đặt bàn/giỏ hàng/thanh toán/lịch sử, yêu thích/đánh giá và đăng xuất/đổi tài khoản; nhân viên đối soát/phân bàn qua API demo thật, **không phải staff UI native**. Firebase initialization phải trống trong suốt bài test.
 
 ```powershell

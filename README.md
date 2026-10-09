@@ -34,6 +34,34 @@ Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗ
 
 ## Giao diện demo
 
+### Android native — tuần 9
+
+APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản khách, đặt bàn/giỏ hàng/thanh toán giả lập và lịch sử thật qua API**. [CI nghiệm thu source 4401d02](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353) đạt cả 7 jobs: 191 backend tests, 38 Android unit tests, 4 regression + 3 customer native tests trên **mỗi API 25/35**, 3 browser E2E và 8 gate tests. Security đạt với hai CVE exception có hạn, không phải đã vá mọi vulnerability.
+
+[Chạy app trong Android Studio](docs/android-demo.md) · [Báo cáo & giới hạn nghiệm thu](docs/week-9-native-demo.md)
+
+Ảnh gốc từ MainActivity trên emulator **API 35**, không phải web mobile hoặc mockup:
+
+<p align="center">
+  <img src="docs/assets/week9-android-api35-home.png" alt="Android native: trang chủ và minh họa món demo" width="240" />
+  <img src="docs/assets/week9-android-api35-menu.png" alt="Android native: thực đơn và yêu thích" width="240" />
+  <img src="docs/assets/week9-android-api35-payment.png" alt="Android native: thanh toán giả lập 340.000 VND, không chuyển tiền" width="240" />
+</p>
+
+<details>
+  <summary>Lịch sử, hóa đơn và đánh giá — Android native</summary>
+
+  <p>
+    <img src="docs/assets/week9-android-api35-history.png" alt="Lịch sử theo tài khoản demo" width="240" />
+    <img src="docs/assets/week9-android-api35-invoice.png" alt="Hóa đơn do server tính, tổng 340.000 VNĐ" width="240" />
+    <img src="docs/assets/week9-android-api35-review.png" alt="Đánh giá món và minh họa SVG" width="240" />
+  </p>
+</details>
+
+Video MP4 API 35 / WebM API 25 và APK dùng thử có trong artifacts của run trên (giữ 14 ngày); 12 PNG gốc của hai API lưu lâu dài trong Git. Native chỉ nghiệm thu customer UI; staff/admin có browser E2E riêng. Không dùng ngân hàng/FCM thật.
+
+### Web sandbox
+
 Ảnh chụp từ ứng dụng đang chạy qua Chromium E2E, không phải mockup. Ngày/ID có thể khác khi chạy lại.
 
 ![Portfolio demo — trải nghiệm khách trên API thật](docs/assets/demo-overview.png)
@@ -116,7 +144,7 @@ Luồng dữ liệu chính:
 | Android | Kotlin 2.0.21, Jetpack Compose, Material 3, Navigation Compose |
 | Kiến trúc mobile | ViewModel, StateFlow, Coroutines, Hilt |
 | Kết nối mobile | Retrofit 2, OkHttp 4, Gson, Kotlin Serialization |
-| Backend | Java 17, Spring Boot 3.5.6, Spring Web, Validation, Security |
+| Backend | Java 17, Spring Boot 3.5.16, Spring Web, Validation, Security |
 | Dữ liệu | Spring Data JPA, MySQL 8, Flyway, H2 cho test |
 | Dịch vụ | Firebase Authentication, Firebase Cloud Messaging |
 | API & vận hành | OpenAPI 3, Swagger UI, Spring Boot Actuator |
@@ -379,7 +407,7 @@ node scripts/check-android-quality.mjs
 
 Trước khi mở pull request, nên chạy cả test backend lẫn build Android để phát hiện sớm lỗi contract giữa hai phía.
 
-Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 Chromium E2E và 6 quality-gate tests**. Lint local hiện còn **96 warnings / 8 hints, 0 errors**; CI Linux fresh metadata có 98 warnings / 8 hints, được hiệu chỉnh theo từng loại với evidence, chưa phải lint sạch. CI có native instrumentation matrix API 25/35, raw test events/JUnit và screenshot Android thật; đọc trạng thái đúng commit trong workflow. Test dùng application fixture không Firebase, không thay thế nghiệm thu toàn bộ app hoặc Google/Firebase login thật. Chi tiết/reproduce trong [báo cáo tuần 8](docs/week-8-quality.md).
+Tuần 9 nghiệm thu **191 backend tests (H2 + MySQL), 38 Android unit tests, 3 Chromium E2E và 8 quality-gate tests**. Mỗi emulator API 25/35 chạy 4 component regressions tuần 8 và 3 customer journeys mới qua MainActivity/MyApp demo thật. Lint CI còn **95 warnings / 8 hints, 0 errors**, budget không tăng; security có hai ngoại lệ Spring WebMVC đến **08/11/2026 00:00 UTC**, chưa được vá. Native evidence không thay thế Google/Firebase login, FCM, điện thoại vật lý hoặc go-live. Chi tiết/reproduce trong [báo cáo tuần 9](docs/week-9-native-demo.md); kết quả lịch sử tuần 8 giữ riêng trong [báo cáo tuần 8](docs/week-8-quality.md).
 
 ## Roadmap
 
@@ -398,6 +426,7 @@ Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 
 - [x] API yêu thích/đánh giá, Android retry/error/account isolation, restaurant timezone, ViewModel tests và quality/security gate.
 - [x] Nghiệm thu instrumentation API 25/35: 4 tests mỗi API và bốn screenshot native đã kiểm tra; [toàn bộ CI xanh ở source revision 7876e77](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37804794761).
 - [x] CI và manual release delivery bundle; log có cấu trúc, metrics, HTTPS/hardening template.
+- [x] Tuần 9: demo APK không Firebase, 12 món/SVG, 3 full native customer journeys mỗi API 25/35, 12 PNG và MP4/WebM đã kiểm; [CI source cuối](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353).
 - [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
 - Ngoài scope hiện tại: hosting/domain, giao dịch/Firebase/FCM thật, signed Android/store release, HA và operator UAT.
 - Tác giả tùy chọn: video có thuyết minh, license và GitHub Release dài hạn; không coi đây là việc bắt buộc để demo local.

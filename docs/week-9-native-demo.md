@@ -4,7 +4,9 @@
 
 Ngày 09/10/2026. Tuần 9 hoàn thiện phần Android demo bổ sung sau tuần 8: một APK riêng không Firebase, dùng API/backend demo thật và dữ liệu tổng hợp. Không triển khai nhà hàng thật, không nhận tiền, không mở hosting và không nghiệm thu Google login/FCM thật.
 
-**Source đã triển khai; nghiệm thu native/ảnh/video và CI trên revision được push còn chờ.** Các ô runtime bên dưới chỉ đánh dấu sau khi đọc raw results, kiểm ảnh gốc và video thực tế. Không dùng CI tuần 8 để chứng minh bản demo mới.
+**Đã nghiệm thu trên source `4401d02a72f9d990c848557f8906a4d7dcc3a4b3`: cả 7 jobs thành công** tại [CI run 37916305353](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353). Đã đọc raw results/JUnit, kiểm 12 PNG gốc và frame thực tế của hai video; không dùng CI tuần 8 thay bằng chứng cho demo mới. Commit bàn giao sau revision này chỉ sửa tài liệu/ảnh, không đổi source đã test.
+
+## Lịch sử chẩn đoán (không phải trạng thái hiện tại)
 
 Source revision `2da58538d7b0c5d47ef132393c310c800779473c`, [CI run 37899286958](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37899286958): backend **191 passed, 0 skipped**; Android build/unit/lint budget và infrastructure đạt. Native API 25/35 đều có **3 failures tại bước mở phiên demo**; browser job bị skip bởi dependencies. Security gate đang chặn **CVE-2026-47890**, không được xem toàn bộ CI là xanh.
 
@@ -12,9 +14,9 @@ Video lỗi API 35 đã giải mã được bằng FFmpeg 7.1: màn chọn perso
 
 Trivy ghi severity CRITICAL (`ghsa`) cho `spring-webmvc:6.2.19`, fixed version 7.0.9. [Advisory chính thức Spring](https://spring.io/security/cve-2026-47890/) ghi LOW, yêu cầu SSE với view fragments và dữ liệu attacker kiểm soát; bản sửa 6.2.20 là enterprise-only. Rà source hiện tại không thấy SSE/view fragments. Chủ project đã đồng ý ngoại lệ đúng CVE/package/version đến **08/11/2026 00:00 UTC**, chỉ cho portfolio local. Guard quét Java/HTML/JS/config trong backend main source, từ chối SSE/emitter/event-stream/fragments API và EventSource. Không xóa finding hoặc đổi severity; regex chỉ là guard phụ, không thay reachability audit. Cả hai CVE-2026-47884/47890 vẫn chưa được vá, cần reassess trước hết hạn, đổi dependency hoặc public deployment.
 
-Run chẩn đoán `da92f50`, [37901459802](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37901459802) xác định `LifecycleRegistry.enforceMainThreadIfNeeded` khi Navigation pop login. Bản sửa gọi navigation trên `Dispatchers.Main.immediate` sau sign-in. Cần runtime run mới để xác nhận, không suy ra thành công từ chẩn đoán/build.
+Run chẩn đoán `da92f50`, [37901459802](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37901459802) xác định `LifecycleRegistry.enforceMainThreadIfNeeded` khi Navigation pop login. Bản sửa gọi navigation trên `Dispatchers.Main.immediate` sau sign-in; runtime các run tiếp theo xác nhận đăng nhập thành công.
 
-Run `4f440cd`, [37914153839](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37914153839): cả API 25/35 **3 native customer tests passed**, lỗi mở phiên đã được xác nhận sửa qua runtime. API 35 job thành công; API 25 thiếu binary `/system/bin/screenrecord` nên gate bằng chứng fail (không phải test nghiệp vụ fail). Video MP4 API 35 giải mã toàn bộ thành công. Kiểm sáu ảnh API 35 thấy minh họa món trống: resolver cũ ghép `/demo-assets` thành `/uploads/demo-assets`. Bản sửa tiếp theo giữ đúng static path này, bổ sung unit assertion, dùng host WebM khi guest recorder không tồn tại theo [Android documentation](https://developer.android.com/studio/run/emulator-record-screen), và gate FFmpeg giải mã video. Cần run cuối có ảnh/video hợp lệ trước bàn giao.
+Run `4f440cd`, [37914153839](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37914153839): cả API 25/35 **3 native customer tests passed**, nhưng API 25 thiếu `/system/bin/screenrecord` nên gate bằng chứng fail. Kiểm ảnh API 35 thấy resolver ghép sai `/demo-assets` thành `/uploads/demo-assets`. Source cuối giữ đúng static path, bổ sung unit assertion, dùng host WebM khi thiếu guest recorder theo [Android documentation](https://developer.android.com/studio/run/emulator-record-screen), và yêu cầu FFmpeg giải mã toàn bộ video. ShellCheck cũng được sửa bằng điều kiện `if` tường minh; không nới gate để lấy CI xanh.
 
 ## Những gì đã thay đổi
 
@@ -30,13 +32,30 @@ Run `4f440cd`, [37914153839](https://github.com/TrinhQuocDat542005/The-Golden-Le
 
 | Kiểm chứng | Trạng thái |
 |---|---|
+| Backend CI H2 + MySQL | **191 passed, 0 failures/errors/skipped** trên source cuối |
 | Backend local `mvnw verify` | 191 ca khai báo; **122 chạy, 0 failure/error, 69 MySQL skip** do Docker local không chạy |
-| Android unit/build | **38 passed, 0 skipped** local; demo APK/instrumentation APK và debug build thành công. Có 6 ca mới cho history/inbox/invoice retry và account isolation |
-| Android quality | Lint không error; budget/static log gate đạt, không tăng budget. Coil compose/SVG đồng bộ 2.7.0 qua version catalog. Không tuyên bố lint sạch |
+| Android unit/build | **38 passed, 0 failures/skipped** local và CI; demo APK/instrumentation APK và debug build thành công. Có 6 ca mới cho history/inbox/invoice retry và account isolation |
+| Android quality | CI **95 warnings / 8 hints**, local 93 warnings / 8 hints, không Error/Fatal; budget/static log gate đạt, không tăng budget. Không tuyên bố lint sạch |
 | Node gates | **8 passed**, gồm guard SSE/XSLT và kiểm đúng ba native events; fail/crash/skip/partial vẫn bị từ chối |
-| Browser E2E | **3 passed** local, gồm customer/staff/admin/refund, check-in và màn hình mobile; fixture 12 món |
-| Native API 25/35 | CI dùng MyApp/MainActivity thật, ba customer UI tests riêng sau bốn regression tests tuần 8; chưa tính đạt trước khi có run thành công |
-| Screenshot/video | Sáu PNG gốc/mỗi API: home, payment, history, invoice, menu, review; MP4 native tối đa 180 giây, không audio; chờ kiểm tra trực quan |
+| Browser E2E | **3 passed** local và CI, gồm customer/staff/admin/refund, check-in và màn hình mobile; fixture 12 món |
+| Native API 25/35 | **4 regression + 3 customer UI tests passed trên mỗi API**, 0 failures/errors/skipped. Ba test mới dùng MyApp/MainActivity thật, không Firebase |
+| Screenshot/video | **6 PNG gốc/mỗi API**, đã kiểm trực quan; MP4 API 35 và WebM API 25 giải mã toàn bộ thành công |
+| Security | Gate đạt với **2 ngoại lệ đúng CVE/package/version có hạn**; inventory vẫn giữ 6 dependency findings và 36 image findings. Không phải zero vulnerabilities hoặc đã vá CVE |
+
+### Ảnh/video native đã kiểm
+
+| Màn hình | API 25 | API 35 |
+|---|---|---|
+| Home | [PNG gốc](assets/week9-android-api25-home.png) | [PNG gốc](assets/week9-android-api35-home.png) |
+| Menu | [PNG gốc](assets/week9-android-api25-menu.png) | [PNG gốc](assets/week9-android-api35-menu.png) |
+| Payment | [PNG gốc](assets/week9-android-api25-payment.png) | [PNG gốc](assets/week9-android-api35-payment.png) |
+| History | [PNG gốc](assets/week9-android-api25-history.png) | [PNG gốc](assets/week9-android-api35-history.png) |
+| Invoice | [PNG gốc](assets/week9-android-api25-invoice.png) | [PNG gốc](assets/week9-android-api35-invoice.png) |
+| Review | [PNG gốc](assets/week9-android-api25-review.png) | [PNG gốc](assets/week9-android-api35-review.png) |
+
+12 PNG 1080×1920 được copy nguyên vẹn từ artifact source cuối, SHA-256 source/destination trùng; không crop, sửa nội dung hoặc dùng mockup. API 35 hiện minh họa món ở home/menu/review. API 25 menu/review hiện SVG đúng; home còn placeholder trong snapshot đầu và review chụp lúc danh sách bình luận đang tải. Đây là giới hạn thời điểm chụp bất đồng bộ, không dùng ảnh đó để tuyên bố mọi nội dung đã tải xong. Các màn dài có cuộn; screenshot không đại diện toàn bộ nội dung ngoài viewport. Giá menu còn định dạng legacy `70000.0 VND`, nhóm lịch sử vẫn có nhãn legacy; chưa phải polish giao diện tuyệt đối.
+
+Video API 35: H.264 MP4, **720×1280, 30,61 giây**. API 25: VP9 WebM host recording, **1080×1920, 28,35 giây**. Cả hai giữ bản gốc, không audio, qua full decode gate và đã xem frame ở giây 10 để xác nhận display native thật. Không mô tả video ngắn này là bao phủ mọi bước của cả ba test; raw results/JUnit là bằng chứng test đầy đủ. Trong [run nghiệm thu](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353), tải artifact emulator tương ứng để xem video, metadata, raw events và JUnit; artifact giữ 14 ngày. Ảnh trong Git không phụ thuộc thời hạn artifact.
 
 Ba native tests:
 
@@ -66,10 +85,10 @@ Linux/KVM disposable runner: `ANDROID_TEST_API=25 bash ops/scripts/test-android-
 - [x] Seed dữ liệu/illustration local, không dữ liệu nhà hàng thật.
 - [x] Source ba native journeys và gate đúng số test, không skip.
 - [x] Bổ sung unit regression history/inbox và cập nhật browser fixture.
-- [ ] Build/unit/lint trên source cuối, MySQL regression CI không skip.
-- [ ] Native API 25 và 35 thành công trên cùng source revision.
-- [ ] Kiểm tra đủ ảnh gốc và video native, lưu ảnh bàn giao.
-- [ ] README/báo cáo dẫn đúng revision/run và hướng dẫn tải demo APK.
-- [ ] Commit/push chuyên nghiệp, working tree sạch.
+- [x] Build/unit/lint trên source cuối, MySQL regression CI không skip.
+- [x] Native API 25 và 35 thành công trên cùng source revision.
+- [x] Kiểm tra đủ ảnh gốc, video giải mã và frame thực tế; lưu ảnh bàn giao.
+- [x] README/báo cáo dẫn đúng revision/run và hướng dẫn tải demo APK.
+- [x] Source nghiệm thu đã commit/push; tài liệu/ảnh bàn giao commit riêng, không đổi source được test.
 
 Hướng dẫn cho người thử app: [Android demo](android-demo.md). CVE exception/lint warnings còn lại của tuần 8 vẫn phải theo dõi; tuần 9 không được coi là vá CVE hoặc lint sạch.
