@@ -394,7 +394,7 @@ Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 
 - [x] Test tích hợp H2/MySQL, concurrency, bảo mật và Android contract; build/lint debug.
 - [x] Demo portfolio riêng: H2/roles fixture, walkthrough thật, screenshot, E2E browser/video và bundle JAR.
 - [x] API yêu thích/đánh giá, Android retry/error/account isolation, restaurant timezone, ViewModel tests và quality/security gate.
-- [ ] Nghiệm thu instrumentation API 25/35 trên CI cho revision tuần 8 (test APK đã build, local emulator bị chặn bởi môi trường ảo hóa).
+- [x] Nghiệm thu instrumentation API 25/35: 4 tests mỗi API và bốn screenshot native đã kiểm tra; [toàn bộ CI xanh ở source revision 7876e77](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37804794761).
 - [x] CI và manual release delivery bundle; log có cấu trúc, metrics, HTTPS/hardening template.
 - [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
 - Ngoài scope hiện tại: hosting/domain, giao dịch/Firebase/FCM thật, signed Android/store release, HA và operator UAT.
@@ -408,7 +408,7 @@ Tuần 8 đã chạy **190 backend tests (H2 + MySQL), 32 Android unit tests, 3 
 - [Tuần 4–5 — Security & operations](docs/weeks-4-5-security-operations.md) — phạm vi hoàn thành, phân quyền, thanh toán thủ công, thông báo và checklist đưa vào vận hành.
 - [Tuần 6 — Production readiness](docs/week-6-production-readiness.md) — CI/release, TLS/private metrics, backup mã hóa, restore/rollback và các gate go-live.
 - [Tuần 7 — Portfolio demo](docs/week-7-portfolio.md) — chạy không cần secret, case study, kịch bản 5–7 phút và giới hạn đã kiểm chứng.
-- [Tuần 8 — Quality & regression](docs/week-8-quality.md) — các khoảng trống đã xử lý, test/evidence, lint budget, CVE exception và gate còn chờ.
+- [Tuần 8 — Quality & regression](docs/week-8-quality.md) — nghiệm thu CI, screenshot Android thật, lint budget và CVE exception có hạn.
 - [Demo bundle guide](docs/demo-bundle-guide.md) — chạy JAR độc lập bằng JDK 17.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) — workflow đóng góp và báo lỗi không lộ dữ liệu.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.

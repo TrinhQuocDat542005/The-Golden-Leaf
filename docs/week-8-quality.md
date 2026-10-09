@@ -2,6 +2,10 @@
 
 ## Phạm vi và trạng thái
 
+**Tuần 8 đã nghiệm thu trong phạm vi portfolio**, kiểm tra báo cáo và ảnh ngày 09/10/2026. Source revision `7876e776e744001e4c23616a3d490cee766aaeb1` đạt toàn bộ [CI run 37804794761](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37804794761): backend, Android, infrastructure, security, emulator API 25, emulator API 35 và demo-browser. Mỗi emulator có đúng **4 test events thành công, không skip**, đã đối chiếu raw output/JUnit và kiểm tra hai PNG gốc. Bốn ảnh đều hiển thị nội dung thật, không có frame trắng hoặc dialog che UI.
+
+Không thay đổi source/test/workflow sau revision đã nghiệm thu. Commit chốt báo cáo chỉ cập nhật Markdown và PNG evidence, dùng `[skip ci]` để không chạy lại bộ test không đổi. Các kết quả local bên dưới và lịch sử xử lý CI giữ provenance riêng; trạng thái cuối là CI run nêu trên.
+
 Mục tiêu là hoàn thiện portfolio sau rà soát toàn bộ tuần 1–7, không triển khai dịch vụ nhà hàng thật. Đã commit/push và chạy CI; kết quả mỗi revision phải đọc ở [workflow CI](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml), không suy ra từ build APK. Local Windows không có tăng tốc hypervisor hoạt động, emulator software API 25/36 không boot được tới thiết bị online. Không tự bật Hyper-V/BIOS, không dùng máy thật/tài khoản thật để lách giới hạn này. Nghiệm thu runtime và ảnh Android được thực hiện trên CI Linux/KVM, tách khỏi các số liệu local bên dưới.
 
 Android vẫn dùng Firebase trong application thật. Instrumentation bắt buộc `-Pweek8IsolatedTests=true`: target debug manifest tắt FirebaseInitProvider, test Application kiểm tra chưa có FirebaseApp và không gọi device binding/FCM. Application tối giản trong `androidTest` chỉ dành cho test màn hình Compose và demo API, **không phải chế độ offline demo của app**. Build debug thường/release không tắt provider; không cài bản test-isolated để sử dụng app thật. Ảnh web mobile-width tuần 7 vẫn là ảnh web, không đổi nhãn thành ảnh Android.
@@ -66,14 +70,18 @@ Không có fixture MySQL thì các suite opt-in bị skip; phải đọc report,
 ```powershell
 ./gradlew.bat --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest lintDebug
 node scripts/check-android-quality.mjs
-node --test scripts/check-android-quality.test.mjs scripts/check-security-report.test.mjs
+node --test scripts/check-android-quality.test.mjs scripts/check-security-report.test.mjs scripts/check-android-instrumentation.test.mjs
 ```
 
 JDK 17, Android SDK platform 36/build-tools 36.0.0; Java time được core-library desugar để tương thích minSdk 25 ([Android documentation](https://developer.android.com/studio/write/java8-support)). Unit tests sử dụng coroutine test dispatcher/Clock và fake repository/session, không cần Firebase account. Một journey gọi production ViewModels với fake ApiService, không gọi đó là HTTP E2E.
 
 Trên Linux runner riêng có KVM và SDK, chạy `ANDROID_TEST_API=25 bash ops/scripts/test-android-emulator.sh`, rồi API 35. Script tạo AVD fixture riêng, demo process riêng 18082, tắt đúng process đã tạo và upload report/log 14 ngày. Không chạy trên server live. Test runner thay application thật để không đăng ký device/push.
 
-Instrumentation gồm hai kịch bản màn hình `NgayGioScreen` thật (slot đầy, Continue, lỗi/retry) và một HTTP journey từ Android tới demo thật (favorite/review/ownership/idempotency/cart/confirm/quote/PENDING/cancel), cộng smoke package hiện có. Đây **không phải** full navigation/login/payment UI journey của toàn app. Còn cần nghiệm thu screenshot Android thật và kiểm tra semantics/layout trên API 25/35.
+Instrumentation gồm hai kịch bản màn hình `NgayGioScreen` thật (slot đầy, Continue, lỗi/retry) và một HTTP journey từ Android tới demo thật (favorite/review/ownership/idempotency/cart/confirm/quote/PENDING/cancel), cộng smoke package/event cards thật. Đây **không phải** full navigation/login/payment UI journey của toàn app. Semantics tests và kiểm tra trực quan bốn screenshot API 25/35 đã đạt ở revision nghiệm thu.
+
+### Lịch sử xử lý CI
+
+Các trạng thái chưa đạt trong phần này là lịch sử ở revisions trước, đã được đóng bằng CI và kiểm tra ảnh của `7876e77` nêu trên.
 
 CI fixture đặt cùng `ANDROID_USER_HOME`/`ANDROID_EMULATOR_HOME`/`ANDROID_AVD_HOME` dưới build directory, tạo AVD bằng path explicit và kiểm tra registry trước boot; không đổi HOME. Điều này xử lý lỗi `Unknown AVD name` từ runner ở lần chạy c5a3c51. Hai test Compose chụp màn hình bằng Android UiAutomation (hỗ trợ cả API 25); script xuất PNG bằng `adb exec-out run-as` vào artifact riêng từng API. Chỉ gọi đây là screenshot đã nghiệm thu sau khi test runtime và kiểm tra ảnh thật đạt, không từ việc build APK.
 
@@ -85,13 +93,19 @@ Lần chạy 1e51d9a đã boot emulator nhưng AGP UTP dừng ở console/test-r
 
 [CI 00df85c](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37801079206) đạt đủ bốn native tests API 25, đã kiểm tra hai PNG không bị system dialog che: slot đầy không chọn được, slot còn bàn bật Continue và lỗi mạng có retry/Continue disabled. API 35 vẫn bị guard chặn vì không tìm thấy focus trong windows-only dump; **không gộp kết quả hai revisions để gọi toàn bộ matrix đạt**. Helper lấy full WindowManager dump để hỗ trợ phần display của Android mới, lưu window diagnostics trong artifact cả khi lỗi. Không bỏ guard hoặc chấp nhận focus null.
 
-### Ảnh native Android API 25
+### Ảnh native Android đã nghiệm thu
 
 Revision `bf92d55` đã đạt bốn native tests trên cả API 25/35, xác minh lại raw events/JUnit và focus thuộc app. Hai ảnh API 25 và ảnh chọn slot API 35 đạt kiểm tra trực quan; ảnh lỗi mạng API 35 là frame trắng trước khi compositor hiển thị nội dung. Không dùng frame trắng để nghiệm thu. Screenshot helper đợi tối đa 10 giây cho header PrimaryRed thật xuất hiện trong native framebuffer; không crop/retouch hoặc thay ảnh giả. Semantics assertions vẫn giữ nguyên và timeout phải fail.
 
-PNG gốc từ artifact `android-emulator-api-25` (ID `11561507730`), revision `00df85c4c910f0f3232057d2775a98a3d0480fef`, ngày 08/10/2026. Không retouch/crop, không phải ảnh web mobile-width. Fixture synthetic Compose component, **không phải toàn bộ navigation/login của app**.
+PNG gốc từ CI run `37804794761`, source revision `7876e776e744001e4c23616a3d490cee766aaeb1`: artifact API 25 ID `11563141996`, API 35 ID `11563496008`. Ảnh được tạo ngày 08/10/2026 và kiểm tra lại ngày 09/10/2026. Không retouch/crop, không phải ảnh web mobile-width. Fixture synthetic Compose component, **không phải toàn bộ navigation/login của app**. Report/log CI giữ 14 ngày; bốn PNG được lưu trong Git để evidence không phụ thuộc thời hạn artifact.
+
+API 25:
 
 <img src="assets/android-api25-slot-selection.png" alt="Android API 25: slot đầy khóa chọn, slot còn bàn được chọn và bật Tiếp tục" width="260"> <img src="assets/android-api25-network-error.png" alt="Android API 25: lỗi mạng có thử lại, Tiếp tục bị khóa" width="260">
+
+API 35:
+
+<img src="assets/android-api35-slot-selection.png" alt="Android API 35: chọn slot còn bàn, Tiếp tục bật" width="260"> <img src="assets/android-api35-network-error.png" alt="Android API 35: lỗi mạng và thử lại hiển thị, Tiếp tục khóa" width="260">
 
 ## Lint và quyền riêng tư log
 
@@ -117,12 +131,13 @@ Ngoại lệ duy nhất hiện tại: **CVE-2026-47884**, `org.springframework:s
 
 Gate phải fail khi exception hết hạn/phiên bản thay đổi/thiếu inventory; ngày expiry không hợp lệ cũng fail. Source regex chỉ là guard phụ, không thay reachability audit; phải đánh giá lại nếu MVC/view routing thay đổi hoặc trước bất kỳ public deployment. Đây là residual risk của portfolio local, **không phải xác nhận đã vá CVE hoặc an toàn để go-live**.
 
-## Gate còn lại để nghiệm thu tuần 8 đầy đủ
+## Checklist nghiệm thu và bảo trì
 
 - [x] Backend/API, Android ViewModels/UI states, unit/regression và source gates đã triển khai.
 - [x] Test APK, CI emulator matrix và test-only application được thêm.
-- [ ] Chạy và xử lý mọi lỗi instrumentation API 25/35 trên runner có KVM; lưu report và screenshot Android thật.
-- [ ] Commit/push khi chủ repo yêu cầu; CI backend/Android/infrastructure/emulator/security/browser phải xanh trên cùng revision trước khi gọi bundle tuần 8 đã xác minh.
-- [ ] Trước expiry: reassess Spring exception và update bản vá tương thích, giữ report đầy đủ.
+- [x] Instrumentation API 25/35 đạt trên runner KVM; raw events/JUnit xác minh đủ 4 tests mỗi API, bốn screenshot thật đã kiểm tra và lưu trong Git.
+- [x] Commit/push theo yêu cầu; backend/Android/infrastructure/emulator/security/browser xanh trên cùng source revision `7876e77`.
+
+Việc bảo trì sau nghiệm thu: trước ngày 08/11/2026 00:00 UTC, reassess Spring exception và update bản vá tương thích, giữ report đầy đủ. Đây vẫn là CVE tồn tại có ngoại lệ giới hạn, không phải đã vá.
 
 Không bắt buộc cho portfolio: hosting/domain, live bank merchant/Firebase/FCM, signed store release, license lựa chọn thay tác giả, GitHub Release công khai. Tuần 8 không thêm gateway hay giao dịch thật.
