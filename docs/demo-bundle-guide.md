@@ -48,6 +48,8 @@ Week 10 bundles also contain **golden-leaf-demo.apk**, a separate native Android
 
 ## Week 10 combined bundle
 
+Publication status (09 October 2026): the [verified CI run](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705) has the **portfolio-demo-bundle** artifact, with APK + JAR and launchers (14-day retention). Tag `portfolio-v0.10.0` exists, but the public prerelease is still pending: repository owner must re-run `portfolio-release` for this exact run. The release URL below is the intended destination, not evidence that publication/download verification has completed. See the [acceptance report](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/blob/main/docs/week-10-portfolio-release.md).
+
 Download `golden-leaf-portfolio-demo.zip` and `RELEASE-SHA256SUMS` from the trusted [portfolio prerelease](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/releases/tag/portfolio-v0.10.0). Check the archive's SHA-256 against `RELEASE-SHA256SUMS` before extracting into a new folder. GitHub Release assets persist beyond CI's 14-day retention; a downloadable asset is not proof that its security acceptance is still current.
 
 The archive contains the demo JAR/APK, `REVISION`, `manifest.json`, checksums, security policy, exact exceptions and launchers. It contains no Firebase service account, merchant destination, production database or signing keystore. APK is **debug-signed**, not store-ready; different CI runs may use different debug certificates. If Android reports an incompatible update, manually uninstall only `com.example.giaodien.demo` before installing the new demo, not the ordinary app.

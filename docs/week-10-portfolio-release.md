@@ -1,8 +1,8 @@
 # Tuần 10 — Polish Android và bản bàn giao portfolio
 
-Ngày 09/10/2026. Phạm vi: demo local cho GitHub, không go-live, không ngân hàng/Firebase/FCM thật. **Đang triển khai/nghiệm thu; chưa tuyên bố release đã xuất bản hoặc CI tuần 10 đạt.**
+Ngày 09/10/2026. Phạm vi: demo local cho GitHub, không go-live, không ngân hàng/Firebase/FCM thật. **Code, CI và combined bundle đã đạt; prerelease public còn chờ chủ repository chạy lại job xuất bản. Chưa tuyên bố hoàn tất toàn bộ bàn giao tuần 10.**
 
-Source nghiệm thu cuối đang chạy: `8ca446a48f8af7cac4f0f97c7cf0224f86a4dc61`, [CI run 37956310101](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37956310101). Không dùng CI tuần 9 hoặc run trước bị lỗi làm bằng chứng source này.
+Source nghiệm thu cuối: `893b3e4f6cf44fa63eb0fc04a9dc4a4df336146c`, [CI run 37958479705](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705), toàn bộ jobs thành công. Job `portfolio-release` lúc đó là no-op có chủ đích vì chưa có tag. Sau nghiệm thu bundle đã push lightweight tag `portfolio-v0.10.0` đúng SHA trên; connector chạy lại job trả 403 Resource not accessible by integration, trình duyệt chưa đăng nhập. Không đổi permission, đọc token hoặc bỏ gate để vượt giới hạn. Chủ repository cần mở job này và chọn Re-run job; sau đó còn phải kiểm public release và checksum tải về.
 
 Run trước `5df5655`, [37955018052](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37955018052), đạt unit/build/lint, nhưng budget gate chặn `NewerVersionAvailable: 13 > 12`: MockWebServer 4.12.0 được khai báo lặp ở unit và instrumentation. Đưa OkHttp core/logging/MockWebServer về một version catalog chung **vẫn 4.12.0**, một khai báo MockWebServer dùng cho cả hai suite. Cảnh báo version mới vẫn giữ trong lint; không suppression, không nâng budget, không đổi dependency major. Source cuối CI đã đạt `NewerVersionAvailable: 12`, `UseTomlInstead: 17` và mọi per-ID budget giữ nguyên.
 
@@ -17,10 +17,19 @@ Run trước `5df5655`, [37955018052](https://github.com/TrinhQuocDat542005/The-
 | Infrastructure/security CI | 14 gate tests + actionlint/ShellCheck/container/backup-restore đạt; scan giữ 6 dependency findings và 36 image findings, 0 blocking sau hai exception đúng scope có hạn |
 | Node gates local | 14 passed: 8 quality/security/instrumentation + 6 packaging |
 | PowerShell guard local | Bundle prototype đúng được nhận; file bị sửa và exception hết hạn bị từ chối |
-| PowerShell startup local | Script chạy trong PowerShell 7 hiện tại, JAR lên đúng profile demo/port 18082; còn cần HTTP smoke với bundle CI cuối |
-| CI/native/release | Chờ raw results, ảnh/video mới, combined bundle và publish/download verification |
+| PowerShell startup local | Bundle CI cuối chạy trong PowerShell 7/JDK 17, đúng profile demo/port 18082; config demo=true, public menu 12 món, web 200; dừng process riêng sau kiểm |
+| Native API 25/35 | Mỗi API 4 regressions + 3 customer journeys + 1 image retry, 0 failures/errors/skips; raw results/JUnit đã kiểm |
+| Browser/Linux launcher CI | 3 browser E2E; launcher Bash của bundle thật đạt config demo, menu 12 và web 200 |
+| Combined bundle local | Verify toàn bộ manifest/checksum/source đạt; APK SHA-256 `96c66050eef6a6801e91baabce9b2c24a5ae89ca1b9490c96cb10db78899b25f`, trùng APK cài/test API 35 |
+| Prerelease public | Chưa xuất bản: cần chạy lại job publish sau tag; chưa có bằng chứng download public |
 
 Windows PowerShell 5 mặc định trên máy chặn chạy script theo execution policy; không thay policy hệ thống hoặc bypass guard. Kiểm PowerShell 7 trong phiên đang cho phép script, không suy ra đã nghiệm thu mọi policy/phiên bản Windows. Prototype local dùng để kiểm launcher, không được xuất bản làm binary đã nghiệm thu. Linux launcher runtime kiểm trong CI; macOS chỉ có syntax/compatibility review nếu chưa có runner thật.
+
+## Ảnh và video final
+
+Đã kiểm trực tiếp 12 PNG gốc của cả API 25/35; copy nguyên bản vào `docs/assets/week10-android-api{25,35}-{home,menu,payment,history,invoice,review}.png` và so SHA-256 nguồn/đích, không crop/chỉnh sửa. Ảnh tuần 8/9 giữ nguyên. Giá menu có dấu phân cách Việt Nam; history dùng nhãn xử lý/sắp tới; ảnh món và bình luận thật đã tải. Nội dung review fixture vẫn nhắc tuần 9 vì được tái sử dụng, không phải ảnh tuần 9.
+
+Video final qua full-decode gate CI và frame sample đã xem: API 35 H264 MP4 720×1280, 32.547367 giây; API 25 VP9 WebM 1080×1920, 31.683 giây. Recording chỉ phần booking, không chứng minh toàn bộ suite hay phone UAT. Artifact giữ 14 ngày; ảnh gốc lưu trong Git. Hóa đơn còn dùng formatter VNĐ cũ, một số header tiếng Anh/ảnh vị trí còn đơn giản; không gọi đây là redesign toàn app hoặc đã thống nhất mọi typography/locale.
 
 ## Thay đổi
 
@@ -46,15 +55,15 @@ Run đầu trên `10afcaf`, [37953912589](https://github.com/TrinhQuocDat542005/
 
 Run `8ca446a`, [37956310101](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37956310101), đạt backend/unit/build/lint/infrastructure/security; mỗi API native đạt 4 regressions và 3 customer journeys, nhưng component retry fixture gọi `MockWebServer.url()` trong composition, gây reverse DNS/NetworkOnMainThreadException. Dựng URL IPv4 literal từ port trước khi vào UI thread; không tắt StrictMode hoặc bỏ test. Assertion backend restart cũng chỉ in boolean/message nếu fail, không dump ephemeral token values. Cần run mới có đủ 4 successful demo events trước release.
 
-- [ ] Android unit/build/lint cuối và static privacy/budget đạt.
-- [ ] Backend H2/MySQL CI và browser E2E đạt trên source tuần 10.
-- [ ] Native API 25/35, raw results/JUnit, ảnh và video tuần 10 được kiểm.
-- [ ] Packaging tests, bundle checksums, launcher PowerShell và JAR smoke đạt.
+- [x] Android unit/build/lint cuối và static privacy/budget đạt.
+- [x] Backend H2/MySQL CI và browser E2E đạt trên source tuần 10.
+- [x] Native API 25/35, raw results/JUnit, ảnh và video tuần 10 được kiểm.
+- [x] Packaging tests, bundle checksums, launcher PowerShell 7/Linux và JAR smoke đạt.
 - [ ] GitHub prerelease public đúng revision, đủ assets và kiểm download/checksum.
-- [ ] README/guide/report dẫn đúng run, release và giới hạn; commit/push sạch.
+- [x] README/guide/report dẫn đúng run, ảnh final và giới hạn; ghi rõ release pending, kiểm 45 local links/assets và diff whitespace; commit/push tài liệu riêng không thay source binary đã test.
 
 ## Giới hạn còn lại
 
-Hai CVE `CVE-2026-47884/47890`, đúng spring-webmvc 6.2.19, vẫn chưa vá; acceptance kết thúc **08/11/2026 00:00 UTC**. Không gia hạn hoặc đổi severity để release. Public hosting, real transfers, Google/Firebase/FCM, signed/store Android và phone UAT ngoài scope. Bundle launchers enforce deadline; dùng APK/direct Java không tự enforce, người review vẫn phải tuân thủ giới hạn. Linux/macOS launchers cần kiểm trên môi trường tương ứng trước khi gọi là runtime đã nghiệm thu.
+Hai CVE `CVE-2026-47884/47890`, đúng spring-webmvc 6.2.19, vẫn chưa vá; acceptance kết thúc **08/11/2026 00:00 UTC**. Không gia hạn hoặc đổi severity để release. Public hosting, real transfers, Google/Firebase/FCM, signed/store Android và phone UAT ngoài scope. Bundle launchers enforce deadline; dùng APK/direct Java không tự enforce, người review vẫn phải tuân thủ giới hạn. Linux runtime đã kiểm trong CI; macOS mới review syntax/compatibility, chưa runtime trên máy Mac.
 
 Hướng dẫn [Android demo](android-demo.md), [combined bundle](demo-bundle-guide.md), [release notes](week-10-release-notes.md). Workflow dùng [GitHub reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows) và [gh release create](https://cli.github.com/manual/gh_release_create); nội dung release vẫn là prerelease local-only.

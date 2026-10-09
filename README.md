@@ -34,29 +34,29 @@ Tuần 8 bổ sung yêu thích/đánh giá theo tài khoản, trạng thái lỗ
 
 ## Giao diện demo
 
-Tuần 10 đang nghiệm thu polish Android, transport recovery và bản **combined APK + backend demo** có checksum/launcher. [Theo dõi báo cáo tuần 10](docs/week-10-portfolio-release.md); ảnh và số test tuần 9 bên dưới vẫn là bằng chứng revision lịch sử, không thay CI tuần 10.
+Tuần 10 đã đạt CI và kiểm bundle **APK + backend demo** có checksum/launcher. [Báo cáo tuần 10](docs/week-10-portfolio-release.md) ghi rõ bằng chứng và giới hạn. GitHub prerelease đang chờ chủ repository chạy lại job xuất bản; tag không đồng nghĩa release đã public.
 
-### Android native — tuần 9
+### Android native — tuần 10
 
-APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản khách, đặt bàn/giỏ hàng/thanh toán giả lập và lịch sử thật qua API**. [CI nghiệm thu source 4401d02](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353) đạt cả 7 jobs: 191 backend tests, 38 Android unit tests, 4 regression + 3 customer native tests trên **mỗi API 25/35**, 3 browser E2E và 8 gate tests. Security đạt với hai CVE exception có hạn, không phải đã vá mọi vulnerability.
+APK `demo` riêng, không cần Firebase: **12 món minh họa, hai tài khoản khách, đặt bàn/giỏ hàng/thanh toán giả lập và lịch sử thật qua API**. [CI nghiệm thu source 893b3e4](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705) đạt 191 backend tests, 48 Android unit tests, 4 regression + 3 customer journeys + 1 image-retry component trên **mỗi API 25/35**, 3 browser E2E và 14 gate tests. Security đạt với hai CVE exception có hạn, không phải đã vá mọi vulnerability. Job xuất bản hiện thành công dạng no-op vì tag chưa có lúc chạy CI; cần chạy lại sau tag.
 
-[Chạy app trong Android Studio](docs/android-demo.md) · [Báo cáo & giới hạn nghiệm thu](docs/week-9-native-demo.md)
+[Chạy app trong Android Studio](docs/android-demo.md) · [Bundle APK + JAR](docs/demo-bundle-guide.md) · [Báo cáo & giới hạn nghiệm thu](docs/week-10-portfolio-release.md)
 
 Ảnh gốc từ MainActivity trên emulator **API 35**, không phải web mobile hoặc mockup:
 
 <p align="center">
-  <img src="docs/assets/week9-android-api35-home.png" alt="Android native: trang chủ và minh họa món demo" width="240" />
-  <img src="docs/assets/week9-android-api35-menu.png" alt="Android native: thực đơn và yêu thích" width="240" />
-  <img src="docs/assets/week9-android-api35-payment.png" alt="Android native: thanh toán giả lập 340.000 VND, không chuyển tiền" width="240" />
+  <img src="docs/assets/week10-android-api35-home.png" alt="Android native: trang chủ và minh họa món demo" width="240" />
+  <img src="docs/assets/week10-android-api35-menu.png" alt="Android native: thực đơn và yêu thích" width="240" />
+  <img src="docs/assets/week10-android-api35-payment.png" alt="Android native: thanh toán giả lập 340.000 VND, không chuyển tiền" width="240" />
 </p>
 
 <details>
   <summary>Lịch sử, hóa đơn và đánh giá — Android native</summary>
 
   <p>
-    <img src="docs/assets/week9-android-api35-history.png" alt="Lịch sử theo tài khoản demo" width="240" />
-    <img src="docs/assets/week9-android-api35-invoice.png" alt="Hóa đơn do server tính, tổng 340.000 VNĐ" width="240" />
-    <img src="docs/assets/week9-android-api35-review.png" alt="Đánh giá món và minh họa SVG" width="240" />
+    <img src="docs/assets/week10-android-api35-history.png" alt="Lịch sử theo tài khoản demo, đơn đang xử lý hoặc sắp tới" width="240" />
+    <img src="docs/assets/week10-android-api35-invoice.png" alt="Hóa đơn do server tính, tổng 340.000 VNĐ" width="240" />
+    <img src="docs/assets/week10-android-api35-review.png" alt="Đánh giá món và minh họa SVG" width="240" />
   </p>
 </details>
 
@@ -211,9 +211,9 @@ Mở **[http://127.0.0.1:8080/demo.html](http://127.0.0.1:8080/demo.html)**. Ch�
 
 DB tạm có 12 món và 7 hình minh họa SVG local, 4 bàn 8 ghế, 28 slots, 4 tài khoản `.invalid`, một đơn hôm nay và lịch sử hoàn tất/hủy để thử. Restart backend để reset. Không chuyển tiền, không gửi FCM, không ghi/serve uploads local. Demo chỉ bind loopback và từ chối trộn profile/DB thật.
 
-Muốn chạy không cần Maven? Tải **portfolio-demo-bundle** từ một [CI run main thành công](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/workflows/ci.yml), kiểm checksum và chạy JAR với JDK 17. Artifact giữ 14 ngày, có thể cần GitHub login; không phải GitHub Release lâu dài. Xem [bundle guide](docs/demo-bundle-guide.md).
+Muốn chạy không cần Maven? Tải **portfolio-demo-bundle** từ [CI tuần 10 đã đạt](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705): có JAR, đúng APK đã test API 35, checksum và launcher. Artifact giữ 14 ngày, có thể cần GitHub login. Prerelease dài hạn còn chờ job xuất bản, chưa có asset public để tải. Xem [bundle guide](docs/demo-bundle-guide.md).
 
-**Phạm vi:** bundle trên là demo web/API; ảnh web mobile-width không thay nghiệm thu Android. Để thử app native không Firebase, chọn **Build Variant `demo`** theo [Android demo guide](docs/android-demo.md). Bản Android `debug`/`release` thường vẫn cần Firebase.
+**Phạm vi:** bundle gồm web/API và Android native demo; ảnh web mobile-width không thay nghiệm thu Android. Có thể build **Variant `demo`** theo [Android demo guide](docs/android-demo.md). Bản Android `debug`/`release` thường vẫn cần Firebase.
 
 ### 3. Development backend bằng Docker (tùy chọn)
 
@@ -409,7 +409,7 @@ node scripts/check-android-quality.mjs
 
 Trước khi mở pull request, nên chạy cả test backend lẫn build Android để phát hiện sớm lỗi contract giữa hai phía.
 
-Tuần 9 nghiệm thu **191 backend tests (H2 + MySQL), 38 Android unit tests, 3 Chromium E2E và 8 quality-gate tests**. Mỗi emulator API 25/35 chạy 4 component regressions tuần 8 và 3 customer journeys mới qua MainActivity/MyApp demo thật. Lint CI còn **95 warnings / 8 hints, 0 errors**, budget không tăng; security có hai ngoại lệ Spring WebMVC đến **08/11/2026 00:00 UTC**, chưa được vá. Native evidence không thay thế Google/Firebase login, FCM, điện thoại vật lý hoặc go-live. Chi tiết/reproduce trong [báo cáo tuần 9](docs/week-9-native-demo.md); kết quả lịch sử tuần 8 giữ riêng trong [báo cáo tuần 8](docs/week-8-quality.md).
+Tuần 10 nghiệm thu **191 backend tests (H2 + MySQL), 48 Android unit tests, 3 Chromium E2E và 14 gate tests**. Mỗi emulator API 25/35 chạy 4 regressions, 3 customer journeys qua MainActivity/MyApp thật và 1 image-retry component. Lint CI còn **94 warnings / 8 hints, 0 errors**, budget không tăng; security có hai ngoại lệ Spring WebMVC đến **08/11/2026 00:00 UTC**, chưa được vá. Native evidence không thay thế Google/Firebase login, FCM, điện thoại vật lý hoặc go-live. Chi tiết trong [báo cáo tuần 10](docs/week-10-portfolio-release.md); bằng chứng lịch sử giữ riêng trong báo cáo tuần 8/9.
 
 ## Roadmap
 
@@ -431,7 +431,9 @@ Tuần 9 nghiệm thu **191 backend tests (H2 + MySQL), 38 Android unit tests, 3
 - [x] Tuần 9: demo APK không Firebase, 12 món/SVG, 3 full native customer journeys mỗi API 25/35, 12 PNG và MP4/WebM đã kiểm; [CI source cuối](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37916305353).
 - [x] Backup DB/uploads mã hóa, diễn tập restore và runbook phát hành/rollback.
 - Ngoài scope hiện tại: hosting/domain, giao dịch/Firebase/FCM thật, signed Android/store release, HA và operator UAT.
-- Tác giả tùy chọn: video có thuyết minh, license và GitHub Release dài hạn; không coi đây là việc bắt buộc để demo local.
+- [x] Tuần 10: polish tiền/nhãn/ảnh, transport recovery, restart backend thật, combined bundle và launcher Windows/Linux; [CI source cuối](https://github.com/TrinhQuocDat542005/The-Golden-Leaf/actions/runs/37958479705).
+- [ ] Xuất bản prerelease `portfolio-v0.10.0` và kiểm download public — cần chủ repository chạy lại job `portfolio-release` do connector thiếu quyền Actions write.
+- Tác giả tùy chọn: video có thuyết minh và license; không bắt buộc để demo local.
 
 ## Tài liệu kỹ thuật
 
@@ -444,7 +446,7 @@ Tuần 9 nghiệm thu **191 backend tests (H2 + MySQL), 38 Android unit tests, 3
 - [Tuần 8 — Quality & regression](docs/week-8-quality.md) — nghiệm thu CI, screenshot Android thật, lint budget và CVE exception có hạn.
 - [Tuần 9 — Native Android demo](docs/week-9-native-demo.md) — APK riêng, dữ liệu minh họa, customer UI journeys, screenshot/video và trạng thái nghiệm thu.
 - [Tuần 10 — Portfolio release](docs/week-10-portfolio-release.md) — polish/recovery, combined APK + JAR, checksum/launcher và prerelease local-only.
-- [Demo bundle guide](docs/demo-bundle-guide.md) — chạy JAR độc lập bằng JDK 17.
+- [Demo bundle guide](docs/demo-bundle-guide.md) — combined APK + JAR, checksum và launcher JDK 17.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) — workflow đóng góp và báo lỗi không lộ dữ liệu.
 - [Environment template](The-Golden-Leaf-server/.env.example) — biến môi trường dùng với Docker Compose.
 - [OpenAPI configuration](The-Golden-Leaf-server/src/main/java/com/example/datban/config/OpenApiConfig.java) — metadata tài liệu API.
